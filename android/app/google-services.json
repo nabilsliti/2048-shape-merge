@@ -1,0 +1,97 @@
+{
+  "project_info": {
+    "project_number": "282452142394",
+    "project_id": "shape-merge",
+    "storage_bucket": "shape-merge.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282452142394:android:697f8da8a8854c9b490803",
+        "android_client_info": {
+          "package_name": "com.crestbit.shapemerge2048"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvz0z5PUnpS2eIIo2UuYdA59xEH3D8vv4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282452142394:android:b14f88e119f56c1a490803",
+        "android_client_info": {
+          "package_name": "com.crestbit.shapemerge2048_dev"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvz0z5PUnpS2eIIo2UuYdA59xEH3D8vv4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282452142394:android:f8ef4da0c8087f16490803",
+        "android_client_info": {
+          "package_name": "com.crestbit.shapemerge2048_staging"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvz0z5PUnpS2eIIo2UuYdA59xEH3D8vv4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
