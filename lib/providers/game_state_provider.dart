@@ -37,21 +37,23 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = state.copyWith(bestScore: bestScore, jokerInventory: jokers);
   }
 
-  ({GameShape? mergedShape, int pointsEarned}) attemptMerge(
+  ({GameShape? mergedShape, int pointsEarned, bool wasTap}) attemptMerge(
     GameShape dragged,
-    Offset dropPosition,
-  ) {
+    Offset dropPosition, {
+    bool wasTap = false,
+  }) {
     if (_boardSize == null) {
-      return (mergedShape: null, pointsEarned: 0);
+      return (mergedShape: null, pointsEarned: 0, wasTap: wasTap);
     }
     final result = GameEngine.attemptMerge(
       state,
       dragged,
       dropPosition,
       _boardSize!,
+      wasTap: wasTap,
     );
     state = result.state;
-    return (mergedShape: result.mergedShape, pointsEarned: result.pointsEarned);
+    return (mergedShape: result.mergedShape, pointsEarned: result.pointsEarned, wasTap: result.wasTap);
   }
 
   void updateShapePosition(String shapeId, double x, double y) {
@@ -71,12 +73,13 @@ class GameStateNotifier extends StateNotifier<GameState> {
     );
   }
 
-  void spawnWildcard() {
+  void spawnWildcard(int level) {
     if (_boardSize == null) return;
     final result = JokerHandler.spawnWildcard(
       state.shapes,
       state.jokerInventory,
       _boardSize!,
+      level,
     );
     state = state.copyWith(
       shapes: result.shapes,

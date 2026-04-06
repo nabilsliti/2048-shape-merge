@@ -36,6 +36,7 @@ class JokerHandler {
     List<GameShape> shapes,
     JokerInventory inventory,
     Size boardSize,
+    int level,
   ) {
     if (inventory.countOf(JokerType.wildcard) <= 0) {
       return (shapes: shapes, inventory: inventory);
@@ -48,7 +49,7 @@ class JokerHandler {
       y: pos.y,
       type: pos.type,
       color: const Color(0xFFFFFFFF),
-      level: shapes.isNotEmpty ? shapes.first.level : 1,
+      level: level,
       isWildcard: true,
     );
 

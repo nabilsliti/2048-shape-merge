@@ -135,6 +135,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Regarde une pub pour obtenir +1 joker de ton choix';
 
   @override
+  String get adNotReady => 'Pub pas encore prête, réessaie dans un instant';
+
+  @override
   String get chooseJoker => 'Choisis un joker à recharger';
 
   @override
@@ -174,4 +177,28 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get quit => 'Quitter';
+
+  @override
+  String get newRecord => 'Nouveau Record !';
+
+  @override
+  String get classicMode => 'Mode Classique';
+
+  @override
+  String get editProfile => 'Modifier le profil';
+
+  @override
+  String get displayName => 'Pseudo';
+
+  @override
+  String get chooseAvatar => 'Choisis ton avatar';
+
+  @override
+  String get save => 'Enregistrer';
+
+  @override
+  String get profileUpdated => 'Profil mis à jour !';
+
+  @override
+  String get signOutConfirm => 'Te déconnecter ?';
 }

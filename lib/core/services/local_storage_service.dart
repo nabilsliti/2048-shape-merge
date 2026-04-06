@@ -8,6 +8,8 @@ class LocalStorageService {
   static const _jokerBombKey = 'jokerBomb';
   static const _jokerWildcardKey = 'jokerWildcard';
   static const _jokerReducerKey = 'jokerReducer';
+  static const _guestNameKey = 'guestName';
+  static const _guestAvatarKey = 'guestAvatar';
 
   final SharedPreferences _prefs;
 
@@ -40,4 +42,18 @@ class LocalStorageService {
     await _prefs.setInt(_jokerWildcardKey, inventory.wildcard);
     await _prefs.setInt(_jokerReducerKey, inventory.reducer);
   }
+
+  String get guestName {
+    var name = _prefs.getString(_guestNameKey);
+    if (name == null) {
+      name = 'Guest_${DateTime.now().millisecondsSinceEpoch % 10000}';
+      _prefs.setString(_guestNameKey, name);
+    }
+    return name;
+  }
+
+  Future<void> setGuestName(String name) => _prefs.setString(_guestNameKey, name);
+
+  String? get guestAvatar => _prefs.getString(_guestAvatarKey);
+  Future<void> setGuestAvatar(String avatarId) => _prefs.setString(_guestAvatarKey, avatarId);
 }

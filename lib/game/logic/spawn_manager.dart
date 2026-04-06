@@ -18,7 +18,10 @@ class SpawnManager {
     Color color;
     int level;
 
-    if (existing.isNotEmpty && _random.nextDouble() < smartSpawnChance) {
+    // 70% smart until 25 shapes, then drops to 50%
+    final smartChance = existing.length >= 25 ? 0.50 : smartSpawnChance;
+
+    if (existing.isNotEmpty && _random.nextDouble() < smartChance) {
       final template = existing[_random.nextInt(existing.length)];
       type = template.type;
       color = template.color;
@@ -43,11 +46,13 @@ class SpawnManager {
 
   static List<GameShape> spawnInitialShapes(Size boardSize) {
     final shapes = <GameShape>[];
-    // Spawn pairs to guarantee merges
+    final types = List<ShapeType>.of(ShapeType.values)..shuffle(_random);
+    final colors = List<Color>.of(MergeDetector.shapeColors)..shuffle(_random);
+
+    // Spawn pairs — round-robin through types and colors for variety
     for (var i = 0; i < startShapes ~/ 2; i++) {
-      final type = ShapeType.values[_random.nextInt(ShapeType.values.length)];
-      final color = MergeDetector.shapeColors[
-          _random.nextInt(MergeDetector.shapeColors.length)];
+      final type = types[i % types.length];
+      final color = colors[i % colors.length];
       const level = 1;
 
       for (var j = 0; j < 2; j++) {
@@ -70,16 +75,18 @@ class SpawnManager {
     Size boardSize,
     double size,
   ) {
-    final margin = size / 2 + 4;
+    final margin = size / 2 + 8;
+    final minGap = 8.0;
+
+    // Phase 1: try random positions with comfortable gap
     for (var attempt = 0; attempt < maxSpawnAttempts; attempt++) {
       final x = margin + _random.nextDouble() * (boardSize.width - 2 * margin);
-      final y =
-          margin + _random.nextDouble() * (boardSize.height - 2 * margin);
+      final y = margin + _random.nextDouble() * (boardSize.height - 2 * margin);
 
       var hasOverlap = false;
       for (final shape in existing) {
         final otherSize = shapeSize(shape.level);
-        final minDist = (size + otherSize) / 2 + 4;
+        final minDist = (size + otherSize) / 2 + 12;
         final dx = x - shape.x;
         final dy = y - shape.y;
         if (dx * dx + dy * dy < minDist * minDist) {
@@ -89,10 +96,35 @@ class SpawnManager {
       }
       if (!hasOverlap) return Offset(x, y);
     }
-    // Fallback: random position
-    return Offset(
-      margin + _random.nextDouble() * (boardSize.width - 2 * margin),
-      margin + _random.nextDouble() * (boardSize.height - 2 * margin),
-    );
+
+    // Phase 2: grid scan to find the least overlapping spot
+    const gridSteps = 16;
+    final stepX = (boardSize.width - 2 * margin) / gridSteps;
+    final stepY = (boardSize.height - 2 * margin) / gridSteps;
+    Offset bestPos = Offset(boardSize.width / 2, boardSize.height / 2);
+    double bestMinDist = double.negativeInfinity;
+
+    for (var gx = 0; gx <= gridSteps; gx++) {
+      for (var gy = 0; gy <= gridSteps; gy++) {
+        final x = margin + gx * stepX;
+        final y = margin + gy * stepY;
+        double closestDist = double.infinity;
+
+        for (final shape in existing) {
+          final otherSize = shapeSize(shape.level);
+          final dx = x - shape.x;
+          final dy = y - shape.y;
+          final dist = (dx * dx + dy * dy) - ((size + otherSize) / 2 + minGap) * ((size + otherSize) / 2 + minGap);
+          if (dist < closestDist) closestDist = dist;
+        }
+
+        if (closestDist > bestMinDist) {
+          bestMinDist = closestDist;
+          bestPos = Offset(x, y);
+        }
+      }
+    }
+
+    return bestPos;
   }
 }

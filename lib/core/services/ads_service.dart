@@ -1,5 +1,7 @@
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'dart:async';
 import 'dart:io';
+
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdsService {
   BannerAd? bannerAd;
@@ -46,15 +48,31 @@ class AdsService {
     if (_rewardedAd == null) return false;
 
     var rewarded = false;
+    final completer = Completer<bool>();
+
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _rewardedAd = null;
+        loadRewardedAd();
+        completer.complete(rewarded);
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _rewardedAd = null;
+        loadRewardedAd();
+        completer.complete(false);
+      },
+    );
+
     await _rewardedAd!.show(
       onUserEarnedReward: (_, __) {
         rewarded = true;
         onRewarded();
       },
     );
-    _rewardedAd = null;
-    loadRewardedAd();
-    return rewarded;
+
+    return completer.future;
   }
 
   void dispose() {

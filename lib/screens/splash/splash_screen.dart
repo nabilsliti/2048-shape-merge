@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
-import 'package:shape_merge/providers/settings_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -15,22 +14,32 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..forward();
+      duration: const Duration(milliseconds: 1500),
+    );
 
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _controller.forward();
     _initAndNavigate();
   }
 
   Future<void> _initAndNavigate() async {
     final storage = await LocalStorageService.create();
-
     if (!mounted) return;
 
     ref.read(gameStateProvider.notifier).loadSavedState(
@@ -38,17 +47,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           jokers: storage.jokerInventory,
         );
 
-    final onboardingDone = storage.onboardingDone;
-    ref.read(onboardingDoneProvider.notifier).state = onboardingDone;
-
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    if (onboardingDone) {
-      context.go('/home');
-    } else {
-      context.go('/onboarding');
-    }
+    context.go('/home');
   }
 
   @override
@@ -60,25 +62,83 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: Center(
-        child: FadeTransition(
-          opacity: _controller,
-          child: ScaleTransition(
-            scale: CurvedAnimation(
-              parent: _controller,
-              curve: Curves.elasticOut,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('🔷', style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 16),
-                Text('SHAPE MERGE', style: AppTheme.titleStyle),
-              ],
+      body: Stack(
+        children: [
+          // Gradient background (like shape-rush)
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.bgTop, AppTheme.bgBot],
+                ),
+              ),
             ),
           ),
-        ),
+          // Pink orb top-left
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFff2d87).withValues(alpha: 0.3),
+              ),
+            ),
+          ),
+          // Cyan orb bottom-right
+          Positioned(
+            bottom: -50,
+            right: -50,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF00d4ff).withValues(alpha: 0.3),
+              ),
+            ),
+          ),
+          // Title
+          Center(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _fadeAnimation.value,
+                  child: Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Transform.rotate(
+                      angle: -0.05,
+                      child: Text.rich(
+                        TextSpan(children: [
+                          TextSpan(
+                            text: 'SHAPE ',
+                            style: AppTheme.titleStyle(54),
+                          ),
+                          TextSpan(
+                            text: 'MERGE\n',
+                            style: AppTheme.titleStyle(54)
+                                .copyWith(color: AppTheme.orangeTop),
+                          ),
+                          TextSpan(
+                            text: '2048',
+                            style: AppTheme.titleStyle(54)
+                                .copyWith(color: AppTheme.orangeTop),
+                          ),
+                        ]),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

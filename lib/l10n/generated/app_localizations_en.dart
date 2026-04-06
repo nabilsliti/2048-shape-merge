@@ -132,6 +132,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchAdReward => 'Watch an ad to get +1 joker of your choice';
 
   @override
+  String get adNotReady => 'Ad not ready yet, try again in a moment';
+
+  @override
   String get chooseJoker => 'Choose a joker to recharge';
 
   @override
@@ -171,4 +174,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quit => 'Quit';
+
+  @override
+  String get newRecord => 'New Record!';
+
+  @override
+  String get classicMode => 'Classic Mode';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get displayName => 'Display Name';
+
+  @override
+  String get chooseAvatar => 'Choose your avatar';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get profileUpdated => 'Profile updated!';
+
+  @override
+  String get signOutConfirm => 'Sign out?';
 }

@@ -5,6 +5,7 @@ class LeaderboardEntry {
   final String uid;
   final String displayName;
   final String? photoUrl;
+  final String? avatarId;
   final int score;
   final int maxLevel;
   final int mergeCount;
@@ -16,6 +17,7 @@ class LeaderboardEntry {
     required this.uid,
     required this.displayName,
     this.photoUrl,
+    this.avatarId,
     required this.score,
     required this.maxLevel,
     required this.mergeCount,
@@ -28,6 +30,7 @@ class LeaderboardEntry {
       'uid': uid,
       'displayName': displayName,
       'photoUrl': photoUrl,
+      'avatarId': avatarId,
       'score': score,
       'maxLevel': maxLevel,
       'mergeCount': mergeCount,
@@ -43,6 +46,7 @@ class LeaderboardEntry {
       uid: data['uid'] as String? ?? '',
       displayName: data['displayName'] as String? ?? '',
       photoUrl: data['photoUrl'] as String?,
+      avatarId: data['avatarId'] as String?,
       score: data['score'] as int? ?? 0,
       maxLevel: data['maxLevel'] as int? ?? 1,
       mergeCount: data['mergeCount'] as int? ?? 0,

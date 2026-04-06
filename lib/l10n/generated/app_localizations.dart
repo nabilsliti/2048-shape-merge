@@ -338,6 +338,12 @@ abstract class AppLocalizations {
   /// **'Watch an ad to get +1 joker of your choice'**
   String get watchAdReward;
 
+  /// No description provided for @adNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad not ready yet, try again in a moment'**
+  String get adNotReady;
+
   /// No description provided for @chooseJoker.
   ///
   /// In en, this message translates to:
@@ -415,6 +421,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quit'**
   String get quit;
+
+  /// No description provided for @newRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'New Record!'**
+  String get newRecord;
+
+  /// No description provided for @classicMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic Mode'**
+  String get classicMode;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfile;
+
+  /// No description provided for @displayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display Name'**
+  String get displayName;
+
+  /// No description provided for @chooseAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your avatar'**
+  String get chooseAvatar;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @profileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated!'**
+  String get profileUpdated;
+
+  /// No description provided for @signOutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
+  String get signOutConfirm;
 }
 
 class _AppLocalizationsDelegate

@@ -40,6 +40,7 @@
   "packLarge": "Large Pack",
   "watchAd": "Watch an Ad",
   "watchAdReward": "Watch an ad to get +1 joker of your choice",
+  "adNotReady": "Ad not ready yet, try again in a moment",
   "chooseJoker": "Choose a joker to recharge",
   "rank": "Rank",
   "allTime": "All Time",
@@ -59,5 +60,13 @@
   "notConnected": "Not Connected",
   "pause": "Pause",
   "resume": "Resume",
-  "quit": "Quit"
+  "quit": "Quit",
+  "newRecord": "New Record!",
+  "classicMode": "Classic Mode",
+  "editProfile": "Edit Profile",
+  "displayName": "Display Name",
+  "chooseAvatar": "Choose your avatar",
+  "save": "Save",
+  "profileUpdated": "Profile updated!",
+  "signOutConfirm": "Sign out?"
 }

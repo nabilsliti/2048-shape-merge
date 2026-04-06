@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/models/player.dart';
 
@@ -12,18 +13,18 @@ class FirestoreService {
       _firestore.collection('players').doc(uid);
 
   Future<void> submitScore(LeaderboardEntry entry) async {
-    final query = await _leaderboardRef
-        .where('uid', isEqualTo: entry.uid)
-        .orderBy('score', descending: true)
-        .limit(1)
-        .get();
+    try {
+      final docRef = _leaderboardRef.doc(entry.uid);
+      final doc = await docRef.get();
 
-    if (query.docs.isEmpty || query.docs.first.data()['score'] as int < entry.score) {
-      if (query.docs.isNotEmpty) {
-        await query.docs.first.reference.update(entry.toFirestore());
+      if (!doc.exists || (doc.data()?['score'] as int? ?? 0) < entry.score) {
+        await docRef.set(entry.toFirestore());
+        debugPrint('✅ Score submitted: ${entry.score} for ${entry.uid}');
       } else {
-        await _leaderboardRef.add(entry.toFirestore());
+        debugPrint('⏭️ Score ${entry.score} not higher than existing');
       }
+    } catch (e) {
+      debugPrint('❌ Score submission failed: $e');
     }
   }
 
@@ -57,5 +58,20 @@ class FirestoreService {
     final doc = await _playerRef(uid).get();
     if (!doc.exists || doc.data() == null) return null;
     return Player.fromFirestore(uid, doc.data()!);
+  }
+
+  Future<void> updateProfile(String uid, {String? displayName, String? avatarId}) async {
+    final data = <String, Object?>{};
+    if (displayName != null) data['displayName'] = displayName;
+    if (avatarId != null) data['avatarId'] = avatarId;
+    if (data.isNotEmpty) {
+      await _playerRef(uid).set(data, SetOptions(merge: true));
+      try {
+        final doc = await _leaderboardRef.doc(uid).get();
+        if (doc.exists) {
+          await _leaderboardRef.doc(uid).update(data);
+        }
+      } catch (_) {}
+    }
   }
 }

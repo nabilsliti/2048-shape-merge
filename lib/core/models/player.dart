@@ -4,6 +4,7 @@ class Player {
   final String uid;
   final String displayName;
   final String? photoUrl;
+  final String? avatarId;
   final int bestScore;
   final int totalMerges;
   final int gamesPlayed;
@@ -13,6 +14,7 @@ class Player {
     required this.uid,
     required this.displayName,
     this.photoUrl,
+    this.avatarId,
     this.bestScore = 0,
     this.totalMerges = 0,
     this.gamesPlayed = 0,
@@ -22,6 +24,7 @@ class Player {
   Player copyWith({
     String? displayName,
     String? photoUrl,
+    String? avatarId,
     int? bestScore,
     int? totalMerges,
     int? gamesPlayed,
@@ -31,6 +34,7 @@ class Player {
       uid: uid,
       displayName: displayName ?? this.displayName,
       photoUrl: photoUrl ?? this.photoUrl,
+      avatarId: avatarId ?? this.avatarId,
       bestScore: bestScore ?? this.bestScore,
       totalMerges: totalMerges ?? this.totalMerges,
       gamesPlayed: gamesPlayed ?? this.gamesPlayed,
@@ -42,6 +46,7 @@ class Player {
     return {
       'displayName': displayName,
       'photoUrl': photoUrl,
+      'avatarId': avatarId,
       'bestScore': bestScore,
       'totalMerges': totalMerges,
       'gamesPlayed': gamesPlayed,
@@ -55,6 +60,7 @@ class Player {
       uid: uid,
       displayName: data['displayName'] as String? ?? '',
       photoUrl: data['photoUrl'] as String?,
+      avatarId: data['avatarId'] as String?,
       bestScore: data['bestScore'] as int? ?? 0,
       totalMerges: data['totalMerges'] as int? ?? 0,
       gamesPlayed: data['gamesPlayed'] as int? ?? 0,

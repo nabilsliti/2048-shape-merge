@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
@@ -14,11 +15,11 @@ class RulesPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(l10n.onboardingTitle1, style: AppTheme.titleStyle),
+          Text(l10n.onboardingTitle1, style: AppTheme.titleStyle(28)),
           const SizedBox(height: 24),
           Text(
             l10n.onboardingDesc1,
-            style: const TextStyle(color: AppTheme.text, fontSize: 16),
+            style: GoogleFonts.nunito(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -26,9 +27,9 @@ class RulesPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _ShapePreview(color: AppTheme.blue, label: '⬤'),
-              _ShapePreview(color: AppTheme.green, label: '⬛'),
-              _ShapePreview(color: AppTheme.purple, label: '⭐'),
+              _ShapePreview(color: AppTheme.blueTop, label: '⬤'),
+              _ShapePreview(color: AppTheme.greenTop, label: '⬛'),
+              _ShapePreview(color: AppTheme.purpleTop, label: '⭐'),
               _ShapePreview(color: AppTheme.gold, label: '⬡'),
             ],
           ),
@@ -41,27 +42,36 @@ class RulesPage extends StatelessWidget {
             children: [
               for (var i = 1; i <= 8; i++)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppTheme.panel,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.border),
+                    color: AppTheme.panelBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.panelBorder),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0xFF111827), offset: Offset(0, 3)),
+                      BoxShadow(color: Colors.black54, offset: Offset(0, 4), blurRadius: 6),
+                    ],
                   ),
                   child: Text(
                     '${1 << i}',
-                    style: TextStyle(
-                      color: AppTheme.gold,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.gold,
+                        shadows: const [Shadow(color: Colors.black38, offset: Offset(0, 2))]),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Max 30 shapes',
-            style: TextStyle(color: AppTheme.muted, fontSize: 14),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.redTop.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.redTop, width: 1.5),
+            ),
+            child: Text(
+              'Max 30 shapes',
+              style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.redBorder),
+            ),
           ),
         ],
       ),
@@ -72,26 +82,24 @@ class RulesPage extends StatelessWidget {
 class _ShapePreview extends StatelessWidget {
   final Color color;
   final String label;
-
   const _ShapePreview({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      width: 64,
+      height: 64,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 12),
+          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 12, spreadRadius: 2),
+          const BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
       child: Center(
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 24),
-        ),
+        child: Text(label, style: const TextStyle(fontSize: 28, shadows: [Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))])),
       ),
     );
   }

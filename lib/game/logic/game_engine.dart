@@ -18,13 +18,24 @@ class GameEngine {
     );
   }
 
-  static ({GameState state, GameShape? mergedShape, int pointsEarned})
+  static ({GameState state, GameShape? mergedShape, int pointsEarned, bool wasTap})
       attemptMerge(
     GameState state,
     GameShape dragged,
     Offset dropPosition,
-    Size boardSize,
-  ) {
+    Size boardSize, {
+    bool wasTap = false,
+  }) {
+    // Tap without real drag → do nothing
+    if (wasTap) {
+      return (
+        state: state,
+        mergedShape: null,
+        pointsEarned: 0,
+        wasTap: true,
+      );
+    }
+
     final target = MergeDetector.findBestTarget(
       dragged,
       state.shapes,
@@ -32,23 +43,27 @@ class GameEngine {
     );
 
     if (target == null) {
-      // No merge — snap back, but still spawn
+      // No merge — shape position stays unchanged (snap back handled by UI),
+      // spawn only if below max capacity
       final updatedShapes = List<GameShape>.from(state.shapes);
-      final newShape = SpawnManager.spawnShape(updatedShapes, boardSize);
-      updatedShapes.add(newShape);
+      if (updatedShapes.length < maxShapes) {
+        final newShape = SpawnManager.spawnShape(updatedShapes, boardSize);
+        updatedShapes.add(newShape);
+      }
 
       final newState = state.copyWith(shapes: updatedShapes);
       return (
         state: _checkGameState(newState, boardSize),
         mergedShape: null,
         pointsEarned: 0,
+        wasTap: false,
       );
     }
 
     // Merge!
     final newLevel = target.level + 1;
-    final midX = (dragged.x + target.x) / 2;
-    final midY = (dragged.y + target.y) / 2;
+    final midX = target.x;
+    final midY = target.y;
     final points = scoreForMerge(newLevel);
 
     final merged = GameShape(
@@ -65,9 +80,11 @@ class GameEngine {
         .toList()
       ..add(merged);
 
-    // Spawn after merge
-    final spawnedShape = SpawnManager.spawnShape(updatedShapes, boardSize);
-    updatedShapes.add(spawnedShape);
+    // Spawn after merge only if below max capacity
+    if (updatedShapes.length < maxShapes) {
+      final spawnedShape = SpawnManager.spawnShape(updatedShapes, boardSize);
+      updatedShapes.add(spawnedShape);
+    }
 
     final newScore = state.score + points;
     final newBest =
@@ -88,6 +105,7 @@ class GameEngine {
       state: _checkGameState(newState, boardSize),
       mergedShape: merged,
       pointsEarned: points,
+      wasTap: false,
     );
   }
 

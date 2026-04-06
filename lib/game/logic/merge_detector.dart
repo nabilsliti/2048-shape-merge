@@ -4,16 +4,17 @@ import 'package:shape_merge/core/models/game_shape.dart';
 
 class MergeDetector {
   static const List<Color> shapeColors = [
-    Color(0xFF4FC3F7),
-    Color(0xFF69F0AE),
-    Color(0xFFCE93D8),
-    Color(0xFFFFD54F),
+    Color(0xFFFF2D55), // red
+    Color(0xFF007AFF), // blue
+    Color(0xFF30D158), // green
+    Color(0xFFFFD60A), // yellow
+    Color(0xFFBF5AF2), // purple
+    Color(0xFFFF9F0A), // orange
   ];
 
   static bool canMerge(GameShape a, GameShape b) {
     if (a.id == b.id) return false;
     if (a.level != b.level) return false;
-    if (a.level >= maxLevel) return false;
     if (a.isWildcard || b.isWildcard) return true;
     return a.type == b.type && a.color == b.color;
   }

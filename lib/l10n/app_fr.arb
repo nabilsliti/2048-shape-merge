@@ -40,6 +40,7 @@
   "packLarge": "Grand Pack",
   "watchAd": "Regarder une pub",
   "watchAdReward": "Regarde une pub pour obtenir +1 joker de ton choix",
+  "adNotReady": "Pub pas encore prête, réessaie dans un instant",
   "chooseJoker": "Choisis un joker à recharger",
   "rank": "Rang",
   "allTime": "Tous les temps",
@@ -59,5 +60,13 @@
   "notConnected": "Non connecté",
   "pause": "Pause",
   "resume": "Reprendre",
-  "quit": "Quitter"
+  "quit": "Quitter",
+  "newRecord": "Nouveau Record !",
+  "classicMode": "Mode Classique",
+  "editProfile": "Modifier le profil",
+  "displayName": "Pseudo",
+  "chooseAvatar": "Choisis ton avatar",
+  "save": "Enregistrer",
+  "profileUpdated": "Profil mis à jour !",
+  "signOutConfirm": "Te déconnecter ?"
 }

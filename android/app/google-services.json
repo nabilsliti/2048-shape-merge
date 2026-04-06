@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "282452142394-nbjhu3pcotag4bo3fa1arnq9vtaues35.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.crestbit.shapemerge2048",
+            "certificate_hash": "9bef32cbad639a22eab5d386bed240bb7f74c120"
+          }
+        },
+        {
           "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -43,6 +51,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "282452142394-5f6rqrld41n06qi0q0uo9d9ahfqucfa1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.crestbit.shapemerge2048_dev",
+            "certificate_hash": "9bef32cbad639a22eab5d386bed240bb7f74c120"
+          }
+        },
+        {
           "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -71,6 +87,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "282452142394-t2let5iao0i6oikpiinfsd834cpan9o7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.crestbit.shapemerge2048_staging",
+            "certificate_hash": "9bef32cbad639a22eab5d386bed240bb7f74c120"
+          }
+        },
         {
           "client_id": "282452142394-ge9je0vjtaetg6vg8aud6p3jjc43s46m.apps.googleusercontent.com",
           "client_type": 3
