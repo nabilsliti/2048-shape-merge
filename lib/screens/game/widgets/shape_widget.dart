@@ -9,12 +9,14 @@ class ShapeWidget extends StatefulWidget {
   final GameShape shape;
   final bool isDragging;
   final bool isHighlighted;
+  final bool isRadarHighlighted;
 
   const ShapeWidget({
     super.key,
     required this.shape,
     this.isDragging = false,
     this.isHighlighted = false,
+    this.isRadarHighlighted = false,
   });
 
   @override
@@ -124,6 +126,7 @@ class _ShapeWidgetState extends State<ShapeWidget>
                 shape: widget.shape,
                 isDragging: widget.isDragging,
                 isHighlighted: widget.isHighlighted,
+                isRadarHighlighted: widget.isRadarHighlighted,
               ),
               child: Center(
                 child: Text(
@@ -154,11 +157,13 @@ class _ShapePainter extends CustomPainter {
   final GameShape shape;
   final bool isDragging;
   final bool isHighlighted;
+  final bool isRadarHighlighted;
 
   _ShapePainter({
     required this.shape,
     required this.isDragging,
     required this.isHighlighted,
+    this.isRadarHighlighted = false,
   });
 
   @override
@@ -228,6 +233,15 @@ class _ShapePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5;
       canvas.drawCircle(center, radius + 4, ringPaint);
+    }
+
+    // Radar highlight ring (golden pulse)
+    if (isRadarHighlighted) {
+      final radarPaint = Paint()
+        ..color = const Color(0xFFFFD60A).withValues(alpha: 0.85)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.0;
+      canvas.drawCircle(center, radius + 6, radarPaint);
     }
   }
 
@@ -335,7 +349,8 @@ class _ShapePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ShapePainter oldDelegate) =>
       oldDelegate.isHighlighted != isHighlighted ||
-      oldDelegate.isDragging != isDragging;
+      oldDelegate.isDragging != isDragging ||
+      oldDelegate.isRadarHighlighted != isRadarHighlighted;
 }
 
 // ─── Spawn entrance effect ───────────────────────────────────────────

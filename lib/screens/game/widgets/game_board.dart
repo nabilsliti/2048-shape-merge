@@ -41,6 +41,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameStateProvider);
     final jokerMode = ref.watch(jokerModeProvider);
+    final radarHighlights = ref.watch(radarHighlightProvider);
 
     return LayoutBuilder(builder: (context, constraints) {
       final boardSize = Size(constraints.maxWidth, constraints.maxHeight);
@@ -54,7 +55,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
             clipBehavior: Clip.none,
             children: [
               for (final shape in gameState.shapes)
-                _buildDraggableShape(shape, gameState, jokerMode, boardSize),
+                _buildDraggableShape(shape, gameState, jokerMode, boardSize, radarHighlights),
             ],
           ),
         ),
@@ -67,6 +68,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
     GameState gameState,
     JokerMode jokerMode,
     Size boardSize,
+    Set<String> radarHighlights,
   ) {
     final isDragging = _draggingId == shape.id;
     final isSnappingBack = _snapBackId == shape.id && _snapBackCtrl != null && _snapBackCtrl!.isAnimating;
@@ -79,6 +81,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         isHighlighted = MergeDetector.canMerge(dragged, shape);
       }
     }
+    final isRadarHighlighted = radarHighlights.contains(shape.id);
 
     double posX = shape.x;
     double posY = shape.y;
@@ -126,6 +129,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
           shape: shape,
           isDragging: isDragging,
           isHighlighted: isHighlighted,
+          isRadarHighlighted: isRadarHighlighted,
         ),
       ),
     );
@@ -146,6 +150,15 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         notifier.spawnWildcard(shape.level);
         AudioService.instance.playWildcard();
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
+      case JokerMode.evolution:
+        notifier.useEvolution(shape);
+        ref.read(jokerModeProvider.notifier).state = JokerMode.none;
+      case JokerMode.megaBomb:
+        notifier.useMegaBomb(shape);
+        ref.read(jokerModeProvider.notifier).state = JokerMode.none;
+      case JokerMode.radar:
+        // Radar activates on tap of the orb, not a shape tap
+        break;
       case JokerMode.none:
         break;
     }

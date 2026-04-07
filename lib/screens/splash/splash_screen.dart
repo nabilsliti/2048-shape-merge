@@ -42,7 +42,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final storage = await LocalStorageService.create();
     if (!mounted) return;
 
-    ref.read(gameStateProvider.notifier).loadSavedState(
+    final notifier = ref.read(gameStateProvider.notifier);
+    notifier.setStorage(storage);
+    notifier.loadSavedState(
           bestScore: storage.bestScore,
           jokers: storage.jokerInventory,
         );
@@ -64,7 +66,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Gradient background (like shape-rush)
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -76,7 +77,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               ),
             ),
           ),
-          // Pink orb top-left
           Positioned(
             top: -100,
             left: -100,
@@ -89,7 +89,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               ),
             ),
           ),
-          // Cyan orb bottom-right
           Positioned(
             bottom: -50,
             right: -50,
@@ -102,7 +101,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               ),
             ),
           ),
-          // Title
           Center(
             child: AnimatedBuilder(
               animation: _controller,

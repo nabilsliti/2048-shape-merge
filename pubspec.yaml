@@ -76,8 +76,10 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/icon/app_icon.png"
 
 flutter_native_splash:
-  color: "#0f0a2e"
-  image: "assets/icon/app_icon.png"
+  color: "#ffffff"
+  color_dark: "#ffffff"
+  image: "assets/icon/crestbit_logo.png"
+  image_dark: "assets/icon/crestbit_logo.png"
   android_12:
-    color: "#0f0a2e"
-    image: "assets/icon/app_icon.png"
+    color: "#ffffff"
+    image: "assets/icon/crestbit_logo.png"

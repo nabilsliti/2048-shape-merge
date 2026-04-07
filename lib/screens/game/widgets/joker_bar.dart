@@ -2,9 +2,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 
 class JokerBar extends ConsumerWidget {
@@ -15,45 +17,93 @@ class JokerBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMode = ref.watch(jokerModeProvider);
+    final inv = inventory;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _JokerOrb(
-            icon: const JokerIcon.bomb(size: 24),
-            count: inventory.bomb,
+            icon: JokerUI.icon(JokerType.bomb, size: 18),
+            count: inv.bomb,
             isActive: currentMode == JokerMode.bomb,
-            glowColor: const Color(0xFFff4444),
-            ringColors: const [Color(0xFFff6b6b), Color(0xFFcc0000)],
-            onTap: () => _toggleJoker(ref, JokerMode.bomb),
+            glowColor: JokerUI.glowColor(JokerType.bomb),
+            ringColors: JokerUI.ringColors(JokerType.bomb),
+            onTap: () => _toggle(ref, JokerMode.bomb),
           ),
           _JokerOrb(
-            icon: const JokerIcon.wildcard(size: 24),
-            count: inventory.wildcard,
+            icon: JokerUI.icon(JokerType.wildcard, size: 18),
+            count: inv.wildcard,
             isActive: currentMode == JokerMode.wildcard,
-            glowColor: const Color(0xFFaa44ff),
-            ringColors: const [Color(0xFFce93d8), Color(0xFF7b1fa2)],
-            onTap: () => _toggleJoker(ref, JokerMode.wildcard),
+            glowColor: JokerUI.glowColor(JokerType.wildcard),
+            ringColors: JokerUI.ringColors(JokerType.wildcard),
+            onTap: () => _toggle(ref, JokerMode.wildcard),
           ),
           _JokerOrb(
-            icon: const JokerIcon.reducer(size: 20),
-            count: inventory.reducer,
+            icon: JokerUI.icon(JokerType.reducer, size: 16),
+            count: inv.reducer,
             isActive: currentMode == JokerMode.reducer,
-            glowColor: const Color(0xFF448aff),
-            ringColors: const [Color(0xFF90caf9), Color(0xFF1565c0)],
-            onTap: () => _toggleJoker(ref, JokerMode.reducer),
+            glowColor: JokerUI.glowColor(JokerType.reducer),
+            ringColors: JokerUI.ringColors(JokerType.reducer),
+            onTap: () => _toggle(ref, JokerMode.reducer),
+          ),
+          // ── séparateur premium ──
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 1, height: 20, color: AppTheme.gold.withValues(alpha: 0.5)),
+              const SizedBox(height: 2),
+              Text('★', style: TextStyle(fontSize: 7, color: AppTheme.gold.withValues(alpha: 0.8))),
+              const SizedBox(height: 2),
+              Container(width: 1, height: 20, color: AppTheme.gold.withValues(alpha: 0.5)),
+            ],
+          ),
+          _JokerOrb(
+            icon: JokerUI.icon(JokerType.radar, size: 16),
+            count: inv.radar,
+            isActive: currentMode == JokerMode.radar,
+            glowColor: JokerUI.glowColor(JokerType.radar),
+            ringColors: JokerUI.ringColors(JokerType.radar),
+            onTap: () => _activateRadar(ref),
+            isPremium: true,
+          ),
+          _JokerOrb(
+            icon: JokerUI.icon(JokerType.evolution, size: 16),
+            count: inv.evolution,
+            isActive: currentMode == JokerMode.evolution,
+            glowColor: JokerUI.glowColor(JokerType.evolution),
+            ringColors: JokerUI.ringColors(JokerType.evolution),
+            onTap: () => _toggle(ref, JokerMode.evolution),
+            isPremium: true,
+          ),
+          _JokerOrb(
+            icon: JokerUI.icon(JokerType.megaBomb, size: 16),
+            count: inv.megaBomb,
+            isActive: currentMode == JokerMode.megaBomb,
+            glowColor: JokerUI.glowColor(JokerType.megaBomb),
+            ringColors: JokerUI.ringColors(JokerType.megaBomb),
+            onTap: () => _toggle(ref, JokerMode.megaBomb),
+            isPremium: true,
           ),
         ],
       ),
     );
   }
 
-  void _toggleJoker(WidgetRef ref, JokerMode mode) {
+  void _toggle(WidgetRef ref, JokerMode mode) {
     final current = ref.read(jokerModeProvider);
     ref.read(jokerModeProvider.notifier).state =
         current == mode ? JokerMode.none : mode;
+  }
+
+  void _activateRadar(WidgetRef ref) {
+    final current = ref.read(jokerModeProvider);
+    if (current == JokerMode.radar) {
+      ref.read(jokerModeProvider.notifier).state = JokerMode.none;
+      return;
+    }
+    ref.read(gameStateProvider.notifier).activateRadar(ref);
   }
 }
 
@@ -64,6 +114,7 @@ class _JokerOrb extends StatefulWidget {
   final Color glowColor;
   final List<Color> ringColors;
   final VoidCallback onTap;
+  final bool isPremium;
 
   const _JokerOrb({
     required this.icon,
@@ -72,6 +123,7 @@ class _JokerOrb extends StatefulWidget {
     required this.glowColor,
     required this.ringColors,
     required this.onTap,
+    this.isPremium = false,
   });
 
   @override
@@ -79,8 +131,10 @@ class _JokerOrb extends StatefulWidget {
 }
 
 class _JokerOrbState extends State<_JokerOrb>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _pulseCtrl;
+  late final AnimationController _scaleCtrl;
+  late final Animation<double> _scaleAnim;
 
   @override
   void initState() {
@@ -89,18 +143,39 @@ class _JokerOrbState extends State<_JokerOrb>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
+
+    _scaleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _scaleAnim = Tween(begin: 1.0, end: 1.25).animate(
+      CurvedAnimation(parent: _scaleCtrl, curve: Curves.easeOutBack),
+    );
+
+    if (widget.isActive) _scaleCtrl.forward();
+  }
+
+  @override
+  void didUpdateWidget(_JokerOrb old) {
+    super.didUpdateWidget(old);
+    if (widget.isActive && !old.isActive) {
+      _scaleCtrl.forward();
+    } else if (!widget.isActive && old.isActive) {
+      _scaleCtrl.reverse();
+    }
   }
 
   @override
   void dispose() {
     _pulseCtrl.dispose();
+    _scaleCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final disabled = widget.count <= 0;
-    final orbSize = 42.0;
+    final orbSize = 34.0;
 
     return GestureDetector(
       onTap: disabled
@@ -110,13 +185,13 @@ class _JokerOrbState extends State<_JokerOrb>
               widget.onTap();
             },
       child: AnimatedBuilder(
-        animation: _pulseCtrl,
+        animation: Listenable.merge([_pulseCtrl, _scaleCtrl]),
         builder: (context, child) {
           final pulse = sin(_pulseCtrl.value * pi);
-          final activeScale = widget.isActive ? 1.0 + pulse * 0.06 : 1.0;
+          final totalScale = _scaleAnim.value;
 
           return Transform.scale(
-            scale: activeScale,
+            scale: totalScale,
             child: SizedBox(
               width: orbSize + 14,
               height: orbSize + 8,

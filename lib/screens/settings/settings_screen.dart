@@ -17,6 +17,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final soundOn = ref.watch(audioProvider);
+    final musicOn = ref.watch(musicProvider);
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull;
     final player = ref.watch(playerProvider).valueOrNull;
@@ -72,6 +73,19 @@ class SettingsScreen extends ConsumerWidget {
                               onChanged: (_) => ref.read(audioProvider.notifier).toggle(),
                               activeThumbColor: AppTheme.greenTop,
                               activeTrackColor: AppTheme.greenTop.withValues(alpha: 0.3),
+                              inactiveThumbColor: AppTheme.muted,
+                            ),
+                          ),
+                          Divider(color: AppTheme.panelBorder.withValues(alpha: 0.3), height: 1, indent: 20, endIndent: 20),
+                          _SettingsTile(
+                            icon: musicOn ? Icons.music_note_rounded : Icons.music_off_rounded,
+                            iconColor: musicOn ? AppTheme.purpleTop : AppTheme.muted,
+                            title: musicOn ? l10n.musicOn : l10n.musicOff,
+                            trailing: Switch(
+                              value: musicOn,
+                              onChanged: (_) => ref.read(musicProvider.notifier).toggle(),
+                              activeThumbColor: AppTheme.purpleTop,
+                              activeTrackColor: AppTheme.purpleTop.withValues(alpha: 0.3),
                               inactiveThumbColor: AppTheme.muted,
                             ),
                           ),

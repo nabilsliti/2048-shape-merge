@@ -4,6 +4,7 @@ import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
+import 'package:shape_merge/screens/game/overlays/tutorial_overlay.dart';
 
 class PauseOverlay extends StatelessWidget {
   final VoidCallback onResume;
@@ -71,6 +72,27 @@ class PauseOverlay extends StatelessWidget {
                               const PremiumIcon.resume(size: 28),
                               const SizedBox(width: 10),
                               Text(l10n.resume.toUpperCase(), style: AppTheme.titleStyle(18)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Button3D.purple(
+                          expand: true,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (_) => TutorialOverlay(onDismiss: () => Navigator.of(context).pop()),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.help_outline, color: Colors.white, size: 28),
+                              const SizedBox(width: 10),
+                              Text(l10n.howToPlay.toUpperCase(), style: AppTheme.titleStyle(18)),
                             ],
                           ),
                         ),

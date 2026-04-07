@@ -92,4 +92,75 @@ class JokerHandler {
       scoreBonus: 0,
     );
   }
+
+  // ── Radar: finds all mergeable pairs ──────────────────────────
+  static Set<String> findMergeablePairs(List<GameShape> shapes) {
+    final result = <String>{};
+    for (var i = 0; i < shapes.length; i++) {
+      for (var j = i + 1; j < shapes.length; j++) {
+        final a = shapes[i];
+        final b = shapes[j];
+        if (a.type == b.type &&
+            a.color == b.color &&
+            a.level == b.level &&
+            !a.isWildcard &&
+            !b.isWildcard) {
+          result.add(a.id);
+          result.add(b.id);
+        }
+      }
+    }
+    return result;
+  }
+
+  static JokerInventory useRadar(JokerInventory inventory) {
+    if (inventory.countOf(JokerType.radar) <= 0) return inventory;
+    return inventory.use(JokerType.radar);
+  }
+
+  // ── Evolution: upgrades a shape by one level ──────────────────
+  static ({List<GameShape> shapes, JokerInventory inventory, int scoreBonus})
+      useEvolution(
+    GameShape target,
+    List<GameShape> shapes,
+    JokerInventory inventory,
+  ) {
+    if (inventory.countOf(JokerType.evolution) <= 0) {
+      return (shapes: shapes, inventory: inventory, scoreBonus: 0);
+    }
+
+    final updated = shapes.map((s) {
+      if (s.id == target.id) return s.copyWith(level: s.level + 1);
+      return s;
+    }).toList();
+
+    return (
+      shapes: updated,
+      inventory: inventory.use(JokerType.evolution),
+      scoreBonus: 0,
+    );
+  }
+
+  // ── Mega Bomb: removes all shapes of the same level ───────────
+  static ({List<GameShape> shapes, JokerInventory inventory, int scoreBonus})
+      useMegaBomb(
+    GameShape target,
+    List<GameShape> shapes,
+    JokerInventory inventory,
+  ) {
+    if (inventory.countOf(JokerType.megaBomb) <= 0) {
+      return (shapes: shapes, inventory: inventory, scoreBonus: 0);
+    }
+
+    final toRemove =
+        shapes.where((s) => s.level == target.level).map((s) => s.id).toSet();
+    final remaining = shapes.where((s) => !toRemove.contains(s.id)).toList();
+    final bonus = toRemove.length * 15;
+
+    return (
+      shapes: remaining,
+      inventory: inventory.use(JokerType.megaBomb),
+      scoreBonus: bonus,
+    );
+  }
 }

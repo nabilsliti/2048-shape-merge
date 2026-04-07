@@ -9,7 +9,9 @@ import 'package:shape_merge/screens/onboarding/rules_page.dart';
 import 'package:shape_merge/screens/onboarding/jokers_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({super.key, this.fromHub = false});
+
+  final bool fromHub;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -88,9 +90,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             borderRadius: 18,
                             onPressed: () async {
-                              final storage = await LocalStorageService.create();
-                              await storage.setOnboardingDone(true);
-                              if (context.mounted) context.go('/home');
+                              if (widget.fromHub) {
+                                if (context.mounted) Navigator.of(context).pop();
+                              } else {
+                                final storage = await LocalStorageService.create();
+                                await storage.setOnboardingDone(true);
+                                if (context.mounted) context.go('/home');
+                              }
                             },
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,

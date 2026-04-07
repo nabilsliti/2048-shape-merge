@@ -12,3 +12,15 @@ class AudioNotifier extends StateNotifier<bool> {
     state = AudioService.instance.soundEnabled;
   }
 }
+
+final musicProvider =
+    StateNotifierProvider<MusicNotifier, bool>((ref) => MusicNotifier());
+
+class MusicNotifier extends StateNotifier<bool> {
+  MusicNotifier() : super(AudioService.instance.musicEnabled);
+
+  Future<void> toggle() async {
+    await AudioService.instance.toggleMusic();
+    state = AudioService.instance.musicEnabled;
+  }
+}

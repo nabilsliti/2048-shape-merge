@@ -5,12 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/constants/joker_ui.dart';
+import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
+import 'package:shape_merge/core/services/iap_service.dart';
 import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
 /// Standalone screen (used by router for /shop fallback).
@@ -51,6 +55,11 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final inventory = ref.watch(gameStateProvider).jokerInventory;
+    final noAds = ref.watch(noAdsPurchasedProvider);
+
+    // Init IAP (idempotent)
+    ref.watch(iapReadyProvider);
+    final iap = ref.read(iapServiceProvider);
 
     // Preload rewarded ad
     final adsService = ref.read(adsServiceProvider);
@@ -92,36 +101,22 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
               child: Column(
                 children: [
                   // ── Current inventory ──
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.panelBg,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.panelBorder, width: 2),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0xFF111827), offset: Offset(0, 4)),
-                        BoxShadow(color: Colors.black54, offset: Offset(0, 6), blurRadius: 8),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _JokerStock(icon: const JokerIcon.bomb(size: 36), color: AppTheme.redTop, count: inventory.bomb),
-                        _JokerStock(icon: const JokerIcon.wildcard(size: 36), color: AppTheme.blueTop, count: inventory.wildcard),
-                        _JokerStock(icon: const JokerIcon.reducer(size: 30), color: AppTheme.greenTop, count: inventory.reducer),
-                      ],
-                    ),
-                  ),
+                  _InventoryCard(inventory: inventory),
                   const SizedBox(height: 20),
 
                   // ── ZÉRO PUB section ──
-                  const _NoAdsSectionHeader(
-                    gradStart: Color(0xFFFFD700),
-                    gradEnd: Color(0xFFFF8C00),
-                  ),
-                  const SizedBox(height: 4),
-                  const _NoAdsCard(),
-                  const SizedBox(height: 24),
+                  if (!noAds) ...[
+                    const _NoAdsSectionHeader(
+                      gradStart: Color(0xFFFFD700),
+                      gradEnd: Color(0xFFFF8C00),
+                    ),
+                    const SizedBox(height: 4),
+                    _NoAdsCard(
+                      price: iap.price(IapProducts.noAds),
+                      onBuy: () => _buyProduct(context, ref, IapProducts.noAds),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // ── PACKS JOKERS section ──
                   const _SectionHeader(
@@ -135,11 +130,12 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   _JokerPackCard(
                     emoji: '⭐',
                     name: 'Pack Étoile',
-                    descriptionWidget: _buildPackContents(5, 5, 5),
-                    price: '1,99 €',
+                    descriptionWidget: _buildPackContents(5, 1, 0, 0),
+                    price: iap.price(IapProducts.packStar),
                     badge: 'STARTER',
                     gradStart: const Color(0xFF30D158),
                     gradEnd: const Color(0xFF0A7A2E),
+                    onBuy: () => _buyProduct(context, ref, IapProducts.packStar),
                   ),
                   const SizedBox(height: 12),
 
@@ -147,11 +143,12 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   _JokerPackCard(
                     emoji: '☄️',
                     name: 'Pack Comète',
-                    descriptionWidget: _buildPackContents(15, 15, 15),
-                    price: '4,99 €',
+                    descriptionWidget: _buildPackContents(15, 3, 2, 2),
+                    price: iap.price(IapProducts.packComet),
                     badge: 'POPULAIRE',
                     gradStart: const Color(0xFF007AFF),
                     gradEnd: const Color(0xFF5856D6),
+                    onBuy: () => _buyProduct(context, ref, IapProducts.packComet),
                   ),
                   const SizedBox(height: 12),
 
@@ -159,11 +156,12 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   _JokerPackCard(
                     emoji: '💎',
                     name: 'Pack Diamant',
-                    descriptionWidget: _buildPackContents(40, 40, 40),
-                    price: '9,99 €',
+                    descriptionWidget: _buildPackContents(40, 8, 5, 5),
+                    price: iap.price(IapProducts.packDiamond),
                     badge: 'BEST VALUE',
                     gradStart: const Color(0xFFBF5AF2),
                     gradEnd: const Color(0xFFFF2D55),
+                    onBuy: () => _buyProduct(context, ref, IapProducts.packDiamond),
                   ),
                   const SizedBox(height: 24),
 
@@ -179,37 +177,138 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     label: l10n.watchAd.toUpperCase(),
                     subtitle: l10n.watchAdReward,
                   ),
+                  const SizedBox(height: 24),
+
+                  // ── Restore purchases ──
+                  Center(
+                    child: TextButton(
+                      onPressed: () => _restorePurchases(context, ref),
+                      child: Text(
+                        'RESTAURER MES ACHATS',
+                        style: GoogleFonts.nunito(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white38,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Colors.white24,
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
           // Ad banner
-          const AdBannerWidget(),
+          if (!noAds) const AdBannerWidget(),
         ],
       ),
     );
   }
 
-  Widget _buildPackContents(int bomb, int wild, int reduce) {
+  Future<void> _buyProduct(BuildContext context, WidgetRef ref, String productId) async {
+    final iap = ref.read(iapServiceProvider);
+
+    // Register a one-shot status listener for feedback
+    iap.onStatusChanged = (result) {
+
+      // Update noAds provider reactively
+      if (result.productId == IapProducts.noAds &&
+          (result.status == IapStatus.purchased || result.status == IapStatus.restored)) {
+        ref.read(noAdsPurchasedProvider.notifier).state = true;
+      }
+
+      if (!context.mounted) return;
+
+      if (result.status == IapStatus.purchased) {
+        // Scroll to top to show inventory animation
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(0,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOut);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Achat réussi !', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            backgroundColor: AppTheme.greenTop,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else if (result.status == IapStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'Erreur d\'achat',
+                style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            backgroundColor: AppTheme.redTop,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    };
+
+    await iap.buy(productId);
+  }
+
+  Future<void> _restorePurchases(BuildContext context, WidgetRef ref) async {
+    final iap = ref.read(iapServiceProvider);
+
+    iap.onStatusChanged = (result) {
+      if (result.productId == IapProducts.noAds &&
+          (result.status == IapStatus.purchased || result.status == IapStatus.restored)) {
+        ref.read(noAdsPurchasedProvider.notifier).state = true;
+      }
+
+      if (!context.mounted) return;
+
+      if (result.status == IapStatus.restored) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Achats restaurés !', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            backgroundColor: AppTheme.greenTop,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    };
+
+    await iap.restorePurchases();
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Recherche d\'achats précédents…',
+              style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+          backgroundColor: AppTheme.blueTop,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Widget _buildPackContents(int free, int radar, int evolution, int megaBomb) {
     Widget item(Widget icon, int count, Color color) {
+      if (count <= 0) return const SizedBox.shrink();
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           icon,
           const SizedBox(width: 3),
-          Text('×$count', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: color)),
+          Text('×$count', style: GoogleFonts.fredoka(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
         ],
       );
     }
 
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: [
-        item(const JokerIcon.bomb(size: 20), bomb, AppTheme.redTop),
-        const SizedBox(width: 10),
-        item(const JokerIcon.wildcard(size: 20), wild, AppTheme.blueTop),
-        const SizedBox(width: 10),
-        item(const JokerIcon.reducer(size: 16), reduce, AppTheme.greenTop),
+        item(JokerUI.icon(JokerType.bomb, size: 18), free, JokerUI.color(JokerType.bomb)),
+        item(JokerUI.icon(JokerType.wildcard, size: 18), free, JokerUI.color(JokerType.wildcard)),
+        item(JokerUI.icon(JokerType.reducer, size: 16), free, JokerUI.color(JokerType.reducer)),
+        if (radar > 0) item(JokerUI.icon(JokerType.radar, size: 16), radar, JokerUI.color(JokerType.radar)),
+        if (evolution > 0) item(JokerUI.icon(JokerType.evolution, size: 16), evolution, JokerUI.color(JokerType.evolution)),
+        if (megaBomb > 0) item(JokerUI.icon(JokerType.megaBomb, size: 16), megaBomb, JokerUI.color(JokerType.megaBomb)),
       ],
     );
   }
@@ -262,9 +361,9 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _JokerChoiceButton(icon: const JokerIcon.bomb(size: 36), color: AppTheme.redTop, jokerType: JokerType.bomb),
-                        _JokerChoiceButton(icon: const JokerIcon.wildcard(size: 36), color: AppTheme.blueTop, jokerType: JokerType.wildcard),
-                        _JokerChoiceButton(icon: const JokerIcon.reducer(size: 30), color: AppTheme.greenTop, jokerType: JokerType.reducer),
+                        _JokerChoiceButton(icon: JokerUI.icon(JokerType.bomb, size: 36), color: JokerUI.color(JokerType.bomb), jokerType: JokerType.bomb),
+                        _JokerChoiceButton(icon: JokerUI.icon(JokerType.wildcard, size: 36), color: JokerUI.color(JokerType.wildcard), jokerType: JokerType.wildcard),
+                        _JokerChoiceButton(icon: JokerUI.icon(JokerType.reducer, size: 30), color: JokerUI.color(JokerType.reducer), jokerType: JokerType.reducer),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -425,7 +524,6 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
         : _displayCount;
 
     return SizedBox(
-      width: 90,
       height: 100,
       child: Stack(
         alignment: Alignment.center,
@@ -544,6 +642,90 @@ class _SparkleData {
   final double size;
   final bool isStar;
   const _SparkleData({required this.angle, required this.distance, required this.size, required this.isStar});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Inventory card — all 6 jokers, free / premium separated
+// ═══════════════════════════════════════════════════════════════
+class _InventoryCard extends StatelessWidget {
+  final JokerInventory inventory;
+  const _InventoryCard({required this.inventory});
+
+  @override
+  Widget build(BuildContext context) {
+    final inv = inventory;
+    return Row(
+      children: [
+        // ── Classique ──
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.blueTop.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.blueTop.withValues(alpha: 0.4), width: 1.5),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.videogame_asset_rounded, color: AppTheme.blueTop, size: 11),
+                    const SizedBox(width: 4),
+                    Text('CLASSIQUE',
+                        style: GoogleFonts.fredoka(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.blueTop, letterSpacing: 1)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.bomb, size: 22), color: JokerUI.color(JokerType.bomb), count: inv.bomb))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.wildcard, size: 22), color: JokerUI.color(JokerType.wildcard), count: inv.wildcard))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.reducer, size: 18), color: JokerUI.color(JokerType.reducer), count: inv.reducer))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // ── Premium ──
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.gold.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.gold.withValues(alpha: 0.5), width: 1.5),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.star_rounded, color: AppTheme.gold, size: 11),
+                    const SizedBox(width: 4),
+                    Text('PREMIUM',
+                        style: GoogleFonts.fredoka(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.gold, letterSpacing: 1)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.radar, size: 22), color: JokerUI.color(JokerType.radar), count: inv.radar))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.evolution, size: 22), color: JokerUI.color(JokerType.evolution), count: inv.evolution))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.megaBomb, size: 22), color: JokerUI.color(JokerType.megaBomb), count: inv.megaBomb))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -769,7 +951,9 @@ class _SectionHeaderState extends State<_SectionHeader> with SingleTickerProvide
 // ZÉRO PUB card — gold premium card
 // ═══════════════════════════════════════════════════════════════
 class _NoAdsCard extends StatefulWidget {
-  const _NoAdsCard();
+  final String price;
+  final VoidCallback? onBuy;
+  const _NoAdsCard({required this.price, this.onBuy});
 
   @override
   State<_NoAdsCard> createState() => _NoAdsCardState();
@@ -843,7 +1027,10 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const _AnimatedPriceButton(price: '5,49 €', large: true),
+                          GestureDetector(
+                            onTap: widget.onBuy,
+                            child: _AnimatedPriceButton(price: widget.price, large: true),
+                          ),
                         ],
                       ),
                     ],
@@ -922,17 +1109,17 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
         const SizedBox(height: 6),
         Row(
           children: [
-            const JokerIcon.bomb(size: 20),
+            JokerUI.icon(JokerType.bomb, size: 20),
             const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.redTop)),
+            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.bomb))),
             const SizedBox(width: 10),
-            const JokerIcon.wildcard(size: 20),
+            JokerUI.icon(JokerType.wildcard, size: 20),
             const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.blueTop)),
+            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.wildcard))),
             const SizedBox(width: 10),
-            const JokerIcon.reducer(size: 16),
+            JokerUI.icon(JokerType.reducer, size: 16),
             const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.greenTop)),
+            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.reducer))),
           ],
         ),
       ],
@@ -948,6 +1135,7 @@ class _JokerPackCard extends StatefulWidget {
   final Widget descriptionWidget;
   final String? badge;
   final Color gradStart, gradEnd;
+  final VoidCallback? onBuy;
   const _JokerPackCard({
     required this.emoji,
     required this.name,
@@ -956,6 +1144,7 @@ class _JokerPackCard extends StatefulWidget {
     this.badge,
     required this.gradStart,
     required this.gradEnd,
+    this.onBuy,
   });
 
   @override
@@ -1044,7 +1233,10 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
                       ),
                       const SizedBox(width: 8),
                       // Price button
-                      _AnimatedPriceButton(price: widget.price, large: true),
+                      GestureDetector(
+                        onTap: widget.onBuy,
+                        child: _AnimatedPriceButton(price: widget.price, large: true),
+                      ),
                     ],
                   ),
                 ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
@@ -24,24 +26,24 @@ class JokersPage extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           _JokerCard(
-            icon: Icons.local_fire_department_rounded,
+            icon: JokerUI.icon(JokerType.bomb, size: 42),
+            color: JokerUI.color(JokerType.bomb),
             title: l10n.jokerBomb,
             description: l10n.jokerBombDesc,
-            color: AppTheme.redTop,
           ),
           const SizedBox(height: 16),
           _JokerCard(
-            icon: Icons.auto_awesome_rounded,
+            icon: JokerUI.icon(JokerType.wildcard, size: 42),
+            color: JokerUI.color(JokerType.wildcard),
             title: l10n.jokerWildcard,
             description: l10n.jokerWildcardDesc,
-            color: AppTheme.blueTop,
           ),
           const SizedBox(height: 16),
           _JokerCard(
-            icon: Icons.keyboard_double_arrow_down_rounded,
+            icon: JokerUI.icon(JokerType.reducer, size: 42),
+            color: JokerUI.color(JokerType.reducer),
             title: l10n.jokerReducer,
             description: l10n.jokerReducerDesc,
-            color: AppTheme.greenTop,
           ),
         ],
       ),
@@ -50,7 +52,7 @@ class JokersPage extends StatelessWidget {
 }
 
 class _JokerCard extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final String title;
   final String description;
   final Color color;
@@ -77,7 +79,15 @@ class _JokerCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 42, color: color, shadows: [Shadow(color: color, blurRadius: 10)]),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 14)],
+            ),
+            child: icon,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

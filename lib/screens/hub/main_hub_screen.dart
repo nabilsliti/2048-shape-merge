@@ -8,6 +8,7 @@ import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/screens/home/home_screen.dart';
 import 'package:shape_merge/screens/settings/profile_dialog.dart';
@@ -17,6 +18,9 @@ class MainHubScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize IAP early to catch pending purchases
+    ref.watch(iapReadyProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
       body: Stack(

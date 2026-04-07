@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
 class TutorialOverlay extends StatelessWidget {
@@ -162,12 +163,35 @@ class _JokerSection extends StatelessWidget {
                   letterSpacing: 1,
                 ),
               ),
+              const SizedBox(height: 4),
+              // ── Classiques ──
+              const Text('— Classiques —',
+                  style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.8)),
+              const SizedBox(height: 4),
+              _jokerRow(JokerUI.icon(JokerType.bomb, size: 20), 'Bombe', 'Détruit une forme'),
+              const SizedBox(height: 4),
+              _jokerRow(JokerUI.icon(JokerType.wildcard, size: 20), 'Wildcard', 'Fusionne avec n\'importe quelle forme'),
+              const SizedBox(height: 4),
+              _jokerRow(JokerUI.icon(JokerType.reducer, size: 20), 'Réducteur', 'Baisse le niveau d\'une forme'),
               const SizedBox(height: 6),
-              _jokerRow(const JokerIcon.bomb(size: 22), 'Bombe', 'Détruit une forme'),
-              const SizedBox(height: 6),
-              _jokerRow(const JokerIcon.wildcard(size: 22), 'Wildcard', 'Fusionne avec n\'importe quelle forme'),
-              const SizedBox(height: 6),
-              _jokerRow(const JokerIcon.reducer(size: 18), 'Réducteur', 'Baisse le niveau d\'une forme'),
+              // ── Premium ──
+              Row(
+                children: [
+                  Expanded(child: Container(height: 1, color: AppTheme.gold.withValues(alpha: 0.4))),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6),
+                    child: Text('★ PREMIUM',
+                        style: TextStyle(color: AppTheme.gold, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  ),
+                  Expanded(child: Container(height: 1, color: AppTheme.gold.withValues(alpha: 0.4))),
+                ],
+              ),
+              const SizedBox(height: 4),
+              _jokerRow(JokerUI.icon(JokerType.radar, size: 20), 'Radar', 'Illumine toutes les paires fusionnables pendant 5s'),
+              const SizedBox(height: 4),
+              _jokerRow(JokerUI.icon(JokerType.evolution, size: 20), 'Évolution', 'Monte une forme d\'un niveau'),
+              const SizedBox(height: 4),
+              _jokerRow(JokerUI.icon(JokerType.megaBomb, size: 20), 'Méga Bombe', 'Détruit toutes les formes du même niveau'),
             ],
           ),
         ),

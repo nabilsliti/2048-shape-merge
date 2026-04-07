@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 
 class LocalStorageService {
@@ -8,8 +9,12 @@ class LocalStorageService {
   static const _jokerBombKey = 'jokerBomb';
   static const _jokerWildcardKey = 'jokerWildcard';
   static const _jokerReducerKey = 'jokerReducer';
+  static const _jokerRadarKey = 'jokerRadar';
+  static const _jokerEvolutionKey = 'jokerEvolution';
+  static const _jokerMegaBombKey = 'jokerMegaBomb';
   static const _guestNameKey = 'guestName';
   static const _guestAvatarKey = 'guestAvatar';
+  static const _noAdsPurchasedKey = 'noAdsPurchased';
 
   final SharedPreferences _prefs;
 
@@ -32,15 +37,21 @@ class LocalStorageService {
       _prefs.setBool(_soundEnabledKey, enabled);
 
   JokerInventory get jokerInventory => JokerInventory(
-        bomb: _prefs.getInt(_jokerBombKey) ?? 3,
-        wildcard: _prefs.getInt(_jokerWildcardKey) ?? 3,
-        reducer: _prefs.getInt(_jokerReducerKey) ?? 3,
+        bomb: _prefs.getInt(_jokerBombKey) ?? initialJokerCount,
+        wildcard: _prefs.getInt(_jokerWildcardKey) ?? initialJokerCount,
+        reducer: _prefs.getInt(_jokerReducerKey) ?? initialJokerCount,
+        radar: _prefs.getInt(_jokerRadarKey) ?? initialRadarCount,
+        evolution: _prefs.getInt(_jokerEvolutionKey) ?? initialEvolutionCount,
+        megaBomb: _prefs.getInt(_jokerMegaBombKey) ?? initialMegaBombCount,
       );
 
   Future<void> saveJokerInventory(JokerInventory inventory) async {
     await _prefs.setInt(_jokerBombKey, inventory.bomb);
     await _prefs.setInt(_jokerWildcardKey, inventory.wildcard);
     await _prefs.setInt(_jokerReducerKey, inventory.reducer);
+    await _prefs.setInt(_jokerRadarKey, inventory.radar);
+    await _prefs.setInt(_jokerEvolutionKey, inventory.evolution);
+    await _prefs.setInt(_jokerMegaBombKey, inventory.megaBomb);
   }
 
   String get guestName {
@@ -56,4 +67,7 @@ class LocalStorageService {
 
   String? get guestAvatar => _prefs.getString(_guestAvatarKey);
   Future<void> setGuestAvatar(String avatarId) => _prefs.setString(_guestAvatarKey, avatarId);
+
+  bool get noAdsPurchased => _prefs.getBool(_noAdsPurchasedKey) ?? false;
+  Future<void> setNoAdsPurchased(bool value) => _prefs.setBool(_noAdsPurchasedKey, value);
 }

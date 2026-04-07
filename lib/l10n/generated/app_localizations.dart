@@ -236,6 +236,18 @@ abstract class AppLocalizations {
   /// **'Sound Off'**
   String get soundOff;
 
+  /// No description provided for @musicOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Music On'**
+  String get musicOn;
+
+  /// No description provided for @musicOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Music Off'**
+  String get musicOff;
+
   /// No description provided for @jokerBomb.
   ///
   /// In en, this message translates to:
@@ -421,6 +433,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quit'**
   String get quit;
+
+  /// No description provided for @howToPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'How to Play'**
+  String get howToPlay;
 
   /// No description provided for @newRecord.
   ///

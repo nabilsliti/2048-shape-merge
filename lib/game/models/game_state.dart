@@ -10,6 +10,7 @@ class GameState {
   final JokerInventory jokerInventory;
   final bool gameActive;
   final bool isPaused;
+  final bool radarActive;
 
   const GameState({
     this.shapes = const [],
@@ -20,6 +21,7 @@ class GameState {
     this.jokerInventory = const JokerInventory(),
     this.gameActive = true,
     this.isPaused = false,
+    this.radarActive = false,
   });
 
   GameState copyWith({
@@ -31,6 +33,7 @@ class GameState {
     JokerInventory? jokerInventory,
     bool? gameActive,
     bool? isPaused,
+    bool? radarActive,
   }) {
     return GameState(
       shapes: shapes ?? this.shapes,
@@ -41,6 +44,7 @@ class GameState {
       jokerInventory: jokerInventory ?? this.jokerInventory,
       gameActive: gameActive ?? this.gameActive,
       isPaused: isPaused ?? this.isPaused,
+      radarActive: radarActive ?? this.radarActive,
     );
   }
 }

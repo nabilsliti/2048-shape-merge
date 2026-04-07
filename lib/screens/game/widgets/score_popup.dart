@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 
 class ScorePopup extends StatefulWidget {
@@ -62,6 +63,10 @@ class _ScorePopupState extends State<ScorePopup>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward().then((_) => widget.onComplete());
+
+    if (_comboText.isNotEmpty) {
+      AudioService.instance.playCombo(widget.points);
+    }
   }
 
   @override

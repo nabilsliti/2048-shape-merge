@@ -79,6 +79,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get soundOff => 'Son désactivé';
 
   @override
+  String get musicOn => 'Musique activée';
+
+  @override
+  String get musicOff => 'Musique désactivée';
+
+  @override
   String get jokerBomb => 'Bombe';
 
   @override
@@ -177,6 +183,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get quit => 'Quitter';
+
+  @override
+  String get howToPlay => 'Comment jouer';
 
   @override
   String get newRecord => 'Nouveau Record !';

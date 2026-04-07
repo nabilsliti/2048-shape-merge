@@ -79,6 +79,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soundOff => 'Sound Off';
 
   @override
+  String get musicOn => 'Music On';
+
+  @override
+  String get musicOff => 'Music Off';
+
+  @override
   String get jokerBomb => 'Bomb';
 
   @override
@@ -174,6 +180,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quit => 'Quit';
+
+  @override
+  String get howToPlay => 'How to Play';
 
   @override
   String get newRecord => 'New Record!';
