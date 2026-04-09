@@ -55,7 +55,6 @@ class _MergeEffectState extends State<MergeEffect>
       builder: (context, _) {
         final t = _controller.value;
         final scale = 1.0 + Curves.easeOutCubic.transform(t) * 3.5;
-        final opacity = (1.0 - t).clamp(0.0, 1.0);
         const baseSize = 40.0;
         final finalSize = baseSize * scale;
 

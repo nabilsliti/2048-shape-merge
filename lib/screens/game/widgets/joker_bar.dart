@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
@@ -54,7 +54,7 @@ class JokerBar extends ConsumerWidget {
             children: [
               Container(width: 1, height: 20, color: AppTheme.gold.withValues(alpha: 0.5)),
               const SizedBox(height: 2),
-              Text('★', style: TextStyle(fontSize: 7, color: AppTheme.gold.withValues(alpha: 0.8))),
+              Text('★', style: TextStyle(fontSize: AppTheme.fontMicro, color: AppTheme.gold.withValues(alpha: 0.8))),
               const SizedBox(height: 2),
               Container(width: 1, height: 20, color: AppTheme.gold.withValues(alpha: 0.5)),
             ],
@@ -238,13 +238,13 @@ class _JokerOrbState extends State<_JokerOrb>
                           center: const Alignment(-0.3, -0.3),
                           colors: disabled
                               ? [
-                                  const Color(0xFF2a2a3a),
-                                  const Color(0xFF1a1a28),
+                                  AppTheme.jokerOrbDisabledTop,
+                                  AppTheme.jokerOrbDisabledBot,
                                 ]
                               : [
                                   widget.glowColor.withValues(alpha: 0.15),
-                                  const Color(0xFF1a1a2e),
-                                  const Color(0xFF0d0d1a),
+                                  AppTheme.cardBg,
+                                  AppTheme.jokerOrbBgDark,
                                 ],
                         ),
                         border: Border.all(
@@ -310,8 +310,8 @@ class _CountBadge extends StatelessWidget {
                   color,
                 ]
               : [
-                  const Color(0xFF3a3a4a),
-                  const Color(0xFF2a2a38),
+                  AppTheme.jokerBadgeEmptyTop,
+                  AppTheme.jokerBadgeEmptyBot,
                 ],
         ),
         border: Border.all(
@@ -337,7 +337,7 @@ class _CountBadge extends StatelessWidget {
       child: Center(
         child: Text(
           '$count',
-          style: AppTheme.titleStyle(11).copyWith(
+          style: AppTheme.titleStyle(AppTheme.fontMini).copyWith(
             color: count > 0 ? Colors.white : AppTheme.muted,
             height: 1.0,
           ),

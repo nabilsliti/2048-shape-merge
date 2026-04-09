@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
@@ -8,9 +9,11 @@ import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
+import 'package:shape_merge/providers/daily_challenge_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
+import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/screens/game/overlays/game_over_overlay.dart';
 import 'package:shape_merge/screens/game/overlays/pause_overlay.dart';
 import 'package:shape_merge/screens/game/overlays/tutorial_overlay.dart';
@@ -19,6 +22,7 @@ import 'package:shape_merge/screens/game/widgets/hud_bar.dart';
 import 'package:shape_merge/screens/game/widgets/joker_bar.dart';
 import 'package:shape_merge/screens/game/widgets/merge_effect.dart';
 import 'package:shape_merge/screens/game/widgets/score_popup.dart';
+import 'package:shape_merge/core/services/notification_service.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -64,6 +68,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               if (user != null) {
                 final gameState = ref.read(gameStateProvider);
                 _submitScore(user, gameState);
+                // Also update bestScore in player document
+                ref.read(firestoreServiceProvider).updateBestScore(user.uid, next);
               }
             }
           },
@@ -89,7 +95,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _submitScore(User user, GameState gameState) {
     debugPrint('🎯 _submitScore called: score=${gameState.score}, uid=${user.uid}');
     final now = DateTime.now();
-    final weekKey = '${now.year}-W${(now.day ~/ 7) + 1}';
+    // Bug B5 fix: use ISO week number via intl (now.day was wrong — day of month != week)
+    final weekNum = ((now.difference(DateTime(now.year, 1, 1)).inDays + DateTime(now.year, 1, 1).weekday - 1) ~/ 7) + 1;
+    final weekKey = '${now.year}-W${weekNum.toString().padLeft(2, '0')}';
     final player = ref.read(playerProvider).valueOrNull;
     final entry = LeaderboardEntry(
       uid: user.uid,
@@ -105,6 +113,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     ref.read(firestoreServiceProvider).submitScore(entry);
   }
 
+  // Bug B2 fix: gamesPlayed + totalMerges were never incremented.
+  void _updatePlayerStats(String uid, int sessionMerges) {
+    ref.read(firestoreServiceProvider).incrementPlayerStats(
+      uid,
+      mergesThisGame: sessionMerges,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameStateProvider);
@@ -115,11 +131,30 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Auto-submit score to leaderboard when game ends
     if (!gameState.gameActive && !_scoreSubmitted) {
       _scoreSubmitted = true;
-      if (isSignedIn) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (isSignedIn) {
           _submitScore(user, gameState);
-        });
-      }
+          // Bug B2 fix: increment gamesPlayed + totalMerges (were never updated)
+          _updatePlayerStats(user.uid, gameState.mergeCount);
+        }
+        // Sync daily challenge progress
+        ref.read(dailyChallengeProvider.notifier).syncGameResult(
+          fusionsThisGame: gameState.mergeCount,
+          scoreThisGame: gameState.score,
+          jokersUsedThisGame: gameState.jokersUsedThisGame,
+          maxLevelReached: gameState.maxLevelReached,
+        );
+        // Process XP gain
+        ref.read(progressionProvider.notifier).processGameEnd(
+          score: gameState.score,
+          mergeCount: gameState.mergeCount,
+          maxLevelReached: gameState.maxLevelReached,
+        );
+        // User just played — cancel the streak-danger reminder and reschedule
+        // for 23 h from now so the reminder fires tomorrow if they don't play.
+        NotificationService.instance
+            .scheduleStreakReminder();
+      });
     }
 
     return Scaffold(
@@ -134,7 +169,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 Padding(
                   padding: const EdgeInsets.only(left: 3, right: 3, top: 3),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                     child: Stack(
                       children: [
                         const Positioned.fill(child: SpaceBackground(lite: true)),
@@ -149,7 +184,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           child: IgnorePointer(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                                 border: Border.all(
                                   color: AppTheme.panelBorder.withValues(alpha: 0.6),
                                   width: 2,
@@ -168,16 +203,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(left: 3, right: 3),
                     child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                           child: Stack(
                             children: [
                               const Positioned.fill(child: SpaceBackground()),
                               Positioned.fill(
                                 child: GameBoard(
-                                  onMerge: (pos, color, points) {
-                                    _addMergeEffect(pos, color, points);
+                                  onMerge: (pos, color, points, comboCount) {
+                                    _addMergeEffect(pos, color, points, comboCount);
                                   },
                                 ),
                               ),
@@ -189,7 +225,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           child: IgnorePointer(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                                 border: Border.all(
                                   color: AppTheme.panelBorder.withValues(alpha: 0.6),
                                   width: 2,
@@ -208,7 +244,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 Padding(
                   padding: const EdgeInsets.only(left: 3, right: 3),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                     child: Stack(
                       children: [
                         const Positioned.fill(child: SpaceBackground(lite: true)),
@@ -217,7 +253,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                           child: IgnorePointer(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                                 border: Border.all(
                                   color: AppTheme.panelBorder.withValues(alpha: 0.6),
                                   width: 2,
@@ -242,6 +278,21 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           if (!_showTutorial && gameState.isPaused)
             PauseOverlay(
               onResume: () => ref.read(gameStateProvider.notifier).togglePause(),
+              onQuit: () {
+                final gs = ref.read(gameStateProvider);
+                ref.read(dailyChallengeProvider.notifier).syncGameResult(
+                  fusionsThisGame: gs.mergeCount,
+                  scoreThisGame: gs.score,
+                  jokersUsedThisGame: gs.jokersUsedThisGame,
+                  maxLevelReached: gs.maxLevelReached,
+                );
+                ref.read(progressionProvider.notifier).processGameEnd(
+                  score: gs.score,
+                  mergeCount: gs.mergeCount,
+                  maxLevelReached: gs.maxLevelReached,
+                );
+                context.go('/home');
+              },
             ),
           if (!gameState.gameActive)
             GameOverOverlay(
@@ -268,7 +319,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     );
   }
 
-  void _addMergeEffect(Offset position, Color color, int points) {
+  void _addMergeEffect(Offset position, Color color, int points, int comboCount) {
     setState(() {
       final effectKey = UniqueKey();
       final popupKey = UniqueKey();
@@ -289,6 +340,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           key: popupKey,
           points: points,
           position: position,
+          comboCount: comboCount,
           onComplete: () => setState(() {
             _effects.removeWhere((e) => e.key == popupKey);
           }),

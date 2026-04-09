@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/models/player.dart';
+import 'package:shape_merge/core/models/player_streak.dart';
 
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
@@ -58,6 +60,101 @@ class FirestoreService {
     final doc = await _playerRef(uid).get();
     if (!doc.exists || doc.data() == null) return null;
     return Player.fromFirestore(uid, doc.data()!);
+  }
+
+  // Bug B2 fix: increment gamesPlayed and totalMerges (were never called before)
+  Future<void> incrementPlayerStats(String uid, {required int mergesThisGame}) async {
+    try {
+      await _playerRef(uid).set({
+        'gamesPlayed': FieldValue.increment(1),
+        'totalMerges': FieldValue.increment(mergesThisGame),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('❌ incrementPlayerStats failed: $e');
+    }
+  }
+
+  Future<void> updateXP(String uid, {required int level, required int currentXP, required int totalXP}) async {
+    await _playerRef(uid).set({
+      'level': level,
+      'currentXP': currentXP,
+      'totalXP': totalXP,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateBestScore(String uid, int bestScore) async {
+    try {
+      await _playerRef(uid).set({
+        'bestScore': bestScore,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('❌ updateBestScore failed: $e');
+    }
+  }
+
+  Future<int> getLeaderboardScore(String uid) async {
+    try {
+      final doc = await _leaderboardRef.doc(uid).get();
+      if (doc.exists) {
+        return (doc.data()?['score'] as int?) ?? 0;
+      }
+    } catch (e) {
+      debugPrint('⚠️ getLeaderboardScore failed: $e');
+    }
+    return 0;
+  }
+
+  Future<void> updateStreak(String uid, PlayerStreak streak) async {
+    await _playerRef(uid).set({
+      'currentStreak': streak.currentStreak,
+      'longestStreak': streak.longestStreak,
+      'lastLoginDate': streak.lastLoginDate,
+      'nextRewardIndex': streak.nextRewardIndex,
+    }, SetOptions(merge: true));
+  }
+
+  DocumentReference<Map<String, Object?>> _dailyChallengesRef(String uid) =>
+      _playerRef(uid).collection('data').doc('dailyChallenges');
+
+  Future<Map<String, Object?>?> getDailyChallenges(String uid) async {
+    try {
+      final doc = await _dailyChallengesRef(uid).get();
+      return doc.exists ? doc.data() : null;
+    } catch (e) {
+      debugPrint('❌ getDailyChallenges failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> saveDailyChallenges(String uid, DailyChallengeState state) async {
+    try {
+      await _dailyChallengesRef(uid).set(state.toMap().cast<String, Object?>());
+    } catch (e) {
+      debugPrint('❌ saveDailyChallenges failed: $e');
+    }
+  }
+
+  /// Deletes all server-side data for [uid].
+  /// Order matters: delete sub-collections first (Firestore does not cascade).
+  Future<void> deleteAccount(String uid) async {
+    try {
+      // 1. Delete sub-document dailyChallenges
+      await _dailyChallengesRef(uid).delete();
+    } catch (e) {
+      debugPrint('⚠️ deleteAccount: dailyChallenges removal failed: $e');
+    }
+    try {
+      // 2. Delete player document
+      await _playerRef(uid).delete();
+    } catch (e) {
+      debugPrint('⚠️ deleteAccount: player doc removal failed: $e');
+    }
+    try {
+      // 3. Delete leaderboard entry
+      await _leaderboardRef.doc(uid).delete();
+    } catch (e) {
+      debugPrint('⚠️ deleteAccount: leaderboard entry removal failed: $e');
+    }
   }
 
   Future<void> updateProfile(String uid, {String? displayName, String? avatarId}) async {

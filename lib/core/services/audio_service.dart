@@ -105,10 +105,9 @@ class AudioService {
   Future<void> playSpawn() => play('spawn.wav');
   Future<void> playButtonTap() => play('button_tap.wav');
 
-  /// Joue un son selon le niveau de combo (points ≥ 80).
-  /// NICE → merge.wav, AMAZING / SUPER MERGE / LEGENDARY → level_up.wav
-  Future<void> playCombo(int points) {
-    if (points >= 160) return playLevelUp();
+  /// Joue un son progressif selon le niveau de combo.
+  Future<void> playCombo(int comboCount) {
+    if (comboCount >= 5) return playLevelUp();
     return playMerge();
   }
 }

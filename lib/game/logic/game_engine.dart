@@ -18,7 +18,7 @@ class GameEngine {
     );
   }
 
-  static ({GameState state, GameShape? mergedShape, int pointsEarned, bool wasTap})
+  static ({GameState state, GameShape? mergedShape, int pointsEarned, bool wasTap, int comboCount})
       attemptMerge(
     GameState state,
     GameShape dragged,
@@ -33,6 +33,7 @@ class GameEngine {
         mergedShape: null,
         pointsEarned: 0,
         wasTap: true,
+        comboCount: state.comboCount,
       );
     }
 
@@ -42,29 +43,48 @@ class GameEngine {
       dropPosition,
     );
 
+    // Helper: append a drag result to the rolling window of 20 attempts
+    List<bool> _updatedAttempts(bool merged) {
+      final list = List<bool>.from(state.recentAttempts)..add(merged);
+      if (list.length > 20) list.removeAt(0);
+      return list;
+    }
+
     if (target == null) {
       // No merge — shape position stays unchanged (snap back handled by UI),
       // spawn only if below max capacity
+      final attempts = _updatedAttempts(false);
+      final mergeRate = attempts.isEmpty ? 0.5 : attempts.where((b) => b).length / attempts.length;
       final updatedShapes = List<GameShape>.from(state.shapes);
       if (updatedShapes.length < maxShapes) {
-        final newShape = SpawnManager.spawnShape(updatedShapes, boardSize);
+        final newShape = SpawnManager.spawnShape(updatedShapes, boardSize, mergeRate: mergeRate, totalMerges: state.mergeCount);
         updatedShapes.add(newShape);
       }
 
-      final newState = state.copyWith(shapes: updatedShapes);
+      final newState = state.copyWith(shapes: updatedShapes, recentAttempts: attempts, comboCount: 0);
       return (
         state: _checkGameState(newState, boardSize),
         mergedShape: null,
         pointsEarned: 0,
         wasTap: false,
+        comboCount: 0,
       );
     }
 
     // Merge!
+    // Chain combo: only if dragged or target is the result of the previous merge
+    final isChain = state.lastMergedShapeId != null &&
+        (dragged.id == state.lastMergedShapeId || target.id == state.lastMergedShapeId);
+    final newCombo = isChain ? state.comboCount + 1 : 0;
     final newLevel = target.level + 1;
     final midX = target.x;
     final midY = target.y;
-    final points = scoreForMerge(newLevel);
+    final basePoints = scoreForMerge(newLevel);
+    // Combo multiplier: ×1.0 (no chain), ×1.5 (chain 1), ×2.0 (chain 2), ... (capped at ×5)
+    final comboMultiplier = newCombo > 0
+        ? (1.0 + newCombo * 0.5).clamp(1.0, 5.0)
+        : 1.0;
+    final points = (basePoints * comboMultiplier).round();
 
     final merged = GameShape(
       id: _uuid.v4(),
@@ -75,6 +95,8 @@ class GameEngine {
       level: newLevel,
     );
 
+    final attempts = _updatedAttempts(true);
+    final mergeRate = attempts.isEmpty ? 0.5 : attempts.where((b) => b).length / attempts.length;
     final updatedShapes = state.shapes
         .where((s) => s.id != dragged.id && s.id != target.id)
         .toList()
@@ -82,7 +104,7 @@ class GameEngine {
 
     // Spawn after merge only if below max capacity
     if (updatedShapes.length < maxShapes) {
-      final spawnedShape = SpawnManager.spawnShape(updatedShapes, boardSize);
+      final spawnedShape = SpawnManager.spawnShape(updatedShapes, boardSize, mergeRate: mergeRate, totalMerges: state.mergeCount + 1);
       updatedShapes.add(spawnedShape);
     }
 
@@ -99,6 +121,9 @@ class GameEngine {
       bestScore: newBest,
       mergeCount: state.mergeCount + 1,
       maxLevelReached: newMaxLevel,
+      recentAttempts: attempts,
+      comboCount: newCombo,
+      lastMergedShapeId: merged.id,
     );
 
     return (
@@ -106,6 +131,7 @@ class GameEngine {
       mergedShape: merged,
       pointsEarned: points,
       wasTap: false,
+      comboCount: newCombo,
     );
   }
 
@@ -146,7 +172,7 @@ class GameEngine {
       var attempts = 0;
       while (
           !MergeDetector.hasPairs(shapes) && shapes.length < maxShapes && attempts < 5) {
-        shapes.add(SpawnManager.spawnShape(shapes, boardSize));
+        shapes.add(SpawnManager.spawnShape(shapes, boardSize, mergeRate: state.recentMergeRate, totalMerges: state.mergeCount));
         attempts++;
       }
       return state.copyWith(shapes: shapes);

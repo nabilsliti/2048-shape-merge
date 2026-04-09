@@ -1,13 +1,17 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
+import 'package:shape_merge/providers/daily_challenge_provider.dart';
+import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
-class GameOverOverlay extends StatefulWidget {
+class GameOverOverlay extends ConsumerStatefulWidget {
   final int score;
   final int mergeCount;
   final bool isVictory;
@@ -28,10 +32,10 @@ class GameOverOverlay extends StatefulWidget {
   });
 
   @override
-  State<GameOverOverlay> createState() => _GameOverOverlayState();
+  ConsumerState<GameOverOverlay> createState() => _GameOverOverlayState();
 }
 
-class _GameOverOverlayState extends State<GameOverOverlay>
+class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
     with TickerProviderStateMixin {
   late AnimationController _entranceCtrl;
   late AnimationController _pulseCtrl;
@@ -68,8 +72,8 @@ class _GameOverOverlayState extends State<GameOverOverlay>
     final title = widget.isVictory ? l10n.victory : l10n.gameOver;
     final badgeEmoji = widget.isVictory ? '🏆' : '💀';
     final badgeColors = widget.isVictory
-        ? const [Color(0xFFFFD700), Color(0xFFFF8C00)]
-        : const [Color(0xFFFF4747), Color(0xFFCC0000)];
+        ? const [AppTheme.victoryBadgeTop, AppTheme.victoryBadgeBot]
+        : const [AppTheme.deathBadgeTop, AppTheme.deathBadgeBot];
 
     return AnimatedBuilder(
       animation: _entranceCtrl,
@@ -95,7 +99,7 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                           _PulsingBadge(pulse: _pulseCtrl, emoji: badgeEmoji, colors: badgeColors),
                           const SizedBox(height: 10),
 
-                          Text(title.toUpperCase(), style: AppTheme.titleStyle(26), textAlign: TextAlign.center),
+                          Text(title.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH1b), textAlign: TextAlign.center),
                           const SizedBox(height: 14),
 
                           // Score panel
@@ -103,16 +107,16 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: AppTheme.panelBg,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                               border: Border.all(color: AppTheme.panelBorder, width: 3),
                               boxShadow: const [
-                                BoxShadow(color: Color(0xFF111827), offset: Offset(0, 6)),
+                                BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 6)),
                                 BoxShadow(color: Colors.black54, offset: Offset(0, 10), blurRadius: 14),
                               ],
                             ),
                             child: Column(
                               children: [
-                                Text('SCORE', style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFF8ad1ff), letterSpacing: 2)),
+                                Text('SCORE', style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: AppTheme.blueLabel, letterSpacing: 2)),
                                 const SizedBox(height: 4),
                                 TweenAnimationBuilder<int>(
                                   tween: IntTween(begin: 0, end: widget.score),
@@ -120,10 +124,10 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                                   curve: Curves.easeOut,
                                   builder: (context, val, _) => Text(
                                     '$val',
-                                    style: GoogleFonts.fredoka(fontSize: 48, fontWeight: FontWeight.w900, color: widget.isNewRecord ? const Color(0xFFFFD700) : AppTheme.gold,
+                                    style: GoogleFonts.fredoka(fontSize: AppTheme.fontXXL, fontWeight: FontWeight.w900, color: widget.isNewRecord ? AppTheme.victoryBadgeTop : AppTheme.gold,
                                         shadows: [
                                           const Shadow(color: Colors.black38, offset: Offset(0, 3)),
-                                          if (widget.isNewRecord) const Shadow(color: Color(0x66FFD700), blurRadius: 12),
+                                          if (widget.isNewRecord) Shadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.4), blurRadius: 12),
                                         ]),
                                   ),
                                 ),
@@ -132,16 +136,16 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                                     decoration: BoxDecoration(
-                                      gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFF8C00)]),
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: const [BoxShadow(color: Color(0x44FFD700), blurRadius: 10, spreadRadius: 1)],
+                                      gradient: const LinearGradient(colors: [AppTheme.victoryBadgeTop, AppTheme.victoryBadgeBot]),
+                                      borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+                                      boxShadow: [BoxShadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.267), blurRadius: 10, spreadRadius: 1)],
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         const Icon(Icons.star, color: Colors.white, size: 16),
                                         const SizedBox(width: 4),
-                                        Text(l10n.newRecord.toUpperCase(), style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1)),
+                                        Text(l10n.newRecord.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1)),
                                         const SizedBox(width: 4),
                                         const Icon(Icons.star, color: Colors.white, size: 16),
                                       ],
@@ -150,6 +154,8 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                                 ],
                                 const SizedBox(height: 12),
                                 _StatChip(label: l10n.merges, value: '${widget.mergeCount}', color: AppTheme.purpleBorder),
+                                // ── XP + Objectifs — résumé rétention ──
+                                _XpAndObjectivesSummary(),
                               ],
                             ),
                           ),
@@ -174,17 +180,17 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                                         shape: BoxShape.circle,
                                       ),
                                       child: Center(
-                                        child: Text('G', style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w900, color: const Color(0xFF4285F4))),
+                                        child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
-                                    Text(l10n.signInGoogle.toUpperCase(), style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white)),
+                                    Text(l10n.signInGoogle.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: Colors.white)),
                                   ],
                                 ),
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(l10n.signInToSave, style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF8ad1ff)), textAlign: TextAlign.center),
+                            Text(l10n.signInToSave, style: GoogleFonts.nunito(fontSize: AppTheme.fontMini, fontWeight: FontWeight.w600, color: AppTheme.blueLabel), textAlign: TextAlign.center),
                             const SizedBox(height: 14),
                           ],
 
@@ -201,7 +207,7 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                                     children: [
                                       const Icon(Icons.home, color: Colors.white, size: 24),
                                       const SizedBox(width: 8),
-                                      Text(l10n.menu.toUpperCase(), style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white)),
+                                      Text(l10n.menu.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: Colors.white)),
                                     ],
                                   ),
                                 ),
@@ -217,7 +223,7 @@ class _GameOverOverlayState extends State<GameOverOverlay>
                                     children: [
                                       const Icon(Icons.refresh, color: Colors.white, size: 24),
                                       const SizedBox(width: 8),
-                                      Text(l10n.replay.toUpperCase(), style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white)),
+                                      Text(l10n.replay.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: Colors.white)),
                                     ],
                                   ),
                                 ),
@@ -239,7 +245,7 @@ class _GameOverOverlayState extends State<GameOverOverlay>
 
   List<Widget> _buildParticles() {
     final rng = Random(99);
-    const colors = [Color(0xFF667eea), Color(0xFF764ba2), Color(0xFF8ad1ff), Color(0xFFa78bfa)];
+    const colors = [AppTheme.confetti1, AppTheme.confetti2, AppTheme.confetti3, AppTheme.confetti4];
 
     return List.generate(12, (i) {
       final color = colors[rng.nextInt(colors.length)];
@@ -297,7 +303,7 @@ class _PulsingBadge extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 2.5),
               boxShadow: [BoxShadow(color: colors[0].withValues(alpha: glow), blurRadius: 20, spreadRadius: 2)],
             ),
-            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 28))),
+            child: Center(child: Text(emoji, style: const TextStyle(fontSize: AppTheme.fontH1))),
           ),
         );
       },
@@ -318,16 +324,70 @@ class _StatChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
-          Text(label.toUpperCase(), style: GoogleFonts.nunito(fontSize: 9, fontWeight: FontWeight.w900, color: const Color(0xFF8ad1ff), letterSpacing: 1)),
+          Text(label.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w900, color: AppTheme.blueLabel, letterSpacing: 1)),
           const SizedBox(height: 2),
-          Text(value, style: GoogleFonts.fredoka(fontSize: 22, fontWeight: FontWeight.w900, color: color, shadows: const [Shadow(color: Colors.black38, offset: Offset(0, 2))])),
+          Text(value, style: GoogleFonts.fredoka(fontSize: AppTheme.fontH3, fontWeight: FontWeight.w900, color: color, shadows: const [Shadow(color: Colors.black38, offset: Offset(0, 2))])),
         ],
       ),
     );
   }
 }
+
+/// XP gain + daily objectives summary shown in GameOverOverlay.
+class _XpAndObjectivesSummary extends ConsumerWidget {
+  const _XpAndObjectivesSummary();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progression = ref.watch(progressionProvider);
+    final challenges = ref.watch(dailyChallengeProvider);
+    if (progression == null && challenges == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        children: [
+          if (progression != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(RetentionUI.xpIcon, color: RetentionUI.levelColor, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  '+${progression.xpGained} XP',
+                  style: GoogleFonts.nunito(
+                      fontSize: AppTheme.fontXSmall,
+                      color: RetentionUI.levelColor,
+                      fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ],
+          if (challenges != null && challenges.completedCount > 0) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(RetentionUI.goalIcon, color: RetentionUI.goalColor, size: 12),
+                const SizedBox(width: 4),
+                Text(
+                  '${challenges.completedCount}/${challenges.challenges.length} objectifs',
+                  style: GoogleFonts.nunito(
+                      fontSize: AppTheme.fontMini,
+                      color: RetentionUI.goalColor,
+                      fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+

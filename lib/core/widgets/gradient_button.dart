@@ -23,7 +23,6 @@ class GradientButton extends StatefulWidget {
 
 class _GradientButtonState extends State<GradientButton> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  bool _isPressed = false;
 
   @override
   void initState() {
@@ -43,24 +42,21 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
   }
 
   void _onPointerDown(PointerDownEvent event) {
-    setState(() => _isPressed = true);
     _controller.forward();
   }
 
   void _onPointerUp(PointerUpEvent event) {
-    setState(() => _isPressed = false);
     _controller.reverse();
     widget.onPressed();
   }
 
   void _onPointerCancel(PointerCancelEvent event) {
-    setState(() => _isPressed = false);
     _controller.reverse();
   }
 
   @override
   Widget build(BuildContext context) {
-    final gradient = widget.colors ?? [AppTheme.blue, const Color(0xFF1E88E5)];
+    final gradient = widget.colors ?? [AppTheme.blue, AppTheme.blueDeep];
     final depthColors = gradient.map((c) => c.withOpacity(0.5)).toList();
 
     return SizedBox(
@@ -85,7 +81,7 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(colors: depthColors),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       boxShadow: [
                         BoxShadow(
                           color: gradient.first.withOpacity(0.4),
@@ -109,7 +105,7 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
                     ),
                     child: Center(
@@ -124,7 +120,7 @@ class _GradientButtonState extends State<GradientButton> with SingleTickerProvid
                             widget.label,
                             style: AppTheme.hudStyle.copyWith(
                               color: Colors.white,
-                              fontSize: 22,
+                              fontSize: AppTheme.fontH3,
                               height: 1, // center exactly
                             ),
                           ),

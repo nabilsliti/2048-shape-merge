@@ -71,5 +71,78 @@
   "chooseAvatar": "Choose your avatar",
   "save": "Save",
   "profileUpdated": "Profile updated!",
-  "signOutConfirm": "Sign out?"
+  "signOutConfirm": "Sign out?",
+  "streakDay": "Day {n}",
+  "@streakDay": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "streakConnectedToday": "Daily login validated!",
+  "streakBroken": "Streak broken",
+  "streakBrokenDesc": "Your streak was interrupted…",
+  "streakSaveNudge": "Sign in to never lose your streak.",
+  "streakCollect": "Awesome!",
+  "streakLost": "Streak lost",
+  "streakLostDesc": "Come back every day to earn\nbetter bonuses.",
+  "dailyObjectivesTitle": "DAILY GOALS",
+  "objectiveFusions": "{n, plural, =1{Make 1 merge} other{Make {n} merges}}",
+  "@objectiveFusions": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveScore": "Reach a score of {n}",
+  "@objectiveScore": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveParties": "{n, plural, =1{Play 1 game} other{Play {n} games}}",
+  "@objectiveParties": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveFormeMax": "Reach shape rank {n}",
+  "@objectiveFormeMax": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveJokersUses": "{n, plural, =1{Use 1 joker} other{Use {n} jokers}}",
+  "@objectiveJokersUses": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveBonusAll": "Complete all bonus",
+  "objectiveCompleted": "Objective completed!",
+  "collectReward": "Collect",
+  "rewardReceived": "Reward received!",
+  "allObjectivesCompleted": "All objectives completed!",
+  "levelBadge": "Lv",
+  "levelUp": "LEVEL {n}!",
+  "@levelUp": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "xpGained": "+{n} XP",
+  "@xpGained": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "xpToNextLevel": "{n} XP to level {lv}",
+  "@xpToNextLevel": {
+    "placeholders": {
+      "n": {"type": "int"},
+      "lv": {"type": "int"}
+    }
+  },
+  "connectToSave": "Sign in to save progress",
+  "later": "Later",
+  "deleteAccount": "Delete my account",
+  "deleteAccountConfirm": "Delete permanently?"
 }

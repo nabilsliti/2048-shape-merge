@@ -153,14 +153,17 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      child: Container(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppTheme.panelBg,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXL),
           border: Border.all(color: AppTheme.panelBorder, width: 3),
           boxShadow: const [
-            BoxShadow(color: Color(0xFF111827), offset: Offset(0, 8)),
+            BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 8)),
             BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
           ],
         ),
@@ -172,7 +175,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
             // Title
-            Text(l10n.editProfile.toUpperCase(), style: AppTheme.titleStyle(20)),
+            Text(l10n.editProfile.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH4)),
             const SizedBox(height: 20),
 
             // Current avatar preview
@@ -184,7 +187,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF4338ca), Color(0xFF6366f1)],
+                  colors: [AppTheme.profileGradTop, AppTheme.profileGradBot],
                 ),
                 border: Border.all(color: AppTheme.gold, width: 3),
                 boxShadow: [
@@ -194,7 +197,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
               child: Center(
                 child: Text(
                   avatarEmoji(_selectedAvatarId),
-                  style: const TextStyle(fontSize: 40),
+                  style: const TextStyle(fontSize: AppTheme.fontEmoji),
                 ),
               ),
             ),
@@ -209,7 +212,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                   const SizedBox(width: 4),
                   Text(
                     widget.email!,
-                    style: GoogleFonts.nunito(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.muted),
+                    style: GoogleFonts.nunito(fontSize: AppTheme.fontMini, fontWeight: FontWeight.w600, color: AppTheme.muted),
                   ),
                 ],
               ),
@@ -219,27 +222,27 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
 
             // Name field
             Text(l10n.displayName.toUpperCase(),
-                style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.muted, letterSpacing: 1)),
+                style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: AppTheme.muted, letterSpacing: 1)),
             const SizedBox(height: 6),
             TextField(
               controller: _nameCtrl,
               maxLength: 20,
-              style: GoogleFonts.nunito(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+              style: GoogleFonts.nunito(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: Colors.white),
               textAlign: TextAlign.center,
               decoration: InputDecoration(
-                counterStyle: GoogleFonts.nunito(color: AppTheme.muted, fontSize: 10),
+                counterStyle: GoogleFonts.nunito(color: AppTheme.muted, fontSize: AppTheme.fontNano),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.08),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   borderSide: BorderSide(color: AppTheme.panelBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   borderSide: BorderSide(color: AppTheme.panelBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   borderSide: const BorderSide(color: AppTheme.gold, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -250,7 +253,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
 
             // Avatar picker label
             Text(l10n.chooseAvatar.toUpperCase(),
-                style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.muted, letterSpacing: 1)),
+                style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: AppTheme.muted, letterSpacing: 1)),
             const SizedBox(height: 8),
 
             // Avatar grid
@@ -277,14 +280,14 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                         color: isSelected
                             ? AppTheme.gold.withValues(alpha: 0.2)
                             : Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
                         border: Border.all(
                           color: isSelected ? AppTheme.gold : Colors.white.withValues(alpha: 0.1),
                           width: isSelected ? 2.5 : 1,
                         ),
                       ),
                       child: Center(
-                        child: Text(avatar['emoji']!, style: TextStyle(fontSize: isSelected ? 28 : 24)),
+                        child: Text(avatar['emoji']!, style: TextStyle(fontSize: isSelected ? AppTheme.fontH1 : AppTheme.fontH2)),
                       ),
                     ),
                   );
@@ -311,7 +314,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                   children: [
                     const PremiumIcon.save(size: 28),
                     const SizedBox(width: 10),
-                    Text(l10n.save.toUpperCase(), style: AppTheme.titleStyle(18)),
+                    Text(l10n.save.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                   ],
                 ),
               ),
@@ -332,7 +335,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                     children: [
                       const PremiumIcon.logout(size: 28),
                       const SizedBox(width: 10),
-                      Text(l10n.signOut.toUpperCase(), style: AppTheme.titleStyle(18)),
+                      Text(l10n.signOut.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                     ],
                   ),
                 ),
@@ -356,10 +359,9 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                         width: 24,
                         height: 24,
                         decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                        child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: 15, fontWeight: FontWeight.w900, color: const Color(0xFF4285F4)))),
-                      ),
+                        child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontGBtn, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)))),
                       const SizedBox(width: 10),
-                      Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(18)),
+                      Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                     ],
                   ),
                 ),
@@ -370,6 +372,18 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
         ), // SingleChildScrollView
         ), // GestureDetector
       ), // Container
+      Positioned(
+        top: -12,
+        right: -12,
+        child: Button3D.red(
+          padding: const EdgeInsets.all(8),
+          borderRadius: 20,
+          onPressed: () => Navigator.of(context).pop(),
+          child: const PremiumIcon.close(size: 22),
+        ),
+      ),
+        ], // Stack children
+      ), // Stack
     ); // Dialog
   }
 }

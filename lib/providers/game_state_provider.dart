@@ -5,13 +5,10 @@ import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
+export 'package:shape_merge/providers/local_storage_provider.dart';
 import 'package:shape_merge/game/logic/joker_handler.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
-
-final localStorageProvider = FutureProvider<LocalStorageService>((ref) async {
-  return LocalStorageService.create();
-});
 
 final gameStateProvider =
     StateNotifierProvider<GameStateNotifier, GameState>((ref) {
@@ -22,8 +19,8 @@ enum JokerMode { none, bomb, wildcard, reducer, radar, evolution, megaBomb }
 
 final jokerModeProvider = StateProvider<JokerMode>((_) => JokerMode.none);
 
-// Set of shape IDs highlighted by radar
-final radarHighlightProvider = StateProvider<Set<String>>((_) => {});
+// Map of shape ID → group index highlighted by radar
+final radarHighlightProvider = StateProvider<Map<String, int>>((_) => {});
 
 class GameStateNotifier extends StateNotifier<GameState> {
   GameStateNotifier() : super(const GameState());
@@ -44,17 +41,21 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = GameEngine.startNewGame(_boardSize!, state);
   }
 
+  void _incrementJokerUsed() {
+    state = state.copyWith(jokersUsedThisGame: state.jokersUsedThisGame + 1);
+  }
+
   void loadSavedState({required int bestScore, required JokerInventory jokers}) {
     state = state.copyWith(bestScore: bestScore, jokerInventory: jokers);
   }
 
-  ({GameShape? mergedShape, int pointsEarned, bool wasTap}) attemptMerge(
+  ({GameShape? mergedShape, int pointsEarned, bool wasTap, int comboCount}) attemptMerge(
     GameShape dragged,
     Offset dropPosition, {
     bool wasTap = false,
   }) {
     if (_boardSize == null) {
-      return (mergedShape: null, pointsEarned: 0, wasTap: wasTap);
+      return (mergedShape: null, pointsEarned: 0, wasTap: wasTap, comboCount: 0);
     }
     final result = GameEngine.attemptMerge(
       state,
@@ -64,7 +65,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       wasTap: wasTap,
     );
     state = result.state;
-    return (mergedShape: result.mergedShape, pointsEarned: result.pointsEarned, wasTap: result.wasTap);
+    return (mergedShape: result.mergedShape, pointsEarned: result.pointsEarned, wasTap: result.wasTap, comboCount: result.comboCount);
   }
 
   void updateShapePosition(String shapeId, double x, double y) {
@@ -82,6 +83,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       jokerInventory: result.inventory,
       score: state.score + result.scoreBonus,
     );
+    _incrementJokerUsed();
     _saveJokers();
   }
 
@@ -97,6 +99,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       shapes: result.shapes,
       jokerInventory: result.inventory,
     );
+    _incrementJokerUsed();
     _saveJokers();
   }
 
@@ -111,6 +114,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       jokerInventory: result.inventory,
       score: state.score + result.scoreBonus,
     );
+    _incrementJokerUsed();
     _saveJokers();
   }
 
@@ -120,11 +124,20 @@ class GameStateNotifier extends StateNotifier<GameState> {
       state.shapes,
       state.jokerInventory,
     );
+    final newScore = state.score + result.scoreBonus;
+    final newBest = newScore > state.bestScore ? newScore : state.bestScore;
+    final evolved = result.evolvedShape;
+    final newMaxLevel = evolved != null && evolved.level > state.maxLevelReached
+        ? evolved.level
+        : state.maxLevelReached;
     state = state.copyWith(
       shapes: result.shapes,
       jokerInventory: result.inventory,
-      score: state.score + result.scoreBonus,
+      score: newScore,
+      bestScore: newBest,
+      maxLevelReached: newMaxLevel,
     );
+    _incrementJokerUsed();
     _saveJokers();
   }
 
@@ -139,6 +152,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       jokerInventory: result.inventory,
       score: state.score + result.scoreBonus,
     );
+    _incrementJokerUsed();
     _saveJokers();
   }
 
@@ -152,6 +166,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       jokerInventory: JokerHandler.useRadar(state.jokerInventory),
       radarActive: true,
     );
+    _incrementJokerUsed();
     _saveJokers();
     _radarTimer?.cancel();
     _radarTimer = Timer(const Duration(seconds: 5), () {

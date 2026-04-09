@@ -12,17 +12,78 @@ class SpawnManager {
 
   static GameShape spawnShape(
     List<GameShape> existing,
-    Size boardSize,
-  ) {
+    Size boardSize, {
+    double mergeRate = 0.5,
+    int totalMerges = 999,
+  }) {
     ShapeType type;
     Color color;
     int level;
 
-    // 70% smart until 25 shapes, then drops to 50%
-    final smartChance = existing.length >= 25 ? 0.50 : smartSpawnChance;
+    // Adaptive smart chance: high merge rate → harder (less smart); low → easier (more smart)
+    // Board pressure: ≥25 shapes always reduces smart chance to cap at 0.50
+    final double adaptiveChance = mergeRate > 0.7
+        ? 0.50
+        : mergeRate > 0.5
+            ? 0.60
+            : mergeRate > 0.3
+                ? 0.70
+                : 0.80;
+    final smartChance = existing.length >= 25
+        ? adaptiveChance.clamp(0.0, 0.50)
+        : adaptiveChance;
 
     if (existing.isNotEmpty && _random.nextDouble() < smartChance) {
-      final template = existing[_random.nextInt(existing.length)];
+      // For beginners (< 20 total merges), prefer spawning a shape that already
+      // has a matching partner on the board (same type+color) so they can merge.
+      final bool isBeginner = totalMerges < 20;
+      GameShape template;
+
+      if (isBeginner) {
+        // Find shapes that have at least one matching partner on the board
+        final mergeable = existing.where((s) =>
+          existing.any((other) =>
+            other.id != s.id &&
+            other.type == s.type &&
+            other.color == s.color &&
+            other.level == s.level
+          )
+        ).toList();
+        template = mergeable.isNotEmpty
+            ? mergeable[_random.nextInt(mergeable.length)]
+            : existing[_random.nextInt(existing.length)];
+      } else {
+        // Prefer "orphan" shapes — those with exactly 1 partner (same type+color+level).
+        // Creating a 2nd match gives the player a new pair without stacking triples.
+        final orphans = existing.where((s) {
+          final partners = existing.where((o) =>
+            o.id != s.id &&
+            o.type == s.type &&
+            o.color == s.color &&
+            o.level == s.level
+          ).length;
+          return partners == 1;
+        }).toList();
+        // Fallback: shapes with 0 partners (creates a new pair)
+        final solos = orphans.isEmpty
+            ? existing.where((s) {
+                final partners = existing.where((o) =>
+                  o.id != s.id &&
+                  o.type == s.type &&
+                  o.color == s.color &&
+                  o.level == s.level
+                ).length;
+                return partners == 0;
+              }).toList()
+            : <GameShape>[];
+        final candidates = orphans.isNotEmpty
+            ? orphans
+            : solos.isNotEmpty
+                ? solos
+                : existing;
+        template = candidates[_random.nextInt(candidates.length)];
+      }
+
       type = template.type;
       color = template.color;
       level = (_random.nextDouble() < levelCopyChance) ? template.level : 1;

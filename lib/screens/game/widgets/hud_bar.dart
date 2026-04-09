@@ -25,10 +25,10 @@ class HudBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final capacityRatio = shapeCount / maxShapes;
     final capColor = capacityRatio < 0.6
-        ? const Color(0xFF69f0ae)
+        ? AppTheme.capGood
         : capacityRatio < 0.85
-            ? const Color(0xFFffab40)
-            : const Color(0xFFff5252);
+            ? AppTheme.capWarn
+            : AppTheme.capDanger;
     final isNewBest = score > 0 && score >= bestScore;
 
     return Padding(
@@ -53,7 +53,7 @@ class HudBar extends StatelessWidget {
                     children: [
                       Text(
                         _fmt(score),
-                        style: AppTheme.titleStyle(28).copyWith(
+                        style: AppTheme.titleStyle(AppTheme.fontH1).copyWith(
                           color: isNewBest ? AppTheme.gold : Colors.white,
                           height: 1.1,
                           shadows: [
@@ -74,10 +74,10 @@ class HudBar extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         isNewBest ? '★ NEW BEST' : 'BEST ${_fmt(bestScore)}',
-                        style: AppTheme.titleStyle(9).copyWith(
+                        style: AppTheme.titleStyle(AppTheme.fontPico).copyWith(
                           color: isNewBest
-                              ? const Color(0xFFffd740)
-                              : const Color(0xFFc9a84c),
+                              ? AppTheme.goldLight
+                              : AppTheme.goldLabel,
                           letterSpacing: 1,
                         ),
                       ),
@@ -104,7 +104,7 @@ class HudBar extends StatelessWidget {
               value: '$shapeCount',
               label: '/$maxShapes',
               color: capColor,
-              valueColor: shapeCount >= 25 ? const Color(0xFFff5252) : null,
+              valueColor: shapeCount >= 25 ? AppTheme.capDanger : null,
             ),
           ),
 
@@ -120,7 +120,7 @@ class HudBar extends StatelessWidget {
                 child: CustomPaint(painter: _BoltPainter()),
               ),
               value: '$mergeCount',
-              color: const Color(0xFFce93d8),
+              color: AppTheme.statMerge,
             ),
           ),
 
@@ -179,7 +179,7 @@ class _StatColumn extends StatelessWidget {
           TextSpan(children: [
             TextSpan(
               text: value,
-              style: AppTheme.titleStyle(18).copyWith(
+              style: AppTheme.titleStyle(AppTheme.fontBody).copyWith(
                 color: valueColor ?? Colors.white,
                 height: 1.1,
                 shadows: [
@@ -190,8 +190,8 @@ class _StatColumn extends StatelessWidget {
             if (label != null)
               TextSpan(
                 text: label,
-                style: AppTheme.titleStyle(11).copyWith(
-                  color: const Color(0xFFc9a84c),
+                style: AppTheme.titleStyle(AppTheme.fontMini).copyWith(
+                  color: AppTheme.goldLabel,
                 ),
               ),
           ]),
@@ -225,13 +225,13 @@ class _StarPainter extends CustomPainter {
       ..shader = ui.Gradient.linear(
         Offset(cx, cy - outerR),
         Offset(cx, cy + outerR),
-        [const Color(0xFFffd740), const Color(0xFFf9a825)],
+        [AppTheme.goldLight, AppTheme.goldAntique],
       ));
 
     canvas.drawPath(path, Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.6
-      ..color = const Color(0xFFffe082).withValues(alpha: 0.6));
+      ..color = AppTheme.goldPale.withValues(alpha: 0.6));
   }
 
   @override
@@ -303,14 +303,14 @@ class _BoltPainter extends CustomPainter {
       ..close();
 
     canvas.drawPath(bolt, Paint()
-      ..color = const Color(0xFFce93d8).withValues(alpha: 0.4)
+      ..color = AppTheme.statMerge.withValues(alpha: 0.4)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
 
     canvas.drawPath(bolt, Paint()
       ..shader = ui.Gradient.linear(
         Offset(w * 0.5, 0),
         Offset(w * 0.5, h),
-        [const Color(0xFFe1bee7), const Color(0xFFb388ff)],
+        [AppTheme.purpleBorder, AppTheme.statMerge2],
       ));
   }
 

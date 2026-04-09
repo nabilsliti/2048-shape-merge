@@ -8,8 +8,9 @@ import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
+import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
+
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
 import 'package:shape_merge/providers/ads_provider.dart';
@@ -88,7 +89,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     ),
                   ),
                   Center(
-                    child: Text(l10n.shop.toUpperCase(), style: AppTheme.titleStyle(24)),
+                    child: Text(l10n.shop.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH2)),
                   ),
                 ],
               ),
@@ -107,8 +108,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   // ── ZÉRO PUB section ──
                   if (!noAds) ...[
                     const _NoAdsSectionHeader(
-                      gradStart: Color(0xFFFFD700),
-                      gradEnd: Color(0xFFFF8C00),
+                      gradStart: AppTheme.gold,
+                      gradEnd: AppTheme.victoryBadgeBot,
                     ),
                     const SizedBox(height: 4),
                     _NoAdsCard(
@@ -121,8 +122,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   // ── PACKS JOKERS section ──
                   const _SectionHeader(
                     title: '🎁 PACKS JOKERS',
-                    gradStart: Color(0xFF00d4ff),
-                    gradEnd: Color(0xFF7C4DFF),
+                    gradStart: AppTheme.shopSectionCyan,
+                    gradEnd: AppTheme.shopSectionPurple,
                   ),
                   const SizedBox(height: 12),
 
@@ -133,8 +134,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     descriptionWidget: _buildPackContents(5, 1, 0, 0),
                     price: iap.price(IapProducts.packStar),
                     badge: 'STARTER',
-                    gradStart: const Color(0xFF30D158),
-                    gradEnd: const Color(0xFF0A7A2E),
+                    gradStart: AppTheme.shopPackStar1,
+                    gradEnd: AppTheme.shopPackStar2,
                     onBuy: () => _buyProduct(context, ref, IapProducts.packStar),
                   ),
                   const SizedBox(height: 12),
@@ -146,8 +147,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     descriptionWidget: _buildPackContents(15, 3, 2, 2),
                     price: iap.price(IapProducts.packComet),
                     badge: 'POPULAIRE',
-                    gradStart: const Color(0xFF007AFF),
-                    gradEnd: const Color(0xFF5856D6),
+                    gradStart: AppTheme.shopPackComet1,
+                    gradEnd: AppTheme.shopPackComet2,
                     onBuy: () => _buyProduct(context, ref, IapProducts.packComet),
                   ),
                   const SizedBox(height: 12),
@@ -159,8 +160,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     descriptionWidget: _buildPackContents(40, 8, 5, 5),
                     price: iap.price(IapProducts.packDiamond),
                     badge: 'BEST VALUE',
-                    gradStart: const Color(0xFFBF5AF2),
-                    gradEnd: const Color(0xFFFF2D55),
+                    gradStart: AppTheme.shopPackDiamond1,
+                    gradEnd: AppTheme.shopPackDiamond2,
                     onBuy: () => _buyProduct(context, ref, IapProducts.packDiamond),
                   ),
                   const SizedBox(height: 24),
@@ -168,8 +169,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   // ── Watch ad for free joker ──
                   const _SectionHeader(
                     title: '🎬 JOKER GRATUIT',
-                    gradStart: Color(0xFFFF9F0A),
-                    gradEnd: Color(0xFFFFD60A),
+                    gradStart: AppTheme.orangeTop,
+                    gradEnd: AppTheme.radarColor,
                   ),
                   const SizedBox(height: 12),
                   _WatchAdCard(
@@ -179,22 +180,6 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Restore purchases ──
-                  Center(
-                    child: TextButton(
-                      onPressed: () => _restorePurchases(context, ref),
-                      child: Text(
-                        'RESTAURER MES ACHATS',
-                        style: GoogleFonts.nunito(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white38,
-                          decoration: TextDecoration.underline,
-                          decorationColor: Colors.white24,
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -294,7 +279,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
         children: [
           icon,
           const SizedBox(width: 3),
-          Text('×$count', style: GoogleFonts.fredoka(fontSize: 13, fontWeight: FontWeight.w800, color: color)),
+          Text('×$count', style: GoogleFonts.fredoka(fontSize: AppTheme.fontXSmall, fontWeight: FontWeight.w800, color: color)),
         ],
       );
     }
@@ -329,7 +314,6 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
           ),
         );
       }
-      // Reload for next attempt
       adsService.loadRewardedAd();
       return;
     }
@@ -349,31 +333,10 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
         children: [
           const SpaceBackground(darken: 0.5),
           Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Material(
-                color: Colors.transparent,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(l10n.chooseJoker.toUpperCase(), style: AppTheme.titleStyle(22)),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _JokerChoiceButton(icon: JokerUI.icon(JokerType.bomb, size: 36), color: JokerUI.color(JokerType.bomb), jokerType: JokerType.bomb),
-                        _JokerChoiceButton(icon: JokerUI.icon(JokerType.wildcard, size: 36), color: JokerUI.color(JokerType.wildcard), jokerType: JokerType.wildcard),
-                        _JokerChoiceButton(icon: JokerUI.icon(JokerType.reducer, size: 30), color: JokerUI.color(JokerType.reducer), jokerType: JokerType.reducer),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Text('RETOUR', style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white54)),
-                    ),
-                  ],
-                ),
-              ),
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: _JokerChoicePanel(),
             ),
           ),
         ],
@@ -594,7 +557,7 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 300),
                   style: GoogleFonts.fredoka(
-                    fontSize: _bounce.isAnimating ? 24 : 20,
+                    fontSize: _bounce.isAnimating ? AppTheme.fontH2 : AppTheme.fontH4,
                     fontWeight: FontWeight.w900,
                     color: _bounce.isAnimating ? Colors.white : (widget.count > 0 ? AppTheme.gold : AppTheme.muted),
                     shadows: _bounce.isAnimating
@@ -618,7 +581,7 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
                   child: Text(
                     '+1',
                     style: GoogleFonts.fredoka(
-                      fontSize: 28,
+                      fontSize: AppTheme.fontH1,
                       fontWeight: FontWeight.w900,
                       color: widget.color,
                       shadows: [
@@ -662,7 +625,7 @@ class _InventoryCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
             decoration: BoxDecoration(
               color: AppTheme.blueTop.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
               border: Border.all(color: AppTheme.blueTop.withValues(alpha: 0.4), width: 1.5),
             ),
             child: Column(
@@ -674,7 +637,7 @@ class _InventoryCard extends StatelessWidget {
                     Icon(Icons.videogame_asset_rounded, color: AppTheme.blueTop, size: 11),
                     const SizedBox(width: 4),
                     Text('CLASSIQUE',
-                        style: GoogleFonts.fredoka(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.blueTop, letterSpacing: 1)),
+                        style: GoogleFonts.fredoka(fontSize: AppTheme.fontNano, fontWeight: FontWeight.w700, color: AppTheme.blueTop, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -696,7 +659,7 @@ class _InventoryCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
             decoration: BoxDecoration(
               color: AppTheme.gold.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
               border: Border.all(color: AppTheme.gold.withValues(alpha: 0.5), width: 1.5),
             ),
             child: Column(
@@ -708,7 +671,7 @@ class _InventoryCard extends StatelessWidget {
                     Icon(Icons.star_rounded, color: AppTheme.gold, size: 11),
                     const SizedBox(width: 4),
                     Text('PREMIUM',
-                        style: GoogleFonts.fredoka(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.gold, letterSpacing: 1)),
+                        style: GoogleFonts.fredoka(fontSize: AppTheme.fontNano, fontWeight: FontWeight.w700, color: AppTheme.gold, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -748,7 +711,7 @@ class _NoAdsIconPainter extends CustomPainter {
     final radius = size.width / 2 - 1;
 
     canvas.drawCircle(center, radius, Paint()
-      ..color = const Color(0xFFFF1744)
+      ..color = AppTheme.shopNoAdsRed
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5);
 
@@ -765,7 +728,7 @@ class _NoAdsIconPainter extends CustomPainter {
     canvas.drawLine(
       Offset(center.dx - offset, center.dy + offset),
       Offset(center.dx + offset, center.dy - offset),
-      Paint()..color = const Color(0xFFFF1744)..style = PaintingStyle.stroke..strokeWidth = 2.5..strokeCap = StrokeCap.round,
+      Paint()..color = AppTheme.shopNoAdsRed..style = PaintingStyle.stroke..strokeWidth = 2.5..strokeCap = StrokeCap.round,
     );
   }
 
@@ -810,11 +773,11 @@ class _NoAdsSectionHeaderState extends State<_NoAdsSectionHeader> with SingleTic
               end: Alignment.bottomRight,
               colors: [
                 widget.gradStart.withValues(alpha: 0.15),
-                const Color(0xFF0d0b2e),
+                AppTheme.sectionBg,
                 widget.gradEnd.withValues(alpha: 0.1),
               ],
             ),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
           ),
           child: Column(
             children: [
@@ -835,7 +798,7 @@ class _NoAdsSectionHeaderState extends State<_NoAdsSectionHeader> with SingleTic
                     child: Text(
                       'ZÉRO PUB + JOKERS',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
+                      style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
                     ),
                   ),
                 ],
@@ -901,11 +864,11 @@ class _SectionHeaderState extends State<_SectionHeader> with SingleTickerProvide
               end: Alignment.bottomRight,
               colors: [
                 widget.gradStart.withValues(alpha: 0.15),
-                const Color(0xFF0d0b2e),
+                AppTheme.sectionBg,
                 widget.gradEnd.withValues(alpha: 0.1),
               ],
             ),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
             boxShadow: [BoxShadow(color: widget.gradStart.withValues(alpha: glow), blurRadius: 12)],
           ),
           child: Column(
@@ -922,7 +885,7 @@ class _SectionHeaderState extends State<_SectionHeader> with SingleTickerProvide
                 child: Text(
                   widget.title,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
+                  style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
                 ),
               ),
               const SizedBox(height: 8),
@@ -988,14 +951,14 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
         final glowAlpha = 0.25 + _pulse.value * 0.2;
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             boxShadow: [
-              BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: glowAlpha), blurRadius: 24, spreadRadius: 2),
-              BoxShadow(color: const Color(0xFF7C4DFF).withValues(alpha: glowAlpha * 0.5), blurRadius: 32, spreadRadius: -4),
+              BoxShadow(color: AppTheme.gold.withValues(alpha: glowAlpha), blurRadius: 24, spreadRadius: 2),
+              BoxShadow(color: AppTheme.shopSectionPurple.withValues(alpha: glowAlpha * 0.5), blurRadius: 32, spreadRadius: -4),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             child: Stack(
               children: [
                 // Background gradient
@@ -1005,10 +968,10 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF1a0533), Color(0xFF2d1b69), Color(0xFF1a1145)],
+                      colors: [AppTheme.shopDarkCard1, AppTheme.shopDarkCard2, AppTheme.shopDarkCard3],
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(width: 2, color: const Color(0xFFFFD700)),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                    border: Border.all(width: 2, color: AppTheme.gold),
                   ),
                   child: Row(
                     children: [
@@ -1021,9 +984,9 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
                           Text(
                             '10,99 €',
                             style: GoogleFonts.nunito(
-                              fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white38,
+                              fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w700, color: Colors.white38,
                               decoration: TextDecoration.lineThrough,
-                              decorationColor: Colors.redAccent, decorationThickness: 2,
+                              decorationColor: AppTheme.shopStrikeRed, decorationThickness: 2,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -1054,10 +1017,10 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: const BoxDecoration(
-                      gradient: LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFDAA520)]),
-                      borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12), topRight: Radius.circular(16)),
+                      gradient: LinearGradient(colors: [AppTheme.gold, AppTheme.goldAntique]),
+                      borderRadius: BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusMedium)),
                     ),
-                    child: Text('✨ ACHAT UNIQUE', style: GoogleFonts.fredoka(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white)),
+                    child: Text('✨ ACHAT UNIQUE', style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
                   ),
                 ),
               ],
@@ -1080,7 +1043,7 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
             width: 72,
             height: 80,
             decoration: BoxDecoration(
-              boxShadow: [BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: glow), blurRadius: 16)],
+              boxShadow: [BoxShadow(color: AppTheme.gold.withValues(alpha: glow), blurRadius: 16)],
             ),
             child: CustomPaint(painter: _ShieldNoPainter()),
           ),
@@ -1097,29 +1060,29 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
         const SizedBox(height: 2),
         ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFFFFD700), Color(0xFFFFECB3), Color(0xFFFFD700)],
+            colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
           ).createShader(bounds),
-          child: Text('ZÉRO PUB + JOKERS', style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+          child: Text('ZÉRO PUB + JOKERS', style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: Colors.white)),
         ),
         const SizedBox(height: 5),
         Text(
           'Supprime toutes les pubs !',
-          style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white54, height: 1.3),
+          style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w700, color: Colors.white54, height: 1.3),
         ),
         const SizedBox(height: 6),
         Row(
           children: [
             JokerUI.icon(JokerType.bomb, size: 20),
             const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.bomb))),
+            Text('×10', style: GoogleFonts.fredoka(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.bomb))),
             const SizedBox(width: 10),
             JokerUI.icon(JokerType.wildcard, size: 20),
             const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.wildcard))),
+            Text('×10', style: GoogleFonts.fredoka(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.wildcard))),
             const SizedBox(width: 10),
             JokerUI.icon(JokerType.reducer, size: 16),
             const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: 14, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.reducer))),
+            Text('×10', style: GoogleFonts.fredoka(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.reducer))),
           ],
         ),
       ],
@@ -1180,14 +1143,14 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
         final glowAlpha = 0.25 + _pulse.value * 0.2;
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             boxShadow: [
               BoxShadow(color: widget.gradStart.withValues(alpha: glowAlpha), blurRadius: 24, spreadRadius: 2),
               BoxShadow(color: widget.gradEnd.withValues(alpha: glowAlpha * 0.5), blurRadius: 32, spreadRadius: -4),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
             child: Stack(
               children: [
                 // Background gradient
@@ -1199,11 +1162,11 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
                       end: Alignment.bottomRight,
                       colors: [
                         widget.gradStart.withValues(alpha: 0.2),
-                        const Color(0xFF0d0b2e),
+                        AppTheme.sectionBg,
                         widget.gradEnd.withValues(alpha: 0.15),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                     border: Border.all(
                       width: 2,
                       color: widget.gradStart.withValues(alpha: 0.5 + glowAlpha * 0.3),
@@ -1224,7 +1187,7 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
                               shaderCallback: (bounds) => LinearGradient(
                                 colors: [widget.gradStart, Colors.white, widget.gradEnd],
                               ).createShader(bounds),
-                              child: Text(widget.name.toUpperCase(), style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+                              child: Text(widget.name.toUpperCase(), style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: Colors.white)),
                             ),
                             const SizedBox(height: 5),
                             widget.descriptionWidget,
@@ -1282,12 +1245,12 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [Color(0xFFFF4747), Color(0xFFFF1744)]),
-                              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(12), topRight: Radius.circular(16)),
+                              gradient: const LinearGradient(colors: [AppTheme.deathBadgeTop, AppTheme.shopNoAdsRed]),
+                              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusMedium)),
                               border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
-                              boxShadow: [BoxShadow(color: const Color(0xFFFF4747).withValues(alpha: 0.5), blurRadius: 6)],
+                              boxShadow: [BoxShadow(color: AppTheme.deathBadgeTop.withValues(alpha: 0.5), blurRadius: 6)],
                             ),
-                            child: Text(widget.badge!, style: GoogleFonts.fredoka(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white)),
+                            child: Text(widget.badge!, style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
                           ),
                         );
                       },
@@ -1323,7 +1286,7 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
                 child: Text(
                   widget.emoji,
                   style: TextStyle(
-                    fontSize: 36,
+                    fontSize: AppTheme.fontLarge,
                     shadows: [
                       Shadow(color: widget.gradStart.withValues(alpha: 0.8), blurRadius: 12),
                       const Shadow(color: Colors.black38, offset: Offset(0, 3), blurRadius: 2),
@@ -1380,13 +1343,13 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
           onTap: widget.onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
               boxShadow: [
-                BoxShadow(color: const Color(0xFFFF9F0A).withValues(alpha: glowAlpha), blurRadius: 24, spreadRadius: 2),
+                BoxShadow(color: AppTheme.orangeTop.withValues(alpha: glowAlpha), blurRadius: 24, spreadRadius: 2),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
               child: Stack(
                 children: [
                   Container(
@@ -1395,10 +1358,10 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1a0533), Color(0xFF2d1b69), Color(0xFF1a1145)],
+                        colors: [AppTheme.shopDarkCard1, AppTheme.shopDarkCard2, AppTheme.shopDarkCard3],
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(width: 2, color: const Color(0xFFFF9F0A).withValues(alpha: 0.6)),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                      border: Border.all(width: 2, color: AppTheme.orangeTop.withValues(alpha: 0.6)),
                     ),
                     child: Row(
                       children: [
@@ -1417,12 +1380,12 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                                   gradient: const LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
-                                    colors: [Color(0xFFFFE082), Color(0xFFFFD700)],
+                                    colors: [AppTheme.goldPale, AppTheme.gold],
                                   ),
                                   border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
-                                  boxShadow: [BoxShadow(color: const Color(0xFFFFD700).withValues(alpha: 0.5), blurRadius: 10)],
+                                  boxShadow: [BoxShadow(color: AppTheme.gold.withValues(alpha: 0.5), blurRadius: 10)],
                                 ),
-                                child: const Center(child: Icon(Icons.smart_display_rounded, color: Color(0xFF1a0533), size: 28)),
+                                child: const Center(child: Icon(Icons.smart_display_rounded, color: AppTheme.shopDarkCard1, size: 28)),
                               ),
                             );
                           },
@@ -1435,12 +1398,12 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                             children: [
                               ShaderMask(
                                 shaderCallback: (bounds) => const LinearGradient(
-                                  colors: [Color(0xFFFF9F0A), Color(0xFFFFD60A), Color(0xFFFF9F0A)],
+                                  colors: [AppTheme.orangeTop, AppTheme.radarColor, AppTheme.orangeTop],
                                 ).createShader(bounds),
-                                child: Text(widget.label, style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white)),
+                                child: Text(widget.label, style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: Colors.white)),
                               ),
                               const SizedBox(height: 5),
-                              Text(widget.subtitle, style: GoogleFonts.nunito(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white54, height: 1.3)),
+                              Text(widget.subtitle, style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w700, color: Colors.white54, height: 1.3)),
                             ],
                           ),
                         ),
@@ -1458,10 +1421,10 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: const BoxDecoration(
-                        gradient: LinearGradient(colors: [Color(0xFF30D158), Color(0xFF0A7A2E)]),
-                        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12), topRight: Radius.circular(16)),
+                        gradient: LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
+                        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusMedium)),
                       ),
-                      child: Text('🎬 GRATUIT', style: GoogleFonts.fredoka(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white)),
+                      child: Text('🎬 GRATUIT', style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -1492,19 +1455,19 @@ class _AdGratuitButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF30D158), Color(0xFF0A7A2E)]),
-              borderRadius: BorderRadius.circular(8),
+              gradient: const LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXXTiny),
               border: Border.all(color: Colors.white.withValues(alpha: 0.25 + pulse.value * 0.2), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF30D158).withValues(alpha: 0.3 + pulse.value * 0.3),
+                  color: AppTheme.shopPackStar1.withValues(alpha: 0.3 + pulse.value * 0.3),
                   offset: const Offset(0, 4),
                   blurRadius: 10 + pulse.value * 6,
                   spreadRadius: pulse.value * 2,
                 ),
               ],
             ),
-            child: Text('GRATUIT', style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
+            child: Text('GRATUIT', style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w900, color: Colors.white)),
           ),
         );
       },
@@ -1550,12 +1513,12 @@ class _AnimatedPriceButtonState extends State<_AnimatedPriceButton> with SingleT
               vertical: widget.large ? 8 : 6,
             ),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF30D158), Color(0xFF0A7A2E)]),
-              borderRadius: BorderRadius.circular(8),
+              gradient: const LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXXTiny),
               border: Border.all(color: Colors.white.withValues(alpha: 0.25 + _pulse.value * 0.2), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF30D158).withValues(alpha: 0.3 + _pulse.value * 0.3),
+                  color: AppTheme.shopPackStar1.withValues(alpha: 0.3 + _pulse.value * 0.3),
                   offset: const Offset(0, 4),
                   blurRadius: 10 + _pulse.value * 6,
                   spreadRadius: _pulse.value * 2,
@@ -1566,7 +1529,7 @@ class _AnimatedPriceButtonState extends State<_AnimatedPriceButton> with SingleT
               fit: BoxFit.scaleDown,
               child: Text(
                 widget.price,
-                style: GoogleFonts.fredoka(fontSize: widget.large ? 20 : 22, fontWeight: FontWeight.w900, color: Colors.white),
+                style: GoogleFonts.fredoka(fontSize: widget.large ? AppTheme.fontH4 : AppTheme.fontH3, fontWeight: FontWeight.w900, color: Colors.white),
               ),
             ),
           ),
@@ -1608,12 +1571,12 @@ class _ShieldNoPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFFFFE082), Color(0xFFFFD700), Color(0xFFDAA520), Color(0xFFB8860B)],
+        colors: const [AppTheme.goldPale, AppTheme.gold, AppTheme.goldAntique, AppTheme.goldBronze],
         stops: const [0.0, 0.3, 0.7, 1.0],
       ).createShader(Rect.fromLTWH(ox, oy, w, h)));
 
     // Border
-    canvas.drawPath(shield, Paint()..color = const Color(0xFF8B6914)..style = PaintingStyle.stroke..strokeWidth = 1.8);
+    canvas.drawPath(shield, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.8);
 
     // Inner shield line
     final innerShield = Path()
@@ -1625,7 +1588,7 @@ class _ShieldNoPainter extends CustomPainter {
       ..lineTo(ox + w * 0.88, oy + h * 0.18)
       ..quadraticBezierTo(ox + w * 0.88, oy + 5, cx, oy + 5)
       ..close();
-    canvas.drawPath(innerShield, Paint()..color = const Color(0xFFFFE082).withValues(alpha: 0.5)..style = PaintingStyle.stroke..strokeWidth = 1.0);
+    canvas.drawPath(innerShield, Paint()..color = AppTheme.goldPale.withValues(alpha: 0.5)..style = PaintingStyle.stroke..strokeWidth = 1.0);
 
     // Red circle with strikethrough
     final circCx = cx;
@@ -1634,14 +1597,14 @@ class _ShieldNoPainter extends CustomPainter {
 
     // Red glow
     canvas.drawCircle(Offset(circCx, circCy), circR + 3, Paint()
-      ..color = const Color(0xFFFF1744).withValues(alpha: 0.5)
+      ..color = AppTheme.shopNoAdsRed.withValues(alpha: 0.5)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
 
     // Red circle fill
     canvas.drawCircle(Offset(circCx, circCy), circR, Paint()
       ..shader = const RadialGradient(
         center: Alignment(-0.3, -0.3),
-        colors: [Color(0xFFFF5252), Color(0xFFFF1744), Color(0xFFD50000)],
+        colors: [AppTheme.capDanger, AppTheme.shopNoAdsRed, AppTheme.redDeep],
         stops: [0.0, 0.5, 1.0],
       ).createShader(Rect.fromCircle(center: Offset(circCx, circCy), radius: circR)));
 
@@ -1739,7 +1702,7 @@ class _SparkleParticlesPainter extends CustomPainter {
       final alpha = (t < 0.5 ? t * 2 : (1.0 - t) * 2).clamp(0.0, 1.0);
       final s = 1.5 + seed * 2.0;
 
-      final paint = Paint()..color = const Color(0xFFFFD700).withValues(alpha: alpha * 0.7);
+      final paint = Paint()..color = AppTheme.gold.withValues(alpha: alpha * 0.7);
       _drawStar(canvas, x, y, s, paint);
     }
   }
@@ -1762,75 +1725,157 @@ class _SparkleParticlesPainter extends CustomPainter {
 // ═══════════════════════════════════════════════════════════════
 // Joker choice button (for dialog)
 // ═══════════════════════════════════════════════════════════════
-class _JokerChoiceButton extends StatefulWidget {
-  final Widget icon;
-  final Color color;
-  final JokerType jokerType;
-  const _JokerChoiceButton({required this.icon, required this.color, required this.jokerType});
-
+// ── Joker choice panel (stateful — tracks selection, validates on button) ──
+class _JokerChoicePanel extends StatefulWidget {
   @override
-  State<_JokerChoiceButton> createState() => _JokerChoiceButtonState();
+  State<_JokerChoicePanel> createState() => _JokerChoicePanelState();
 }
 
-class _JokerChoiceButtonState extends State<_JokerChoiceButton> with SingleTickerProviderStateMixin {
-  bool _chosen = false;
-  late final AnimationController _anim;
+class _JokerChoicePanelState extends State<_JokerChoicePanel> {
+  JokerType? _selected;
 
   @override
-  void initState() {
-    super.initState();
-    _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-  }
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.panelBg,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        border: Border.all(color: AppTheme.panelBorder, width: 3),
+        boxShadow: const [
+          BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 8)),
+          BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Gift icon
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppTheme.profileGradTop, AppTheme.profileGradBot],
+              ),
+              border: Border.all(color: AppTheme.gold, width: 3),
+              boxShadow: [
+                BoxShadow(color: AppTheme.gold.withValues(alpha: 0.3), blurRadius: 12),
+              ],
+            ),
+            child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 40),
+          ),
+          const SizedBox(height: 12),
+          Text(l10n.chooseJoker.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH4)),
+          const SizedBox(height: 20),
 
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
+          // Joker choices
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _JokerChoiceButton(
+                icon: JokerUI.icon(JokerType.bomb, size: 36),
+                color: JokerUI.color(JokerType.bomb),
+                selected: _selected == JokerType.bomb,
+                onTap: () => setState(() => _selected = JokerType.bomb),
+              ),
+              _JokerChoiceButton(
+                icon: JokerUI.icon(JokerType.wildcard, size: 36),
+                color: JokerUI.color(JokerType.wildcard),
+                selected: _selected == JokerType.wildcard,
+                onTap: () => setState(() => _selected = JokerType.wildcard),
+              ),
+              _JokerChoiceButton(
+                icon: JokerUI.icon(JokerType.reducer, size: 30),
+                color: JokerUI.color(JokerType.reducer),
+                selected: _selected == JokerType.reducer,
+                onTap: () => setState(() => _selected = JokerType.reducer),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
 
-  void _onTap() {
-    if (_chosen) return;
-    setState(() => _chosen = true);
-    _anim.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) Navigator.of(context).pop(widget.jokerType);
-      });
-    });
+          // Validate button — only pops with selection
+          SizedBox(
+            width: double.infinity,
+            child: Button3D.green(
+              expand: true,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              onPressed: _selected == null ? null : () => Navigator.pop(context, _selected),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Text('VALIDER', style: AppTheme.titleStyle(AppTheme.fontBody)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
+}
+
+// ── Single joker choice tile (visual only, no pop) ──
+class _JokerChoiceButton extends StatelessWidget {
+  final Widget icon;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+  const _JokerChoiceButton({required this.icon, required this.color, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _onTap,
-      child: AnimatedBuilder(
-        animation: _anim,
-        builder: (context, _) {
-          final scale = 1.0 + _anim.value * 0.25;
-          final glow = _anim.value * 0.8;
-          return Transform.scale(
-            scale: scale,
-            child: Container(
+      onTap: onTap,
+      child: AnimatedScale(
+        scale: selected ? 1.2 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutBack,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _chosen ? widget.color.withValues(alpha: 0.2) : AppTheme.panelBg,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: widget.color, width: _chosen ? 3 : 1.5),
+                color: selected ? color.withValues(alpha: 0.2) : AppTheme.panelBg,
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                border: Border.all(color: color, width: selected ? 3 : 1.5),
                 boxShadow: [
-                  BoxShadow(color: widget.color.withValues(alpha: _chosen ? glow : 0.3), blurRadius: _chosen ? 24 : 10),
-                  const BoxShadow(color: Color(0xFF111827), offset: Offset(0, 3)),
+                  BoxShadow(color: color.withValues(alpha: selected ? 0.6 : 0.3), blurRadius: selected ? 20 : 10),
+                  const BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 3)),
                 ],
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  widget.icon,
-                  if (_chosen)
-                    Icon(Icons.check_circle, color: widget.color, size: 28),
-                ],
-              ),
+              child: icon,
             ),
-          );
-        },
+            if (selected)
+              Positioned(
+                top: -8,
+                right: -8,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8),
+                    ],
+                  ),
+                  child: const Icon(Icons.check, color: Colors.white, size: 14),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

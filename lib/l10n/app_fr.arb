@@ -71,5 +71,78 @@
   "chooseAvatar": "Choisis ton avatar",
   "save": "Enregistrer",
   "profileUpdated": "Profil mis à jour !",
-  "signOutConfirm": "Te déconnecter ?"
+  "signOutConfirm": "Te déconnecter ?",
+  "streakDay": "Jour {n}",
+  "@streakDay": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "streakConnectedToday": "Connexion du jour validée !",
+  "streakBroken": "Série interrompue",
+  "streakBrokenDesc": "Ton streak s'est interrompu…",
+  "streakSaveNudge": "Connecte-toi pour ne jamais perdre ton streak.",
+  "streakCollect": "Super !",
+  "streakLost": "Streak perdu",
+  "streakLostDesc": "Reviens chaque jour pour accumuler\ndes bonus plus intéressants.",
+  "dailyObjectivesTitle": "OBJECTIFS DU JOUR",
+  "objectiveFusions": "{n, plural, =1{Réaliser 1 fusion} other{Réaliser {n} fusions}}",
+  "@objectiveFusions": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveScore": "Atteindre un score de {n}",
+  "@objectiveScore": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveParties": "{n, plural, =1{Jouer 1 partie} other{Jouer {n} parties}}",
+  "@objectiveParties": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveFormeMax": "Atteindre la forme rang {n}",
+  "@objectiveFormeMax": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveJokersUses": "{n, plural, =1{Utiliser 1 joker} other{Utiliser {n} jokers}}",
+  "@objectiveJokersUses": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveBonusAll": "Bonus tout compléter",
+  "objectiveCompleted": "Objectif complété !",
+  "collectReward": "Collecter",
+  "rewardReceived": "Récompense reçue !",
+  "allObjectivesCompleted": "Tous les objectifs complétés !",
+  "levelBadge": "Nv",
+  "levelUp": "NIVEAU {n} !",
+  "@levelUp": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "xpGained": "+{n} XP",
+  "@xpGained": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "xpToNextLevel": "{n} XP avant le niveau {lv}",
+  "@xpToNextLevel": {
+    "placeholders": {
+      "n": {"type": "int"},
+      "lv": {"type": "int"}
+    }
+  },
+  "connectToSave": "Connecte-toi pour sauvegarder",
+  "later": "Plus tard",
+  "deleteAccount": "Supprimer mon compte",
+  "deleteAccountConfirm": "Supprimer définitivement ?"
 }

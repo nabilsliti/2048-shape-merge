@@ -21,7 +21,7 @@ class TutorialOverlay extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppTheme.panelBg,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
               border: Border.all(color: AppTheme.panelBorder, width: 2),
               boxShadow: [
                 BoxShadow(
@@ -43,7 +43,7 @@ class TutorialOverlay extends StatelessWidget {
                   // Title
                   Text(
                     '🧬 SHAPE MERGE 2048',
-                    style: AppTheme.titleStyle(24),
+                    style: AppTheme.titleStyle(AppTheme.fontH2),
                   ),
                   const SizedBox(height: 20),
 
@@ -82,7 +82,7 @@ class TutorialOverlay extends StatelessWidget {
                       horizontal: 48,
                       vertical: 14,
                     ),
-                    child: Text('GO !', style: AppTheme.titleStyle(24)),
+                    child: Text('GO !', style: AppTheme.titleStyle(AppTheme.fontH2)),
                   ),
                 ],
               ),
@@ -110,7 +110,7 @@ class _InstructionRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(icon, style: const TextStyle(fontSize: 20)),
+        Text(icon, style: const TextStyle(fontSize: AppTheme.fontH4)),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -120,7 +120,7 @@ class _InstructionRow extends StatelessWidget {
                 label,
                 style: const TextStyle(
                   color: Colors.white70,
-                  fontSize: 12,
+                  fontSize: AppTheme.fontTiny,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
                 ),
@@ -130,7 +130,7 @@ class _InstructionRow extends StatelessWidget {
                 text,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: AppTheme.fontSmall,
                   height: 1.3,
                 ),
               ),
@@ -148,7 +148,7 @@ class _JokerSection extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('🃏', style: TextStyle(fontSize: 20)),
+        const Text('🃏', style: TextStyle(fontSize: AppTheme.fontH4)),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -158,7 +158,7 @@ class _JokerSection extends StatelessWidget {
                 'JOKERS',
                 style: TextStyle(
                   color: Colors.white70,
-                  fontSize: 12,
+                  fontSize: AppTheme.fontTiny,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
                 ),
@@ -166,7 +166,7 @@ class _JokerSection extends StatelessWidget {
               const SizedBox(height: 4),
               // ── Classiques ──
               const Text('— Classiques —',
-                  style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.8)),
+                  style: TextStyle(color: Colors.white38, fontSize: AppTheme.fontNano, letterSpacing: 0.8)),
               const SizedBox(height: 4),
               _jokerRow(JokerUI.icon(JokerType.bomb, size: 20), 'Bombe', 'Détruit une forme'),
               const SizedBox(height: 4),
@@ -181,7 +181,7 @@ class _JokerSection extends StatelessWidget {
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 6),
                     child: Text('★ PREMIUM',
-                        style: TextStyle(color: AppTheme.gold, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        style: TextStyle(color: AppTheme.gold, fontSize: AppTheme.fontPico, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                   Expanded(child: Container(height: 1, color: AppTheme.gold.withValues(alpha: 0.4))),
                 ],
@@ -220,7 +220,7 @@ class _JokerSection extends StatelessWidget {
             ),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
+              fontSize: AppTheme.fontSmall,
               height: 1.3,
             ),
           ),

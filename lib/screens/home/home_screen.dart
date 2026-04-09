@@ -8,6 +8,7 @@ import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/screens/hub/widgets/daily_challenge_card.dart';
 
 /// Standalone screen (used by router for /home fallback).
 class HomeScreen extends StatelessWidget {
@@ -90,14 +91,12 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
         Positioned.fill(
           child: SafeArea(
             bottom: false,
-            child: Padding(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 90, bottom: 24),
-                    child: _FloatingTitle(),
-                  ),
+                  const SizedBox(height: 90),
 
                   // ── Best Score — floating premium display ──
                   _BestScoreDisplay(
@@ -105,7 +104,12 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                     score: gameState.bestScore,
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+
+                  // ── Daily challenges card ──
+                  const DailyChallengeCard(),
+
+                  const SizedBox(height: 16),
 
                   // ── Play button — full width Button3D green ──
                   Button3D.green(
@@ -119,7 +123,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                           children: [
                             const PremiumIcon.rocket(size: 44),
                             const SizedBox(width: 14),
-                            Text(l10n.play.toUpperCase(), style: AppTheme.titleStyle(24)),
+                            Text(l10n.play.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH2)),
                           ],
                         ),
                       ),
@@ -144,7 +148,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                                   child: CustomPaint(painter: _JokerBagPainter()),
                                 ),
                                 const SizedBox(height: 6),
-                                Text(l10n.shop.toUpperCase(), style: AppTheme.titleStyle(12)),
+                                Text(l10n.shop.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontTiny)),
                               ],
                             ),
                           ),
@@ -164,7 +168,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                                   child: CustomPaint(painter: _TrophyPainter()),
                                 ),
                                 const SizedBox(height: 6),
-                                Text(l10n.leaderboard.toUpperCase(), style: AppTheme.titleStyle(12)),
+                                Text(l10n.leaderboard.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontTiny)),
                               ],
                             ),
                           ),
@@ -216,7 +220,7 @@ class _GlassMenuButtonState extends State<_GlassMenuButton> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: _pressed ? 0.12 : 0.08),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           border: Border.all(color: widget.accentColor.withValues(alpha: 0.3), width: 1.5),
           boxShadow: [
             BoxShadow(color: widget.accentColor.withValues(alpha: 0.1), blurRadius: 12),
@@ -231,7 +235,7 @@ class _GlassMenuButtonState extends State<_GlassMenuButton> {
               child: CustomPaint(painter: widget.iconPainter),
             ),
             const SizedBox(height: 6),
-            Text(widget.label, style: AppTheme.titleStyle(11)),
+            Text(widget.label, style: AppTheme.titleStyle(AppTheme.fontMini)),
           ],
         ),
       ),
@@ -288,7 +292,7 @@ class _BestScoreDisplayState extends State<_BestScoreDisplay>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.15 + p * 0.20),
+                    color: AppTheme.gold.withValues(alpha: 0.15 + p * 0.20),
                     blurRadius: 24 + p * 16,
                     spreadRadius: -2 + p * 6,
                   ),
@@ -302,9 +306,9 @@ class _BestScoreDisplayState extends State<_BestScoreDisplay>
             Text(
               widget.label,
               style: GoogleFonts.nunito(
-                fontSize: 11,
+                fontSize: AppTheme.fontMini,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFFBBA86E).withValues(alpha: 0.7 + p * 0.3),
+                color: AppTheme.goldDim.withValues(alpha: 0.7 + p * 0.3),
                 letterSpacing: 3,
               ),
             ),
@@ -314,15 +318,15 @@ class _BestScoreDisplayState extends State<_BestScoreDisplay>
             Text(
               '${widget.score}',
               style: GoogleFonts.fredoka(
-                fontSize: 44,
+                fontSize: AppTheme.fontDisplay,
                 fontWeight: FontWeight.w900,
                 foreground: Paint()
                   ..shader = const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFF8DC), Color(0xFFFFD700)],
+                    colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
                   ).createShader(const Rect.fromLTWH(0, 0, 200, 50)),
                 shadows: [
                   Shadow(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.3 + p * 0.2),
+                    color: AppTheme.gold.withValues(alpha: 0.3 + p * 0.2),
                     blurRadius: 12 + p * 8,
                   ),
                   const Shadow(
@@ -343,9 +347,9 @@ class _BestScoreDisplayState extends State<_BestScoreDisplay>
                 borderRadius: BorderRadius.circular(1),
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFFFD700).withValues(alpha: 0.0),
-                    const Color(0xFFFFD700).withValues(alpha: 0.5 + p * 0.3),
-                    const Color(0xFFFFD700).withValues(alpha: 0.0),
+                    AppTheme.gold.withValues(alpha: 0.0),
+                    AppTheme.gold.withValues(alpha: 0.5 + p * 0.3),
+                    AppTheme.gold.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -391,11 +395,11 @@ class _JokerBagPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFFc56cff), Color(0xFFa541ff), Color(0xFF7b1fa2)],
+        colors: const [AppTheme.bagPurpleLight, AppTheme.bagPurpleMid, AppTheme.bagPurpleDark],
       ).createShader(Rect.fromLTWH(0, 0, w, h)));
 
     // Bag border
-    canvas.drawPath(bag, Paint()..color = const Color(0xFF6a0dad)..style = PaintingStyle.stroke..strokeWidth = 1.5);
+    canvas.drawPath(bag, Paint()..color = AppTheme.bagBorder..style = PaintingStyle.stroke..strokeWidth = 1.5);
 
     // Bag flap — top rectangle
     final flap = RRect.fromRectAndRadius(
@@ -404,9 +408,9 @@ class _JokerBagPainter extends CustomPainter {
     );
     canvas.drawRRect(flap, Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFFd98fff), Color(0xFFb560e8)],
+        colors: [AppTheme.bagFlapLight, AppTheme.bagFlapDark],
       ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawRRect(flap, Paint()..color = const Color(0xFF6a0dad)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+    canvas.drawRRect(flap, Paint()..color = AppTheme.bagBorder..style = PaintingStyle.stroke..strokeWidth = 1.2);
 
     // Handle — arch
     final handle = Path()
@@ -414,18 +418,18 @@ class _JokerBagPainter extends CustomPainter {
       ..quadraticBezierTo(w * 0.35, h * 0.08, w * 0.50, h * 0.08)
       ..quadraticBezierTo(w * 0.65, h * 0.08, w * 0.65, h * 0.32);
     canvas.drawPath(handle, Paint()
-      ..color = const Color(0xFFe0b0ff)
+      ..color = AppTheme.bagHandle
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round);
     canvas.drawPath(handle, Paint()
-      ..color = const Color(0xFF6a0dad)
+      ..color = AppTheme.bagBorder
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
       ..strokeCap = StrokeCap.round);
 
     // Star on bag
-    _drawStar(canvas, Offset(w * 0.50, h * 0.68), w * 0.14, const Color(0xFFFFD700), const Color(0xFFFF8C00));
+    _drawStar(canvas, Offset(w * 0.50, h * 0.68), w * 0.14, AppTheme.gold, AppTheme.victoryBadgeBot);
 
     // Shine highlight
     canvas.drawRRect(
@@ -447,7 +451,7 @@ class _JokerBagPainter extends CustomPainter {
     canvas.drawPath(path, Paint()
       ..shader = RadialGradient(colors: [c1, c2]).createShader(
         Rect.fromCircle(center: center, radius: r)));
-    canvas.drawPath(path, Paint()..color = const Color(0xFF8B6914)..style = PaintingStyle.stroke..strokeWidth = 0.8);
+    canvas.drawPath(path, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 0.8);
   }
 
   @override
@@ -476,9 +480,9 @@ class _TrophyPainter extends CustomPainter {
     );
     canvas.drawRRect(basePlate, Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFFFFE082), Color(0xFFDAA520), Color(0xFFB8860B)],
+        colors: [AppTheme.goldPale, AppTheme.goldAntique, AppTheme.goldBronze],
       ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawRRect(basePlate, Paint()..color = const Color(0xFF8B6914)..style = PaintingStyle.stroke..strokeWidth = 1.0);
+    canvas.drawRRect(basePlate, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.0);
 
     // Stem
     final stem = Path()
@@ -489,9 +493,9 @@ class _TrophyPainter extends CustomPainter {
       ..close();
     canvas.drawPath(stem, Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFFFFD700), Color(0xFFDAA520)],
+        colors: [AppTheme.gold, AppTheme.goldAntique],
       ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawPath(stem, Paint()..color = const Color(0xFF8B6914)..style = PaintingStyle.stroke..strokeWidth = 1.0);
+    canvas.drawPath(stem, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.0);
 
     // Cup body
     final cup = Path()
@@ -511,26 +515,26 @@ class _TrophyPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: const [Color(0xFFFFE082), Color(0xFFFFD700), Color(0xFFDAA520), Color(0xFFB8860B)],
+        colors: const [AppTheme.goldPale, AppTheme.gold, AppTheme.goldAntique, AppTheme.goldBronze],
         stops: const [0.0, 0.3, 0.7, 1.0],
       ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawPath(cup, Paint()..color = const Color(0xFF8B6914)..style = PaintingStyle.stroke..strokeWidth = 1.5);
+    canvas.drawPath(cup, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.5);
 
     // Left handle
     final lHandle = Path()
       ..moveTo(w * 0.20, h * 0.18)
       ..quadraticBezierTo(w * 0.04, h * 0.20, w * 0.06, h * 0.35)
       ..quadraticBezierTo(w * 0.08, h * 0.48, w * 0.22, h * 0.45);
-    canvas.drawPath(lHandle, Paint()..color = const Color(0xFFFFD700)..style = PaintingStyle.stroke..strokeWidth = 3.5..strokeCap = StrokeCap.round);
-    canvas.drawPath(lHandle, Paint()..color = const Color(0xFF8B6914)..style = PaintingStyle.stroke..strokeWidth = 1.2..strokeCap = StrokeCap.round);
+    canvas.drawPath(lHandle, Paint()..color = AppTheme.gold..style = PaintingStyle.stroke..strokeWidth = 3.5..strokeCap = StrokeCap.round);
+    canvas.drawPath(lHandle, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.2..strokeCap = StrokeCap.round);
 
     // Right handle
     final rHandle = Path()
       ..moveTo(w * 0.80, h * 0.18)
       ..quadraticBezierTo(w * 0.96, h * 0.20, w * 0.94, h * 0.35)
       ..quadraticBezierTo(w * 0.92, h * 0.48, w * 0.78, h * 0.45);
-    canvas.drawPath(rHandle, Paint()..color = const Color(0xFFFFD700)..style = PaintingStyle.stroke..strokeWidth = 3.5..strokeCap = StrokeCap.round);
-    canvas.drawPath(rHandle, Paint()..color = const Color(0xFF8B6914)..style = PaintingStyle.stroke..strokeWidth = 1.2..strokeCap = StrokeCap.round);
+    canvas.drawPath(rHandle, Paint()..color = AppTheme.gold..style = PaintingStyle.stroke..strokeWidth = 3.5..strokeCap = StrokeCap.round);
+    canvas.drawPath(rHandle, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.2..strokeCap = StrokeCap.round);
 
     // Star on cup
     _drawStar(canvas, Offset(w * 0.50, h * 0.35), w * 0.12);
@@ -545,7 +549,7 @@ class _TrophyPainter extends CustomPainter {
     canvas.drawLine(
       Offset(w * 0.24, h * 0.12),
       Offset(w * 0.76, h * 0.12),
-      Paint()..color = const Color(0xFFFFE082).withValues(alpha: 0.6)..strokeWidth = 1.5..strokeCap = StrokeCap.round,
+      Paint()..color = AppTheme.goldPale.withValues(alpha: 0.6)..strokeWidth = 1.5..strokeCap = StrokeCap.round,
     );
   }
 
@@ -560,7 +564,7 @@ class _TrophyPainter extends CustomPainter {
     }
     path.close();
     canvas.drawPath(path, Paint()..color = Colors.white.withValues(alpha: 0.7));
-    canvas.drawPath(path, Paint()..color = const Color(0xFF8B6914).withValues(alpha: 0.5)..style = PaintingStyle.stroke..strokeWidth = 0.7);
+    canvas.drawPath(path, Paint()..color = AppTheme.goldDark.withValues(alpha: 0.5)..style = PaintingStyle.stroke..strokeWidth = 0.7);
   }
 
   @override
@@ -622,9 +626,9 @@ class _FloatingTitleState extends State<_FloatingTitle>
                   child: Text(
                     letter,
                     style: isMerge
-                        ? AppTheme.titleStyle(38)
+                        ? AppTheme.titleStyle(AppTheme.fontXL)
                             .copyWith(color: AppTheme.orangeTop)
-                        : AppTheme.titleStyle(38),
+                        : AppTheme.titleStyle(AppTheme.fontXL),
                   ),
                 );
               }),
@@ -640,7 +644,7 @@ class _FloatingTitleState extends State<_FloatingTitle>
                   offset: Offset(0, dy),
                   child: Text(
                     _line2[i],
-                    style: AppTheme.titleStyle(48)
+                    style: AppTheme.titleStyle(AppTheme.fontXXL)
                         .copyWith(color: AppTheme.orangeTop),
                   ),
                 );
@@ -674,8 +678,8 @@ class _HomeNebulaPainter extends CustomPainter {
       size.width * 0.4,
       Paint()
         ..shader = RadialGradient(colors: [
-          const Color(0xFF6a11cb).withValues(alpha: 0.45),
-          const Color(0xFF6a11cb).withValues(alpha: 0.0),
+          AppTheme.bgTop.withValues(alpha: 0.45),
+          AppTheme.bgTop.withValues(alpha: 0.0),
         ]).createShader(Rect.fromCircle(center: c1, radius: size.width * 0.4)),
     );
 
@@ -689,8 +693,8 @@ class _HomeNebulaPainter extends CustomPainter {
       size.width * 0.35,
       Paint()
         ..shader = RadialGradient(colors: [
-          const Color(0xFFE040FB).withValues(alpha: 0.35),
-          const Color(0xFFE040FB).withValues(alpha: 0.0),
+          AppTheme.nebulaPink.withValues(alpha: 0.35),
+          AppTheme.nebulaPink.withValues(alpha: 0.0),
         ]).createShader(
             Rect.fromCircle(center: c2, radius: size.width * 0.35)),
     );
@@ -705,8 +709,8 @@ class _HomeNebulaPainter extends CustomPainter {
       size.width * 0.32,
       Paint()
         ..shader = RadialGradient(colors: [
-          const Color(0xFF2575fc).withValues(alpha: 0.3),
-          const Color(0xFF2575fc).withValues(alpha: 0.0),
+          AppTheme.bgBot.withValues(alpha: 0.3),
+          AppTheme.bgBot.withValues(alpha: 0.0),
         ]).createShader(
             Rect.fromCircle(center: c3, radius: size.width * 0.32)),
     );
@@ -754,14 +758,14 @@ class _HomeParticlesPainter extends CustomPainter {
         Offset(x, y),
         radius * 1.5,
         Paint()
-          ..color = const Color(0xFFFFD740).withValues(alpha: alpha * 0.4)
+          ..color = AppTheme.goldLight.withValues(alpha: alpha * 0.4)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
       canvas.drawCircle(
         Offset(x, y),
         radius,
         Paint()
-          ..color = const Color(0xFFFFD740).withValues(alpha: alpha * 0.7)
+          ..color = AppTheme.goldLight.withValues(alpha: alpha * 0.7)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
       );
       // Sharp center
@@ -937,7 +941,7 @@ class _ModeIslandState extends State<_ModeIsland> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: BoxDecoration(
           color: widget.topBg.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           border: Border.all(color: Colors.white, width: 1.5),
           boxShadow: [
             BoxShadow(
@@ -977,7 +981,7 @@ class _ModeIslandState extends State<_ModeIsland> {
                 children: [
                   Text(widget.title,
                       style: GoogleFonts.nunito(
-                          fontSize: 22,
+                          fontSize: AppTheme.fontH3,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                           shadows: const [
@@ -986,7 +990,7 @@ class _ModeIslandState extends State<_ModeIsland> {
                           ])),
                   Text(widget.desc,
                       style: GoogleFonts.nunito(
-                          fontSize: 12,
+                          fontSize: AppTheme.fontTiny,
                           fontWeight: FontWeight.w700,
                           color: Colors.white.withOpacity(0.9))),
                 ],

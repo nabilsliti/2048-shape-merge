@@ -15,11 +15,11 @@ class RulesPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(l10n.onboardingTitle1, style: AppTheme.titleStyle(28)),
+          Text(l10n.onboardingTitle1, style: AppTheme.titleStyle(AppTheme.fontH1)),
           const SizedBox(height: 24),
           Text(
             l10n.onboardingDesc1,
-            style: GoogleFonts.nunito(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+            style: GoogleFonts.nunito(color: Colors.white, fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -45,16 +45,16 @@ class RulesPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppTheme.panelBg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                     border: Border.all(color: AppTheme.panelBorder),
                     boxShadow: const [
-                      BoxShadow(color: Color(0xFF111827), offset: Offset(0, 3)),
+                      BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 3)),
                       BoxShadow(color: Colors.black54, offset: Offset(0, 4), blurRadius: 6),
                     ],
                   ),
                   child: Text(
                     '${1 << i}',
-                    style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.gold,
+                    style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: AppTheme.gold,
                         shadows: const [Shadow(color: Colors.black38, offset: Offset(0, 2))]),
                   ),
                 ),
@@ -65,12 +65,12 @@ class RulesPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: AppTheme.redTop.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
               border: Border.all(color: AppTheme.redTop, width: 1.5),
             ),
             child: Text(
               'Max 30 shapes',
-              style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.redBorder),
+              style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: AppTheme.redBorder),
             ),
           ),
         ],
@@ -99,7 +99,7 @@ class _ShapePreview extends StatelessWidget {
         ],
       ),
       child: Center(
-        child: Text(label, style: const TextStyle(fontSize: 28, shadows: [Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))])),
+        child: Text(label, style: const TextStyle(fontSize: AppTheme.fontH1, shadows: [Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))])),
       ),
     );
   }

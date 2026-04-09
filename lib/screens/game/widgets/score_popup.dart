@@ -6,12 +6,14 @@ class ScorePopup extends StatefulWidget {
   final int points;
   final Offset position;
   final VoidCallback onComplete;
+  final int comboCount;
 
   const ScorePopup({
     super.key,
     required this.points,
     required this.position,
     required this.onComplete,
+    this.comboCount = 0,
   });
 
   @override
@@ -76,43 +78,52 @@ class _ScorePopupState extends State<ScorePopup>
   }
 
   String get _comboText {
-    if (widget.points >= 640) return '🔥 LEGENDARY!';
-    if (widget.points >= 320) return '⭐ SUPER MERGE!';
-    if (widget.points >= 160) return '✨ AMAZING!';
-    if (widget.points >= 80) return '💫 NICE!';
+    final combo = widget.comboCount;
+    if (combo >= 9) return '🔥 LEGENDARY ×$combo';
+    if (combo >= 7) return '⭐ SUPER ×$combo';
+    if (combo >= 5) return '✨ AMAZING ×$combo';
+    if (combo >= 3) return '💫 COMBO ×$combo';
+    if (combo >= 2) return 'COMBO ×$combo';
     return '';
   }
 
   @override
   Widget build(BuildContext context) {
     final hasCombo = _comboText.isNotEmpty;
+    const popupWidth = 160.0;
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
+        // Clamp horizontal position so the popup stays within the board
+        final rawLeft = widget.position.dx - popupWidth / 2;
+        final clampedLeft = rawLeft.clamp(0.0, double.infinity);
+
         return Positioned(
-          left: widget.position.dx - 60,
+          left: clampedLeft,
           top: widget.position.dy + _position.value.dy - 30,
-          child: Transform.scale(
-            scale: _scale.value,
-            child: Opacity(
-              opacity: _opacity.value,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+          child: SizedBox(
+            width: popupWidth,
+            child: Transform.scale(
+              scale: _scale.value,
+              child: Opacity(
+                opacity: _opacity.value,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   if (hasCombo)
                     ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [
-                          AppTheme.gold,
-                          AppTheme.orange,
-                          AppTheme.red,
-                        ],
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: widget.comboCount >= 7
+                            ? [AppTheme.red, AppTheme.orange, AppTheme.gold, AppTheme.red]
+                            : widget.comboCount >= 5
+                                ? [AppTheme.gold, AppTheme.orange, AppTheme.red]
+                                : [AppTheme.gold, AppTheme.orange, AppTheme.gold],
                       ).createShader(bounds),
                       child: Text(
                         _comboText,
                         style: AppTheme.scoreStyle.copyWith(
-                          fontSize: 18,
+                          fontSize: widget.comboCount >= 5 ? AppTheme.fontH4 : AppTheme.fontBody,
                           color: Colors.white,
                           shadows: [],
                         ),
@@ -121,7 +132,7 @@ class _ScorePopupState extends State<ScorePopup>
                   Text(
                     '+${widget.points}',
                     style: AppTheme.scoreStyle.copyWith(
-                      fontSize: hasCombo ? 32 : 26,
+                      fontSize: hasCombo ? AppTheme.fontCombo : AppTheme.fontH1b,
                       color: AppTheme.gold,
                       shadows: [
                         Shadow(
@@ -135,6 +146,7 @@ class _ScorePopupState extends State<ScorePopup>
                 ],
               ),
             ),
+          ),
           ),
         );
       },

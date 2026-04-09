@@ -10,6 +10,8 @@ class ShapeWidget extends StatefulWidget {
   final bool isDragging;
   final bool isHighlighted;
   final bool isRadarHighlighted;
+  final int radarGroupIndex;
+  final bool isMergeResult;
 
   const ShapeWidget({
     super.key,
@@ -17,6 +19,8 @@ class ShapeWidget extends StatefulWidget {
     this.isDragging = false,
     this.isHighlighted = false,
     this.isRadarHighlighted = false,
+    this.radarGroupIndex = -1,
+    this.isMergeResult = false,
   });
 
   @override
@@ -41,7 +45,7 @@ class _ShapeWidgetState extends State<ShapeWidget>
 
     _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: Duration(milliseconds: widget.isMergeResult ? 400 : 600),
     );
 
     // Spawn particles for entrance sparkle effect
@@ -54,10 +58,14 @@ class _ShapeWidgetState extends State<ShapeWidget>
       );
     });
 
-    // Random stagger delay for cascading effect
-    Future.delayed(Duration(milliseconds: rng.nextInt(150)), () {
-      if (mounted) _entranceController.forward();
-    });
+    // Merge results appear immediately; others use stagger delay
+    if (widget.isMergeResult) {
+      _entranceController.forward();
+    } else {
+      Future.delayed(Duration(milliseconds: rng.nextInt(150)), () {
+        if (mounted) _entranceController.forward();
+      });
+    }
   }
 
   @override
@@ -77,8 +85,12 @@ class _ShapeWidgetState extends State<ShapeWidget>
       builder: (context, child) {
         final eT = _entranceController.value;
 
-        // Entrance: elastic scale bounce
-        final entranceScale = eT == 0 ? 0.0 : Curves.elasticOut.transform(eT);
+        // Entrance: scale bounce (punchier for merge results)
+        final entranceScale = eT == 0
+            ? 0.0
+            : widget.isMergeResult
+                ? Curves.easeOutBack.transform(eT)
+                : Curves.elasticOut.transform(eT);
         // Entrance: quick fade in (done by 40%)
         final entranceOpacity = (eT / 0.4).clamp(0.0, 1.0);
         // Float: only after entrance finishes
@@ -127,6 +139,7 @@ class _ShapeWidgetState extends State<ShapeWidget>
                 isDragging: widget.isDragging,
                 isHighlighted: widget.isHighlighted,
                 isRadarHighlighted: widget.isRadarHighlighted,
+                radarGroupIndex: widget.radarGroupIndex,
               ),
               child: Center(
                 child: Text(
@@ -158,12 +171,26 @@ class _ShapePainter extends CustomPainter {
   final bool isDragging;
   final bool isHighlighted;
   final bool isRadarHighlighted;
+  final int radarGroupIndex;
+
+  // Distinct bright colors for each radar group
+  static const _radarGroupColors = [
+    Color(0xFFFFEA00), // yellow (original radar)
+    Color(0xFF00E5FF), // cyan
+    Color(0xFFFF4081), // pink
+    Color(0xFF76FF03), // lime green
+    Color(0xFFE040FB), // purple
+    Color(0xFFFF6D00), // orange
+    Color(0xFF00E676), // green
+    Color(0xFF448AFF), // blue
+  ];
 
   _ShapePainter({
     required this.shape,
     required this.isDragging,
     required this.isHighlighted,
     this.isRadarHighlighted = false,
+    this.radarGroupIndex = -1,
   });
 
   @override
@@ -235,13 +262,21 @@ class _ShapePainter extends CustomPainter {
       canvas.drawCircle(center, radius + 4, ringPaint);
     }
 
-    // Radar highlight ring (golden pulse)
+    // Radar highlight ring (colored per group)
     if (isRadarHighlighted) {
+      final groupColor = radarGroupIndex >= 0
+          ? _radarGroupColors[radarGroupIndex % _radarGroupColors.length]
+          : AppTheme.radarColor;
       final radarPaint = Paint()
-        ..color = const Color(0xFFFFD60A).withValues(alpha: 0.85)
+        ..color = groupColor.withValues(alpha: 0.85)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3.0;
       canvas.drawCircle(center, radius + 6, radarPaint);
+      // Soft glow in group color
+      final glowRadar = Paint()
+        ..color = groupColor.withValues(alpha: 0.25)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      canvas.drawCircle(center, radius + 6, glowRadar);
     }
   }
 
@@ -297,18 +332,6 @@ class _ShapePainter extends CustomPainter {
     return path;
   }
 
-  static Path _regularPolygonPath(Offset center, double radius, int sides) {
-    final path = Path();
-    for (var i = 0; i < sides; i++) {
-      final angle = (i * 2 * pi / sides) - (pi / 2);
-      final x = center.dx + radius * cos(angle);
-      final y = center.dy + radius * sin(angle);
-      if (i == 0) { path.moveTo(x, y); } else { path.lineTo(x, y); }
-    }
-    path.close();
-    return path;
-  }
-
   /// Rounded polygon from a list of vertices.
   static Path _roundedPolygonPath(List<Offset> vertices, double cornerRadius) {
     final path = Path();
@@ -350,7 +373,8 @@ class _ShapePainter extends CustomPainter {
   bool shouldRepaint(covariant _ShapePainter oldDelegate) =>
       oldDelegate.isHighlighted != isHighlighted ||
       oldDelegate.isDragging != isDragging ||
-      oldDelegate.isRadarHighlighted != isRadarHighlighted;
+      oldDelegate.isRadarHighlighted != isRadarHighlighted ||
+      oldDelegate.radarGroupIndex != radarGroupIndex;
 }
 
 // ─── Spawn entrance effect ───────────────────────────────────────────

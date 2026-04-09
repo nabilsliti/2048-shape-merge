@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:shape_merge/core/theme/app_theme.dart';
 
 /// Premium hand-painted Bomb joker icon
 class BombPainter extends CustomPainter {
@@ -18,13 +19,13 @@ class BombPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.35, -0.35),
-        colors: const [Color(0xFF555555), Color(0xFF333333), Color(0xFF1a1a1a), Color(0xFF0d0d0d)],
+        colors: const [AppTheme.bombBodyLight, AppTheme.bombBodyMid, AppTheme.bombBodyDark, AppTheme.bombBodyShade],
         stops: const [0.0, 0.4, 0.75, 1.0],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)));
 
     // Metallic ring
     canvas.drawCircle(Offset(cx, cy), r, Paint()
-      ..color = const Color(0xFF555555)
+      ..color = AppTheme.bombBodyLight
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5);
 
@@ -39,31 +40,31 @@ class BombPainter extends CustomPainter {
     final fuseBase = Offset(cx + w * 0.08, cy - r + 1);
     final fuseTop = Offset(cx + w * 0.15, h * 0.12);
     canvas.drawLine(fuseBase, fuseTop, Paint()
-      ..color = const Color(0xFF8B6914)
+      ..color = AppTheme.fuseOuter
       ..strokeWidth = 4.0
       ..strokeCap = StrokeCap.round);
     canvas.drawLine(fuseBase, fuseTop, Paint()
-      ..color = const Color(0xFFDAA520)
+      ..color = AppTheme.fuseInner
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round);
 
     // Fuse tip ring
     canvas.drawCircle(fuseTop, 3.5, Paint()
       ..shader = const RadialGradient(
-        colors: [Color(0xFFFFE082), Color(0xFFDAA520)],
+        colors: [AppTheme.fuseTipLight, AppTheme.fuseTipDark],
       ).createShader(Rect.fromCircle(center: fuseTop, radius: 3.5)));
 
     // Spark glow
     canvas.drawCircle(Offset(fuseTop.dx + 1, fuseTop.dy - 3), 5, Paint()
-      ..color = const Color(0xFFFF6600).withValues(alpha: 0.5)
+      ..color = AppTheme.sparkOrange.withValues(alpha: 0.5)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4));
     canvas.drawCircle(Offset(fuseTop.dx + 1, fuseTop.dy - 3), 3, Paint()
-      ..color = const Color(0xFFFFDD00).withValues(alpha: 0.7)
+      ..color = AppTheme.sparkYellow.withValues(alpha: 0.7)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
     canvas.drawCircle(Offset(fuseTop.dx + 1, fuseTop.dy - 2), 1.5, Paint()..color = Colors.white);
 
     // Spark lines
-    const sparkColor = Color(0xFFFF8800);
+    const sparkColor = AppTheme.sparkFlame;
     for (var i = 0; i < 5; i++) {
       final a = (i * math.pi * 2 / 5) - math.pi * 0.6;
       final len = 4.0 + (i % 2) * 3;
@@ -81,12 +82,12 @@ class BombPainter extends CustomPainter {
     canvas.drawLine(
       Offset(scx - r * 0.22, scy - r * 0.22),
       Offset(scx + r * 0.22, scy + r * 0.22),
-      Paint()..color = const Color(0xFFff4444)..strokeWidth = 2.5..strokeCap = StrokeCap.round,
+      Paint()..color = AppTheme.bombXMark..strokeWidth = 2.5..strokeCap = StrokeCap.round,
     );
     canvas.drawLine(
       Offset(scx + r * 0.22, scy - r * 0.22),
       Offset(scx - r * 0.22, scy + r * 0.22),
-      Paint()..color = const Color(0xFFff4444)..strokeWidth = 2.5..strokeCap = StrokeCap.round,
+      Paint()..color = AppTheme.bombXMark..strokeWidth = 2.5..strokeCap = StrokeCap.round,
     );
   }
 
@@ -106,7 +107,7 @@ class WildcardPainter extends CustomPainter {
 
     // Outer glow
     canvas.drawCircle(Offset(cx, cy), r + 4, Paint()
-      ..color = const Color(0xFF6a11cb).withValues(alpha: 0.25)
+      ..color = AppTheme.wildcardGlow.withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
 
     // Magic circle background
@@ -114,10 +115,10 @@ class WildcardPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.3, -0.3),
-        colors: const [Color(0xFF9c27b0), Color(0xFF7b1fa2), Color(0xFF4a148c)],
+        colors: const [AppTheme.wildcardBody1, AppTheme.wildcardBody2, AppTheme.wildcardBody3],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)));
     canvas.drawCircle(Offset(cx, cy), r, Paint()
-      ..color = const Color(0xFFce93d8).withValues(alpha: 0.5)
+      ..color = AppTheme.wildcardRing.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2);
 
@@ -141,10 +142,10 @@ class WildcardPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: const [Color(0xFFFFE082), Color(0xFFFFD700), Color(0xFFFF8C00)],
+        colors: const [AppTheme.goldPale, AppTheme.gold, AppTheme.victoryBadgeBot],
       ).createShader(Rect.fromLTWH(cx - starR, cy - starR, starR * 2, starR * 2)));
     canvas.drawPath(star, Paint()
-      ..color = const Color(0xFF8B6914)
+      ..color = AppTheme.fuseOuter
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8);
 
@@ -158,7 +159,7 @@ class WildcardPainter extends CustomPainter {
     for (final s in sparkles) {
       final sx = w * s[0];
       final sy = h * s[1];
-      canvas.drawCircle(Offset(sx, sy), 1.5, Paint()..color = const Color(0xFFFFD700).withValues(alpha: 0.6));
+      canvas.drawCircle(Offset(sx, sy), 1.5, Paint()..color = AppTheme.gold.withValues(alpha: 0.6));
       canvas.drawCircle(Offset(sx, sy), 0.8, Paint()..color = Colors.white.withValues(alpha: 0.8));
     }
 
@@ -185,19 +186,19 @@ class ReducerPainter extends CustomPainter {
 
     // Outer glow
     canvas.drawCircle(Offset(cx, cy), r + 3, Paint()
-      ..color = const Color(0xFFff5252).withValues(alpha: 0.15)
+      ..color = AppTheme.reducerGlow.withValues(alpha: 0.15)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
 
     // Circle background — dark gradient
     canvas.drawCircle(Offset(cx, cy), r, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.2, -0.3),
-        colors: const [Color(0xFF3a3a4a), Color(0xFF2a2a38), Color(0xFF1a1a28)],
+        colors: const [AppTheme.reducerBody1, AppTheme.reducerBody2, AppTheme.reducerBody3],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)));
 
     // Circle border
     canvas.drawCircle(Offset(cx, cy), r, Paint()
-      ..color = const Color(0xFFff5252).withValues(alpha: 0.6)
+      ..color = AppTheme.reducerGlow.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5);
 
@@ -236,7 +237,7 @@ class ReducerPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFFff6b6b), Color(0xFFe53935)],
+        colors: const [AppTheme.reducerArrow1, AppTheme.reducerArrow2],
       ).createShader(Rect.fromLTWH(0, 0, w, h)));
 
     // Arrow highlight (left edge shine)
@@ -252,9 +253,9 @@ class ReducerPainter extends CustomPainter {
           color: Colors.white,
           fontSize: w * 0.32,
           fontWeight: FontWeight.w900,
-          fontFamily: 'Fredoka',
+          fontFamily: AppTheme.fontFamilyTitle,
           shadows: const [
-            Shadow(color: Color(0x55000000), offset: Offset(1, 1), blurRadius: 2),
+            Shadow(color: Colors.black54, offset: Offset(1, 1), blurRadius: 2),
           ],
         ),
       ),
@@ -346,7 +347,7 @@ class PlayIconPainter extends CustomPainter {
 
     // Outer glow
     canvas.drawCircle(Offset(cx, cy), r + 4, Paint()
-      ..color = const Color(0xFF00e676).withValues(alpha: 0.20)
+      ..color = AppTheme.evolutionGlow.withValues(alpha: 0.20)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
 
     // Shadow
@@ -358,12 +359,12 @@ class PlayIconPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.3, -0.3),
-        colors: const [Color(0xFF69f0ae), Color(0xFF00e676), Color(0xFF00c853)],
+        colors: const [AppTheme.evolutionFill1, AppTheme.evolutionFill2, AppTheme.evolutionFill3],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)));
 
     // Border
     canvas.drawCircle(Offset(cx, cy), r, Paint()
-      ..color = const Color(0xFF00a843).withValues(alpha: 0.5)
+      ..color = AppTheme.evolutionDark.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5);
 
@@ -380,7 +381,7 @@ class PlayIconPainter extends CustomPainter {
     // Triangle shadow
     canvas.save();
     canvas.translate(1, 1.5);
-    canvas.drawPath(triangle, Paint()..color = const Color(0xFF00a843).withValues(alpha: 0.3));
+    canvas.drawPath(triangle, Paint()..color = AppTheme.evolutionDark.withValues(alpha: 0.3));
     canvas.restore();
 
     // Triangle fill
@@ -412,7 +413,7 @@ class BackArrowPainter extends CustomPainter {
 
     // Outer glow
     canvas.drawCircle(Offset(cx, cy), r + 3, Paint()
-      ..color = const Color(0xFF90caf9).withValues(alpha: 0.15)
+      ..color = AppTheme.radarRingBlue.withValues(alpha: 0.15)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
 
     // Shadow
@@ -424,7 +425,7 @@ class BackArrowPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.2, -0.3),
-        colors: const [Color(0xFF3a3a50), Color(0xFF2a2a3c), Color(0xFF1a1a2a)],
+        colors: const [AppTheme.radarBody1, AppTheme.radarBody2, AppTheme.radarBody3],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)));
 
     // Border
@@ -483,6 +484,7 @@ class PremiumIcon extends StatelessWidget {
   const PremiumIcon.logout({super.key, this.size = 32}) : painter = const _LogoutPainterConst();
   const PremiumIcon.resume({super.key, this.size = 32}) : painter = const _ResumePainterConst();
   const PremiumIcon.home({super.key, this.size = 32}) : painter = const _HomePainterConst();
+  const PremiumIcon.close({super.key, this.size = 32}) : painter = const _CloseXPainterConst();
 
   @override
   Widget build(BuildContext context) {
@@ -571,6 +573,63 @@ class _HomePainterConst extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+class _CloseXPainterConst extends CustomPainter {
+  const _CloseXPainterConst();
+  static final _delegate = CloseXPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Premium Close X icon — bold stylized X (no background circle)
+// ═══════════════════════════════════════════════════════════════
+class CloseXPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w * 0.5;
+    final cy = h * 0.5;
+    final xSize = w * 0.32;
+    final strokeW = w * 0.16;
+
+    // X shadow — offset down-right
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeW
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx - xSize + 1.5, cy - xSize + 2), Offset(cx + xSize + 1.5, cy + xSize + 2), shadowPaint);
+    canvas.drawLine(Offset(cx + xSize + 1.5, cy - xSize + 2), Offset(cx - xSize + 1.5, cy + xSize + 2), shadowPaint);
+
+    // X strokes — bold white with slight outer glow
+    final glowPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeW + 3
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawLine(Offset(cx - xSize, cy - xSize), Offset(cx + xSize, cy + xSize), glowPaint);
+    canvas.drawLine(Offset(cx + xSize, cy - xSize), Offset(cx - xSize, cy + xSize), glowPaint);
+
+    // X main strokes — crisp white
+    final xPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeW
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx - xSize, cy - xSize), Offset(cx + xSize, cy + xSize), xPaint);
+    canvas.drawLine(Offset(cx + xSize, cy - xSize), Offset(cx - xSize, cy + xSize), xPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Premium Logout icon — red circle with white power/exit arrow
 // ═══════════════════════════════════════════════════════════════
@@ -584,7 +643,7 @@ class LogoutPainter extends CustomPainter {
     // Red circle background
     final bgPaint = Paint()
       ..shader = RadialGradient(
-        colors: [const Color(0xFFff4747), const Color(0xFFcc0000)],
+        colors: [AppTheme.megaBombRing1, AppTheme.megaBombRing2],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r));
     canvas.drawCircle(Offset(cx, cy), r, bgPaint);
 
@@ -592,7 +651,7 @@ class LogoutPainter extends CustomPainter {
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * 0.03
-      ..color = const Color(0xFFffaaaa).withValues(alpha: 0.4);
+      ..color = AppTheme.megaBombRingShine.withValues(alpha: 0.4);
     canvas.drawCircle(Offset(cx, cy), r * 0.82, ringPaint);
 
     // Door frame (left half arc)
@@ -640,7 +699,7 @@ class SaveCheckPainter extends CustomPainter {
     // Golden circle background
     final bgPaint = Paint()
       ..shader = RadialGradient(
-        colors: [const Color(0xFFffd700), const Color(0xFFe5a000)],
+        colors: [AppTheme.radarStarGold, AppTheme.radarStarDark],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r));
     canvas.drawCircle(Offset(cx, cy), r, bgPaint);
 
@@ -648,7 +707,7 @@ class SaveCheckPainter extends CustomPainter {
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * 0.03
-      ..color = const Color(0xFFfffde0).withValues(alpha: 0.6);
+      ..color = AppTheme.radarStarShine.withValues(alpha: 0.6);
     canvas.drawCircle(Offset(cx, cy), r * 0.82, ringPaint);
 
     // White checkmark
@@ -687,7 +746,7 @@ class RocketPlayPainter extends CustomPainter {
       ..quadraticBezierTo(cx - w * 0.08, h * 0.85, cx, h * 1.02)
       ..quadraticBezierTo(cx + w * 0.08, h * 0.85, cx + w * 0.22, h * 0.72);
     canvas.drawPath(flameGlowPath, Paint()
-      ..color = const Color(0xFFFF6600).withValues(alpha: 0.25)
+      ..color = AppTheme.rocketGlow.withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
 
     // Outer flame — orange
@@ -699,7 +758,7 @@ class RocketPlayPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFFFF6600), Color(0xFFFF3300), Color(0xFFFF0000)],
+        colors: const [AppTheme.rocketFlame1, AppTheme.rocketFlame2, AppTheme.rocketFlame3],
         stops: const [0.0, 0.5, 1.0],
       ).createShader(Rect.fromLTWH(0, h * 0.70, w, h * 0.26)));
 
@@ -712,7 +771,7 @@ class RocketPlayPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFFFFE082), Color(0xFFFFD54F), Color(0xFFFF8F00)],
+        colors: const [AppTheme.rocketNozzle1, AppTheme.rocketNozzle2, AppTheme.rocketNozzle3],
       ).createShader(Rect.fromLTWH(0, h * 0.70, w, h * 0.20)));
 
     // White-hot core
@@ -752,7 +811,7 @@ class RocketPlayPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFF42a5f5), Color(0xFF1565c0)],
+        colors: const [AppTheme.rocketBody1, AppTheme.rocketBody2],
       ).createShader(Rect.fromLTWH(0, h * 0.52, w, h * 0.20)));
 
     // Right fin
@@ -766,7 +825,7 @@ class RocketPlayPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFF42a5f5), Color(0xFF1565c0)],
+        colors: const [AppTheme.rocketBody1, AppTheme.rocketBody2],
       ).createShader(Rect.fromLTWH(0, h * 0.52, w, h * 0.20)));
 
     // ── Rocket body ──
@@ -785,13 +844,13 @@ class RocketPlayPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: const [Color(0xFFe0e0e0), Color(0xFFfafafa), Color(0xFFffffff), Color(0xFFe8e8e8)],
+        colors: const [AppTheme.rocketPanel1, AppTheme.rocketPanel2, AppTheme.rocketPanel3, AppTheme.rocketPanel4],
         stops: const [0.0, 0.3, 0.6, 1.0],
       ).createShader(Rect.fromLTWH(cx - w * 0.22, 0, w * 0.44, h * 0.72)));
 
     // Body border
     canvas.drawPath(bodyPath, Paint()
-      ..color = const Color(0xFF90a4ae).withValues(alpha: 0.6)
+      ..color = AppTheme.rocketBodyBorder.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0);
 
@@ -806,7 +865,7 @@ class RocketPlayPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: const [Color(0xFFef5350), Color(0xFFc62828)],
+        colors: const [AppTheme.rocketNoseCone1, AppTheme.rocketNoseCone2],
       ).createShader(Rect.fromLTWH(0, h * 0.04, w, h * 0.20)));
 
     // ── Window (porthole) ──
@@ -815,13 +874,13 @@ class RocketPlayPainter extends CustomPainter {
 
     // Window rim
     canvas.drawCircle(Offset(cx, windowCy), windowR + 2, Paint()
-      ..color = const Color(0xFF78909c));
+      ..color = AppTheme.rocketWindow);
 
     // Window glass — blue gradient
     canvas.drawCircle(Offset(cx, windowCy), windowR, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.3, -0.3),
-        colors: const [Color(0xFF81d4fa), Color(0xFF29b6f6), Color(0xFF0277bd)],
+        colors: const [AppTheme.rocketGlass1, AppTheme.rocketGlass2, AppTheme.rocketGlass3],
       ).createShader(Rect.fromCircle(center: Offset(cx, windowCy), radius: windowR)));
 
     // Window shine
@@ -833,7 +892,7 @@ class RocketPlayPainter extends CustomPainter {
 
     // ── Stripes on body ──
     final stripePaint = Paint()
-      ..color = const Color(0xFF42a5f5).withValues(alpha: 0.6)
+      ..color = AppTheme.rocketBody1.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
     canvas.drawLine(
@@ -879,7 +938,7 @@ class ResumePainter extends CustomPainter {
 
     // Outer glow
     canvas.drawCircle(Offset(cx, cy), r + 4, Paint()
-      ..color = const Color(0xFF00e676).withValues(alpha: 0.25)
+      ..color = AppTheme.evolutionFill2.withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
 
     // Shadow
@@ -891,18 +950,18 @@ class ResumePainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.3, -0.3),
-        colors: const [Color(0xFF69f0ae), Color(0xFF00e676), Color(0xFF00c853)],
+        colors: const [AppTheme.evolutionFill1, AppTheme.evolutionFill2, AppTheme.evolutionFill3],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)));
 
     // Subtle inner ring
     canvas.drawCircle(Offset(cx, cy), r * 0.82, Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * 0.03
-      ..color = const Color(0xFFb9f6ca).withValues(alpha: 0.4));
+      ..color = AppTheme.evoRingLight.withValues(alpha: 0.4));
 
     // Border
     canvas.drawCircle(Offset(cx, cy), r, Paint()
-      ..color = const Color(0xFF00a843).withValues(alpha: 0.5)
+      ..color = AppTheme.evolutionDark.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5);
 
@@ -918,7 +977,7 @@ class ResumePainter extends CustomPainter {
     // Triangle shadow
     canvas.save();
     canvas.translate(1, 1.5);
-    canvas.drawPath(triangle, Paint()..color = const Color(0xFF00a843).withValues(alpha: 0.3));
+    canvas.drawPath(triangle, Paint()..color = AppTheme.evolutionDark.withValues(alpha: 0.3));
     canvas.restore();
 
     // Triangle fill
@@ -948,7 +1007,7 @@ class HomePainter extends CustomPainter {
 
     // Outer glow
     canvas.drawCircle(Offset(cx, cy), r + 4, Paint()
-      ..color = const Color(0xFFff9800).withValues(alpha: 0.25)
+      ..color = AppTheme.homePainterFill2.withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
 
     // Shadow
@@ -960,18 +1019,18 @@ class HomePainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.3, -0.3),
-        colors: const [Color(0xFFffcc80), Color(0xFFff9800), Color(0xFFe65100)],
+        colors: const [AppTheme.homePainterFill1, AppTheme.homePainterFill2, AppTheme.homePainterFill3],
       ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)));
 
     // Subtle inner ring
     canvas.drawCircle(Offset(cx, cy), r * 0.82, Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * 0.03
-      ..color = const Color(0xFFffe0b2).withValues(alpha: 0.4));
+      ..color = AppTheme.homePainterRing.withValues(alpha: 0.4));
 
     // Border
     canvas.drawCircle(Offset(cx, cy), r, Paint()
-      ..color = const Color(0xFFe65100).withValues(alpha: 0.5)
+      ..color = AppTheme.homePainterFill3.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5);
 
@@ -995,7 +1054,7 @@ class HomePainter extends CustomPainter {
     // Roof shadow
     canvas.save();
     canvas.translate(0.5, 1);
-    canvas.drawPath(roofPath, Paint()..color = const Color(0xFFe65100).withValues(alpha: 0.3));
+    canvas.drawPath(roofPath, Paint()..color = AppTheme.homePainterFill3.withValues(alpha: 0.3));
     canvas.restore();
 
     canvas.drawPath(roofPath, roofPaint);
@@ -1014,7 +1073,7 @@ class HomePainter extends CustomPainter {
       Rect.fromCenter(center: Offset(cx, houseBot - doorH * 0.5), width: doorW, height: doorH),
       Radius.circular(doorW * 0.2),
     );
-    canvas.drawRRect(doorRect, Paint()..color = const Color(0xFFff9800));
+    canvas.drawRRect(doorRect, Paint()..color = AppTheme.homePainterFill2);
 
     // Shine
     canvas.drawCircle(

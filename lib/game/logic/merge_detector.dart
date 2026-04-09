@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
+import 'package:shape_merge/core/theme/app_theme.dart';
 
 class MergeDetector {
-  static const List<Color> shapeColors = [
-    Color(0xFFFF2D55), // red
-    Color(0xFF007AFF), // blue
-    Color(0xFF30D158), // green
-    Color(0xFFFFD60A), // yellow
-    Color(0xFFBF5AF2), // purple
-    Color(0xFFFF9F0A), // orange
-  ];
+  static List<Color> get shapeColors => AppTheme.levelColors;
 
   static bool canMerge(GameShape a, GameShape b) {
     if (a.id == b.id) return false;

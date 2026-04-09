@@ -9,7 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
-import 'package:shape_merge/core/widgets/joker_icons.dart';
+
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
@@ -78,7 +78,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                       ),
                     ),
                     Center(
-                      child: Text(l10n.leaderboard.toUpperCase(), style: AppTheme.titleStyle(24)),
+                      child: Text(l10n.leaderboard.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH2)),
                     ),
                   ],
                 ),
@@ -100,7 +100,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [Color(0xFF4338ca), Color(0xFF6366f1)],
+                            colors: [AppTheme.profileGradTop, AppTheme.profileGradBot],
                           ),
                           border: Border.all(color: AppTheme.panelBorder, width: 3),
                           boxShadow: const [
@@ -108,13 +108,13 @@ class LeaderboardScreenContent extends ConsumerWidget {
                           ],
                         ),
                         child: const Center(
-                          child: Text('🏆', style: TextStyle(fontSize: 48)),
+                          child: Text('🏆', style: TextStyle(fontSize: AppTheme.fontXXL)),
                         ),
                       ),
                       const SizedBox(height: 24),
                       Text(
                         l10n.signInToSave,
-                        style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white70, height: 1.4),
+                        style: GoogleFonts.nunito(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700, color: Colors.white70, height: 1.4),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
@@ -132,10 +132,9 @@ class LeaderboardScreenContent extends ConsumerWidget {
                                 width: 24,
                                 height: 24,
                                 decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                                child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: 15, fontWeight: FontWeight.w900, color: const Color(0xFF4285F4)))),
-                              ),
+                                child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontGBtn, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)))),
                               const SizedBox(width: 10),
-                              Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(18)),
+                              Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                             ],
                           ),
                         ),
@@ -177,7 +176,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                     ),
                   ),
                   Center(
-                    child: Text(l10n.leaderboard.toUpperCase(), style: AppTheme.titleStyle(24)),
+                    child: Text(l10n.leaderboard.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH2)),
                   ),
                 ],
               ),
@@ -206,15 +205,15 @@ class LeaderboardScreenContent extends ConsumerWidget {
 
                 // ── Shared card builder ──
                 Widget buildCard(LeaderboardEntry entry, int rank, bool isMe, bool isTop3, int visualIndex) {
-                  const accents = [Color(0xFFFFD740), Color(0xFFB0BEC5), Color(0xFFFF8A65)];
-                  const meAccent = Color(0xFF60a5fa);
+                  const accents = [AppTheme.goldLight, AppTheme.medalSilver2, AppTheme.medalBronze2];
+                  const meAccent = AppTheme.leaderMyRank;
                   final accent = isMe ? meAccent : (isTop3 ? accents[visualIndex] : Colors.white.withValues(alpha: 0.08));
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 6),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -252,7 +251,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                                   child: Text(
                                     '$rank',
                                     style: GoogleFonts.fredoka(
-                                      fontSize: 14, fontWeight: FontWeight.w700,
+                                      fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w700,
                                       color: isMe ? meAccent : Colors.white.withValues(alpha: 0.5),
                                     ),
                                   ),
@@ -269,7 +268,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                               end: Alignment.bottomRight,
                               colors: (isTop3 || isMe)
                                   ? [accent.withValues(alpha: 0.3), accent.withValues(alpha: 0.1)]
-                                  : [const Color(0xFF374151), const Color(0xFF1f2937)],
+                                  : [AppTheme.avatarBg1, AppTheme.avatarBg2],
                             ),
                             border: Border.all(
                               color: (isTop3 || isMe) ? accent.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
@@ -280,7 +279,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                             ],
                           ),
                           alignment: Alignment.center,
-                          child: Text(avatarEmoji(entry.avatarId), style: const TextStyle(fontSize: 16)),
+                          child: Text(avatarEmoji(entry.avatarId), style: const TextStyle(fontSize: AppTheme.fontRegular)),
                         ),
                         const SizedBox(width: 8),
                         // ── Name ──
@@ -291,7 +290,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                               Text(
                                 entry.displayName,
                                 style: GoogleFonts.nunito(
-                                  fontSize: 13, fontWeight: FontWeight.w800,
+                                  fontSize: AppTheme.fontXSmall, fontWeight: FontWeight.w800,
                                   color: isMe ? meAccent : (isTop3 ? Colors.white : Colors.white.withValues(alpha: 0.8)),
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -300,7 +299,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                                 Text(
                                   'You',
                                   style: GoogleFonts.nunito(
-                                    fontSize: 11, fontWeight: FontWeight.w700,
+                                    fontSize: AppTheme.fontMini, fontWeight: FontWeight.w700,
                                     color: meAccent.withValues(alpha: 0.6),
                                   ),
                                 ),
@@ -312,7 +311,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
                             color: (isTop3 || isMe) ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
                             border: Border.all(
                               color: (isTop3 || isMe) ? accent.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.06),
@@ -321,7 +320,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                           child: Text(
                             '${entry.score}',
                             style: GoogleFonts.fredoka(
-                              fontSize: 14, fontWeight: FontWeight.w700,
+                              fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w700,
                               color: (isTop3 || isMe) ? accent : Colors.white.withValues(alpha: 0.6),
                             ),
                           ),
@@ -378,11 +377,11 @@ class _MedalPainter extends CustomPainter {
 
   static const _configs = [
     // Gold
-    (g1: Color(0xFFFFE082), g2: Color(0xFFFFB300), g3: Color(0xFFF57F17), glow: Color(0x66FFD740), text: Color(0xFF4E342E), shine: Color(0xFFFFFDE7)),
+    (g1: AppTheme.medalGold1, g2: AppTheme.medalGold2, g3: AppTheme.medalGold3, glow: AppTheme.medalGoldGlow, text: AppTheme.medalGoldText, shine: AppTheme.medalGoldShine),
     // Silver
-    (g1: Color(0xFFE0E0E0), g2: Color(0xFF90A4AE), g3: Color(0xFF455A64), glow: Color(0x55B0BEC5), text: Color(0xFF263238), shine: Color(0xFFFFFFFF)),
+    (g1: AppTheme.medalSilver1, g2: AppTheme.medalSilver2, g3: AppTheme.medalSilver3, glow: AppTheme.medalSilverGlow, text: AppTheme.medalSilverText, shine: AppTheme.medalSilverShine),
     // Bronze
-    (g1: Color(0xFFFFCCBC), g2: Color(0xFFFF7043), g3: Color(0xFFBF360C), glow: Color(0x55FF8A65), text: Color(0xFF3E2723), shine: Color(0xFFFFF3E0)),
+    (g1: AppTheme.medalBronze1, g2: AppTheme.medalBronze2, g3: AppTheme.medalBronze3, glow: AppTheme.medalBronzeGlow, text: AppTheme.medalBronzeText, shine: AppTheme.medalBronzeShine),
   ];
 
   @override

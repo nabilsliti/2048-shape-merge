@@ -6,13 +6,14 @@ import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/game/logic/joker_handler.dart';
 import 'package:shape_merge/game/logic/merge_detector.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/screens/game/widgets/shape_widget.dart';
 
 class GameBoard extends ConsumerStatefulWidget {
-  final void Function(Offset position, Color color, int points)? onMerge;
+  final void Function(Offset position, Color color, int points, int comboCount)? onMerge;
 
   const GameBoard({super.key, this.onMerge});
 
@@ -31,9 +32,19 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
   Offset? _snapBackFrom;
   Offset? _snapBackTo;
 
+  // Fly-to-merge animation state
+  AnimationController? _flyToCtrl;
+  String? _flyToShapeId;
+  String? _flyToTargetId;
+  Offset? _flyFrom;
+  Offset? _flyTo;
+  GameShape? _pendingDragShape;
+  String? _recentMergedId;
+
   @override
   void dispose() {
     _snapBackCtrl?.dispose();
+    _flyToCtrl?.dispose();
     super.dispose();
   }
 
@@ -68,10 +79,12 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
     GameState gameState,
     JokerMode jokerMode,
     Size boardSize,
-    Set<String> radarHighlights,
+    Map<String, int> radarHighlights,
   ) {
     final isDragging = _draggingId == shape.id;
     final isSnappingBack = _snapBackId == shape.id && _snapBackCtrl != null && _snapBackCtrl!.isAnimating;
+    final isFlyingTo = _flyToShapeId == shape.id && _flyToCtrl != null && _flyToCtrl!.isAnimating;
+    final isFlyTarget = _flyToTargetId == shape.id && _flyToCtrl != null && _flyToCtrl!.isAnimating;
     final size = shapeSize(shape.level);
 
     var isHighlighted = false;
@@ -81,10 +94,12 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         isHighlighted = MergeDetector.canMerge(dragged, shape);
       }
     }
-    final isRadarHighlighted = radarHighlights.contains(shape.id);
+    final isRadarHighlighted = radarHighlights.containsKey(shape.id);
+    final radarGroupIndex = radarHighlights[shape.id] ?? -1;
 
     double posX = shape.x;
     double posY = shape.y;
+    double extraScale = 1.0;
     if (isDragging && _dragOffset != null) {
       posX = _dragOffset!.dx;
       posY = _dragOffset!.dy;
@@ -92,10 +107,30 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       final t = Curves.easeOutCubic.transform(_snapBackCtrl!.value);
       posX = _snapBackFrom!.dx + (_snapBackTo!.dx - _snapBackFrom!.dx) * t;
       posY = _snapBackFrom!.dy + (_snapBackTo!.dy - _snapBackFrom!.dy) * t;
+    } else if (isFlyingTo && _flyFrom != null && _flyTo != null) {
+      final t = Curves.easeInOutCubic.transform(_flyToCtrl!.value);
+      posX = _flyFrom!.dx + (_flyTo!.dx - _flyFrom!.dx) * t;
+      posY = _flyFrom!.dy + (_flyTo!.dy - _flyFrom!.dy) * t;
+      extraScale = 1.0 - 0.4 * t; // shrink as it approaches target
+    } else if (isFlyTarget) {
+      final t = Curves.easeOutCubic.transform(_flyToCtrl!.value);
+      extraScale = 1.0 + 0.15 * t; // grow slightly (anticipation)
     }
 
     final left = posX - size / 2;
     final top = posY - size / 2;
+
+    Widget shapeChild = ShapeWidget(
+      shape: shape,
+      isDragging: isDragging,
+      isHighlighted: isHighlighted,
+      isRadarHighlighted: isRadarHighlighted,
+      radarGroupIndex: radarGroupIndex,
+      isMergeResult: shape.id == _recentMergedId,
+    );
+    if (extraScale != 1.0) {
+      shapeChild = Transform.scale(scale: extraScale, child: shapeChild);
+    }
 
     return Positioned(
       key: ValueKey(shape.id),
@@ -105,6 +140,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         onTap: () => _handleShapeTap(shape, jokerMode),
         onPanStart: (details) {
           if (jokerMode != JokerMode.none) return;
+          if (_flyToShapeId != null) return; // Block during fly-to
           // Cancel any running snap-back
           _snapBackCtrl?.stop();
           _snapBackId = null;
@@ -125,12 +161,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
           });
         },
         onPanEnd: (_) => _handleDrop(shape, boardSize),
-        child: ShapeWidget(
-          shape: shape,
-          isDragging: isDragging,
-          isHighlighted: isHighlighted,
-          isRadarHighlighted: isRadarHighlighted,
-        ),
+        child: shapeChild,
       ),
     );
   }
@@ -151,7 +182,19 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         AudioService.instance.playWildcard();
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.evolution:
+        final evoResult = JokerHandler.useEvolution(
+          shape, ref.read(gameStateProvider).shapes, ref.read(gameStateProvider).jokerInventory);
         notifier.useEvolution(shape);
+        if (evoResult.evolvedShape != null) {
+          AudioService.instance.playMerge();
+          HapticFeedback.heavyImpact();
+          widget.onMerge?.call(
+            Offset(evoResult.evolvedShape!.x, evoResult.evolvedShape!.y),
+            evoResult.evolvedShape!.color,
+            evoResult.scoreBonus,
+            0, // evolution joker doesn't count as combo
+          );
+        }
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.megaBomb:
         notifier.useMegaBomb(shape);
@@ -171,11 +214,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
     final dragDist = (_dragOffset! - _dragStartOffset!).distance;
     final wasTap = dragDist < 5.0;
 
-    final notifier = ref.read(gameStateProvider.notifier);
-    final result = notifier.attemptMerge(shape, _dragOffset!, wasTap: wasTap);
-
-    if (result.wasTap) {
-      // Tap — do nothing, just reset
+    if (wasTap) {
       setState(() {
         _draggingId = null;
         _dragOffset = null;
@@ -184,22 +223,18 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       return;
     }
 
-    if (result.mergedShape != null) {
-      // Merge success
-      HapticFeedback.heavyImpact();
-      AudioService.instance.playMerge();
-      widget.onMerge?.call(
-        Offset(result.mergedShape!.x, result.mergedShape!.y),
-        result.mergedShape!.color,
-        result.pointsEarned,
-      );
-      setState(() {
-        _draggingId = null;
-        _dragOffset = null;
-        _dragStartOffset = null;
-      });
+    // Check for merge target before committing
+    final gameState = ref.read(gameStateProvider);
+    final target = MergeDetector.findBestTarget(shape, gameState.shapes, _dragOffset!);
+
+    if (target != null) {
+      // Fly-to animation → then merge
+      _startFlyToMerge(shape, target, _dragOffset!);
     } else {
-      // No merge — animate snap back to original position, then spawn happened in engine
+      // No merge — snap back + spawn
+      final notifier = ref.read(gameStateProvider.notifier);
+      notifier.attemptMerge(shape, _dragOffset!, wasTap: false);
+
       final fromOffset = _dragOffset!;
       final toOffset = _dragStartOffset!;
 
@@ -235,6 +270,78 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       _snapBackCtrl!.forward();
     }
   }
+
+  // ── Fly-to-merge animation ──────────────────────────────────────────────
+
+  void _startFlyToMerge(GameShape dragged, GameShape target, Offset fromPos) {
+    _flyToCtrl?.dispose();
+    _flyToCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+    _flyToShapeId = dragged.id;
+    _flyToTargetId = target.id;
+    _flyFrom = fromPos;
+    _flyTo = Offset(target.x, target.y);
+    _pendingDragShape = dragged;
+
+    _flyToCtrl!.addListener(() => setState(() {}));
+    _flyToCtrl!.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _completeMerge();
+      }
+    });
+
+    setState(() {
+      _draggingId = null;
+      _dragOffset = null;
+      _dragStartOffset = null;
+    });
+
+    _flyToCtrl!.forward();
+  }
+
+  void _completeMerge() {
+    final notifier = ref.read(gameStateProvider.notifier);
+    final result = notifier.attemptMerge(
+      _pendingDragShape!,
+      _flyTo!,
+      wasTap: false,
+    );
+
+    if (result.mergedShape != null) {
+      _recentMergedId = result.mergedShape!.id;
+      // Progressive haptic: heavier on higher combos
+      if (result.comboCount >= 5) {
+        HapticFeedback.heavyImpact();
+        HapticFeedback.heavyImpact();
+      } else if (result.comboCount >= 3) {
+        HapticFeedback.heavyImpact();
+      } else {
+        HapticFeedback.mediumImpact();
+      }
+      // Progressive sound
+      if (result.comboCount >= 3) {
+        AudioService.instance.playCombo(result.comboCount);
+      } else {
+        AudioService.instance.playMerge();
+      }
+      widget.onMerge?.call(
+        Offset(result.mergedShape!.x, result.mergedShape!.y),
+        result.mergedShape!.color,
+        result.pointsEarned,
+        result.comboCount,
+      );
+    }
+
+    setState(() {
+      _flyToShapeId = null;
+      _flyToTargetId = null;
+      _flyFrom = null;
+      _flyTo = null;
+      _pendingDragShape = null;
+    });
+  }
 }
 
 class _BoardBackgroundPainter extends CustomPainter {
@@ -260,9 +367,9 @@ class _BoardBackgroundPainter extends CustomPainter {
 
     // Nebula glow
     final nebulaPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
-    nebulaPaint.color = const Color(0xFF6a11cb).withValues(alpha: 0.04);
+    nebulaPaint.color = AppTheme.bgTop.withValues(alpha: 0.04);
     canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.2), 80, nebulaPaint);
-    nebulaPaint.color = const Color(0xFF2575fc).withValues(alpha: 0.03);
+    nebulaPaint.color = AppTheme.bgBot.withValues(alpha: 0.03);
     canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.7), 90, nebulaPaint);
   }
 

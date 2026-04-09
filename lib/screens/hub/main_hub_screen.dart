@@ -3,26 +3,51 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:shape_merge/core/constants/retention_ui.dart';
+import 'package:shape_merge/core/services/progression_service.dart';
+import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
+import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
+import 'package:shape_merge/providers/streak_provider.dart';
 import 'package:shape_merge/screens/home/home_screen.dart';
+
+import 'package:shape_merge/screens/hub/widgets/level_up_overlay.dart';
+import 'package:shape_merge/screens/hub/widgets/streak_popup.dart';
 import 'package:shape_merge/screens/settings/profile_dialog.dart';
 
-class MainHubScreen extends ConsumerWidget {
+class MainHubScreen extends ConsumerStatefulWidget {
   const MainHubScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainHubScreen> createState() => _MainHubScreenState();
+}
+
+class _MainHubScreenState extends ConsumerState<MainHubScreen> {
+  @override
+  Widget build(BuildContext context) {
     // Initialize IAP early to catch pending purchases
     ref.watch(iapReadyProvider);
 
+    // Show streak popup once when a new streak day is earned
+    ref.listen(streakProvider, (prev, next) {
+      if (next != null && next.streakIncremented && prev != next) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          StreakPopup.show(context, next).then((_) {
+            ref.read(streakProvider.notifier).clearResult();
+          });
+        });
+      }
+    });
+
     return Scaffold(
-      backgroundColor: const Color(0xFF111111),
+      backgroundColor: AppTheme.scaffoldBg,
       body: Stack(
         children: [
           // Global Background
@@ -57,6 +82,9 @@ class MainHubScreen extends ConsumerWidget {
               ],
             ),
           ),
+
+          // Level-up overlay — centered, auto-dismisses after 2.5s
+          const Positioned.fill(child: LevelUpOverlay()),
         ],
       ),
     );
@@ -81,7 +109,7 @@ class MainHubScreen extends ConsumerWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFff2d87).withOpacity(0.3),
+                color: AppTheme.orbPink.withOpacity(0.3),
               ),
             ),
           ),
@@ -93,7 +121,7 @@ class MainHubScreen extends ConsumerWidget {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF00d4ff).withOpacity(0.3),
+                color: AppTheme.orbCyan.withOpacity(0.3),
               ),
             ),
           ),
@@ -108,13 +136,29 @@ class _TopHud extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).valueOrNull;
     final player = ref.watch(playerProvider).valueOrNull;
+    final streakResult = ref.watch(streakProvider);
 
-    // Determine current avatar
+    final localStorage = ref.watch(localStorageProvider).valueOrNull;
+    final streakCount = user != null
+        ? (player?.currentStreak ?? localStorage?.currentStreak ?? 0)
+        : (localStorage?.currentStreak ?? 0);
+
+    // Level: prefer live progressionProvider result (updated immediately after game)
+    final progressionResult = ref.watch(progressionProvider);
+    final level = progressionResult?.newLevel
+        ?? (user != null
+            ? (player?.level ?? localStorage?.playerLevel ?? 1)
+            : (localStorage?.playerLevel ?? 1));
+    final currentXP = progressionResult?.currentXP
+        ?? (user != null
+            ? (player?.currentXP ?? localStorage?.currentXP ?? 0)
+            : (localStorage?.currentXP ?? 0));
+    final xpNeeded = ProgressionService.xpForLevel(level);
+
     final String currentAvatar;
     if (user != null) {
       currentAvatar = avatarEmoji(player?.avatarId);
     } else {
-      final localStorage = ref.watch(localStorageProvider).valueOrNull;
       currentAvatar = avatarEmoji(localStorage?.guestAvatar);
     }
 
@@ -128,30 +172,63 @@ class _TopHud extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Settings button
-          Button3D.purple(
-            padding: EdgeInsets.zero,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => const SettingsModal(),
-              );
-            },
-            child: const SizedBox(
-              width: 42,
-              height: 42,
-              child: Icon(Icons.settings, color: Colors.white, size: 22),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Button3D.purple(
+              padding: EdgeInsets.zero,
+              borderRadius: 100,
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => const SettingsModal(),
+                );
+              },
+              child: const SizedBox(
+                width: 42,
+                height: 42,
+                child: Icon(Icons.settings, color: Colors.white, size: 20),
+              ),
             ),
           ),
-          const Spacer(),
-          // Avatar / Profile button — aligned right
-          Button3D.purple(
-            padding: EdgeInsets.zero,
-            onPressed: () => showProfileDialog(context, ref),
-            child: SizedBox(
-              width: 42,
-              height: 42,
-              child: Center(
-                child: Text(currentAvatar, style: const TextStyle(fontSize: 22)),
+
+          // ── 3 chips centrés, même taille ──
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (streakCount > 0) ...[
+                  RetentionUI.streakBadge(
+                    count: streakCount,
+                    onTap: streakResult != null
+                        ? () => StreakPopup.show(context, streakResult).then((_) {
+                              ref.read(streakProvider.notifier).clearResult();
+                            })
+                        : null,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                RetentionUI.levelBadge(level: level),
+                const SizedBox(width: 6),
+                _AnimatedXpBadge(currentXP: currentXP, xpNeeded: xpNeeded),
+              ],
+            ),
+          ),
+
+          // Avatar / Profile button
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Button3D.purple(
+              padding: EdgeInsets.zero,
+              borderRadius: 100,
+              onPressed: () => showProfileDialog(context, ref),
+              child: SizedBox(
+                width: 42,
+                height: 42,
+                child: Center(
+                  child: currentAvatar == '👤'
+                      ? const Icon(Icons.person_rounded, color: Colors.white, size: 24)
+                      : Text(currentAvatar, style: const TextStyle(fontSize: AppTheme.fontH4)),
+                ),
               ),
             ),
           ),
@@ -178,74 +255,90 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Stack(
         clipBehavior: Clip.none,
-        alignment: Alignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFf0f0f0), width: 4),
+              color: AppTheme.panelBg,
+              borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+              border: Border.all(color: AppTheme.panelBorder, width: 3),
               boxShadow: const [
-                BoxShadow(
-                    color: Color(0xFFcccccc), offset: Offset(0, 15)),
-                BoxShadow(
-                    color: Colors.black54,
-                    offset: Offset(0, 25),
-                    blurRadius: 30),
+                BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 8)),
+                BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("RÉGLAGES",
-                    style: GoogleFonts.fredoka(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF333333))),
-                const SizedBox(height: 15),
-                _settingToggle(
-                    "Musique", Icons.music_note, AppTheme.purpleTop, soundOn,
-                    (v) {
-                  ref.read(audioProvider.notifier).toggle();
-                }),
-                const SizedBox(height: 20),
-                Button3D.blue(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.language, color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Flexible(
-                          child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text("LANGUE : FRANÇAIS",
-                                  style: GoogleFonts.nunito(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white)))),
+                // Settings icon — circular gradient like profile avatar
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppTheme.profileGradTop, AppTheme.profileGradBot],
+                    ),
+                    border: Border.all(color: AppTheme.gold, width: 3),
+                    boxShadow: [
+                      BoxShadow(color: AppTheme.gold.withValues(alpha: 0.3), blurRadius: 12),
                     ],
+                  ),
+                  child: const Icon(Icons.settings_rounded, color: Colors.white, size: 44),
+                ),
+                const SizedBox(height: 12),
+
+                // Title
+                Text('RÉGLAGES', style: AppTheme.titleStyle(AppTheme.fontH4)),
+                const SizedBox(height: 20),
+
+                // Music toggle
+                _settingToggle(
+                  'Musique', Icons.music_note, soundOn,
+                  (v) => ref.read(audioProvider.notifier).toggle(),
+                ),
+                const SizedBox(height: 16),
+
+                // Language button
+                SizedBox(
+                  width: double.infinity,
+                  child: Button3D.blue(
+                    expand: true,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.language, color: Colors.white, size: 22),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('LANGUE : FRANÇAIS',
+                                style: AppTheme.titleStyle(AppTheme.fontBody)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          // Close (X) button on the top-right edge
           Positioned(
-            top: -20,
-            right: -15,
+            top: -12,
+            right: -12,
             child: Button3D.red(
-              padding: EdgeInsets.zero,
-              borderRadius: 25,
+              padding: const EdgeInsets.all(8),
+              borderRadius: 20,
               onPressed: () => Navigator.of(context).pop(),
-              child: const SizedBox(
-                width: 50,
-                height: 50,
-                child: Icon(Icons.close, color: Colors.white, size: 24),
-              ),
+              child: const PremiumIcon.close(size: 22),
             ),
           ),
         ],
@@ -253,28 +346,29 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
     );
   }
 
-  Widget _settingToggle(String title, IconData icon, Color iconColor,
-      bool isOn, ValueChanged<bool> onChanged) {
+  Widget _settingToggle(String title, IconData icon, bool isOn,
+      ValueChanged<bool> onChanged) {
     return GestureDetector(
       onTap: () => onChanged(!isOn),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-            color: const Color(0xFFf8f9fa),
-            border: Border.all(color: const Color(0xFFe9ecef), width: 2),
-            borderRadius: BorderRadius.circular(16)),
+          color: Colors.white.withValues(alpha: 0.08),
+          border: Border.all(color: AppTheme.panelBorder, width: 2),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
-                Icon(icon, color: iconColor),
+                Icon(icon, color: AppTheme.gold),
                 const SizedBox(width: 10),
                 Text(title,
                     style: GoogleFonts.nunito(
-                        fontSize: 16,
+                        fontSize: AppTheme.fontRegular,
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFF333333))),
+                        color: Colors.white)),
               ],
             ),
             AnimatedContainer(
@@ -282,37 +376,231 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
               width: 60,
               height: 32,
               decoration: BoxDecoration(
-                  color:
-                      isOn ? AppTheme.greenTop : const Color(0xFFcccccc),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: isOn
-                            ? AppTheme.greenBot
-                            : const Color(0xFF999999),
-                        offset: const Offset(0, 3))
-                  ]),
-              alignment:
-                  isOn ? Alignment.centerRight : Alignment.centerLeft,
+                color: isOn ? AppTheme.greenTop : Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                boxShadow: [
+                  BoxShadow(
+                    color: isOn ? AppTheme.greenBot : Colors.black26,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              alignment: isOn ? Alignment.centerRight : Alignment.centerLeft,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 28,
                 height: 28,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black38,
-                          blurRadius: 6,
-                          offset: Offset(0, 4))
-                    ]),
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 4)),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Animated XP Badge — bounce + rolling counter + floating +N XP
+// ═══════════════════════════════════════════════════════════════
+class _AnimatedXpBadge extends StatefulWidget {
+  const _AnimatedXpBadge({required this.currentXP, required this.xpNeeded});
+
+  final int currentXP;
+  final int xpNeeded;
+
+  @override
+  State<_AnimatedXpBadge> createState() => _AnimatedXpBadgeState();
+}
+
+class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
+    with TickerProviderStateMixin {
+  late final AnimationController _bounce;
+  late final AnimationController _plusLabel;
+  late final AnimationController _counterRoll;
+
+  int _displayXP = 0;
+  int _prevXP = 0;
+  int _gainedXP = 0;
+  bool _isRolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayXP = widget.currentXP;
+    _prevXP = widget.currentXP;
+    _bounce = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600))
+      ..addListener(() => setState(() {}));
+    _plusLabel = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..addListener(() => setState(() {}));
+    _counterRoll = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1500))
+      ..addStatusListener((s) {
+        if (s == AnimationStatus.completed) {
+          setState(() {
+            _isRolling = false;
+            _displayXP = widget.currentXP;
+          });
+        }
+      })
+      ..addListener(() => setState(() {}));
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedXpBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentXP == oldWidget.currentXP) return;
+
+    _bounce.forward(from: 0);
+
+    if (widget.currentXP > oldWidget.currentXP) {
+      setState(() {
+        _prevXP = oldWidget.currentXP;
+        _gainedXP = widget.currentXP - oldWidget.currentXP;
+        _isRolling = true;
+      });
+      _plusLabel.forward(from: 0);
+      _counterRoll.forward(from: 0);
+    } else {
+      // Level-up reset — update display immediately
+      setState(() {
+        _isRolling = false;
+        _displayXP = widget.currentXP;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _bounce.dispose();
+    _plusLabel.dispose();
+    _counterRoll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Bounce: elastic scale 1 → 1.35 → 0.92 → 1
+    final double bounceScale;
+    if (_bounce.value < 0.3) {
+      bounceScale = 1.0 + (_bounce.value / 0.3) * 0.35;
+    } else if (_bounce.value < 0.6) {
+      bounceScale = 1.35 - ((_bounce.value - 0.3) / 0.3) * 0.43;
+    } else {
+      bounceScale = 0.92 + ((_bounce.value - 0.6) / 0.4) * 0.08;
+    }
+
+    // Glow peaks at bounce peak
+    final glowT =
+        _bounce.value < 0.5 ? _bounce.value * 2 : 2 - _bounce.value * 2;
+
+    // Rolling counter — fiable avec flag booléen
+    final counterShown = _isRolling
+        ? (_prevXP +
+                (widget.currentXP - _prevXP) *
+                    Curves.easeInOut.transform(_counterRoll.value))
+            .round()
+            .clamp(0, widget.xpNeeded)
+        : _displayXP;
+
+    // Floating +N XP label
+    final plusProgress = Curves.easeOutCubic.transform(_plusLabel.value);
+    final plusOpacity = (1.0 - _plusLabel.value * 1.2).clamp(0.0, 1.0);
+    final plusOffset = -48.0 * plusProgress;
+
+    const color = AppTheme.xpBadgeBot;
+
+    final badge = Transform.scale(
+      scale: _bounce.isAnimating ? bounceScale : 1.0,
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 80, minHeight: 46),
+        padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTheme.xpBadgeTop, AppTheme.xpBadgeBot],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+          border: Border.all(color: AppTheme.xpBadgeBorder, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.55 + glowT * 0.45),
+              blurRadius: _bounce.isAnimating ? 14 + glowT * 16 : 14,
+              offset: const Offset(0, 4),
+            ),
+            const BoxShadow(color: Colors.black54, offset: Offset(0, 5)),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text('⚡', style: TextStyle(fontSize: AppTheme.fontRegular, height: 1)),
+            const SizedBox(width: 6),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('XP',
+                    style: AppTheme.titleStyle(AppTheme.fontPico).copyWith(
+                        color: AppTheme.goldLabel,
+                        letterSpacing: 1,
+                        height: 1)),
+                Text(
+                  '$counterShown/${widget.xpNeeded}',
+                  style: GoogleFonts.fredoka(
+                    fontSize: AppTheme.fontRegular,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                    shadows: const [
+                      Shadow(color: Colors.black38, blurRadius: 4)
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        badge,
+        if (_plusLabel.isAnimating && _gainedXP > 0)
+          Positioned(
+            top: plusOffset,
+            child: Opacity(
+              opacity: plusOpacity,
+              child: Text(
+                '+$_gainedXP XP',
+                style: GoogleFonts.fredoka(
+                  fontSize: AppTheme.fontXSmall,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                        color: color.withValues(alpha: 0.9), blurRadius: 8),
+                    const Shadow(color: Colors.black54, blurRadius: 4),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

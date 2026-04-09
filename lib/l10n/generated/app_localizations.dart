@@ -487,6 +487,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign out?'**
   String get signOutConfirm;
+
+  /// No description provided for @streakDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {n}'**
+  String streakDay(int n);
+
+  /// No description provided for @streakConnectedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily login validated!'**
+  String get streakConnectedToday;
+
+  /// No description provided for @streakBroken.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak broken'**
+  String get streakBroken;
+
+  /// No description provided for @streakBrokenDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your streak was interrupted…'**
+  String get streakBrokenDesc;
+
+  /// No description provided for @streakSaveNudge.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to never lose your streak.'**
+  String get streakSaveNudge;
+
+  /// No description provided for @streakCollect.
+  ///
+  /// In en, this message translates to:
+  /// **'Awesome!'**
+  String get streakCollect;
+
+  /// No description provided for @streakLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak lost'**
+  String get streakLost;
+
+  /// No description provided for @streakLostDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Come back every day to earn\nbetter bonuses.'**
+  String get streakLostDesc;
+
+  /// No description provided for @dailyObjectivesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DAILY GOALS'**
+  String get dailyObjectivesTitle;
+
+  /// No description provided for @objectiveFusions.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Make 1 merge} other{Make {n} merges}}'**
+  String objectiveFusions(int n);
+
+  /// No description provided for @objectiveScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach a score of {n}'**
+  String objectiveScore(int n);
+
+  /// No description provided for @objectiveParties.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Play 1 game} other{Play {n} games}}'**
+  String objectiveParties(int n);
+
+  /// No description provided for @objectiveFormeMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach shape rank {n}'**
+  String objectiveFormeMax(int n);
+
+  /// No description provided for @objectiveJokersUses.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Use 1 joker} other{Use {n} jokers}}'**
+  String objectiveJokersUses(int n);
+
+  /// No description provided for @objectiveBonusAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete all bonus'**
+  String get objectiveBonusAll;
+
+  /// No description provided for @objectiveCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Objective completed!'**
+  String get objectiveCompleted;
+
+  /// No description provided for @collectReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect'**
+  String get collectReward;
+
+  /// No description provided for @rewardReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Reward received!'**
+  String get rewardReceived;
+
+  /// No description provided for @allObjectivesCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'All objectives completed!'**
+  String get allObjectivesCompleted;
+
+  /// No description provided for @levelBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Lv'**
+  String get levelBadge;
+
+  /// No description provided for @levelUp.
+  ///
+  /// In en, this message translates to:
+  /// **'LEVEL {n}!'**
+  String levelUp(int n);
+
+  /// No description provided for @xpGained.
+  ///
+  /// In en, this message translates to:
+  /// **'+{n} XP'**
+  String xpGained(int n);
+
+  /// No description provided for @xpToNextLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} XP to level {lv}'**
+  String xpToNextLevel(int n, int lv);
+
+  /// No description provided for @connectToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to save progress'**
+  String get connectToSave;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete permanently?'**
+  String get deleteAccountConfirm;
 }
 
 class _AppLocalizationsDelegate

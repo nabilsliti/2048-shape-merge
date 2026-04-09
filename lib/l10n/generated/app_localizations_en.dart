@@ -207,4 +207,121 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signOutConfirm => 'Sign out?';
+
+  @override
+  String streakDay(int n) {
+    return 'Day $n';
+  }
+
+  @override
+  String get streakConnectedToday => 'Daily login validated!';
+
+  @override
+  String get streakBroken => 'Streak broken';
+
+  @override
+  String get streakBrokenDesc => 'Your streak was interrupted…';
+
+  @override
+  String get streakSaveNudge => 'Sign in to never lose your streak.';
+
+  @override
+  String get streakCollect => 'Awesome!';
+
+  @override
+  String get streakLost => 'Streak lost';
+
+  @override
+  String get streakLostDesc => 'Come back every day to earn\nbetter bonuses.';
+
+  @override
+  String get dailyObjectivesTitle => 'DAILY GOALS';
+
+  @override
+  String objectiveFusions(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Make $n merges',
+      one: 'Make 1 merge',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveScore(int n) {
+    return 'Reach a score of $n';
+  }
+
+  @override
+  String objectiveParties(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Play $n games',
+      one: 'Play 1 game',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveFormeMax(int n) {
+    return 'Reach shape rank $n';
+  }
+
+  @override
+  String objectiveJokersUses(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Use $n jokers',
+      one: 'Use 1 joker',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get objectiveBonusAll => 'Complete all bonus';
+
+  @override
+  String get objectiveCompleted => 'Objective completed!';
+
+  @override
+  String get collectReward => 'Collect';
+
+  @override
+  String get rewardReceived => 'Reward received!';
+
+  @override
+  String get allObjectivesCompleted => 'All objectives completed!';
+
+  @override
+  String get levelBadge => 'Lv';
+
+  @override
+  String levelUp(int n) {
+    return 'LEVEL $n!';
+  }
+
+  @override
+  String xpGained(int n) {
+    return '+$n XP';
+  }
+
+  @override
+  String xpToNextLevel(int n, int lv) {
+    return '$n XP to level $lv';
+  }
+
+  @override
+  String get connectToSave => 'Sign in to save progress';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get deleteAccount => 'Delete my account';
+
+  @override
+  String get deleteAccountConfirm => 'Delete permanently?';
 }

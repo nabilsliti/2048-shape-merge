@@ -17,11 +17,11 @@ class JokersPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(l10n.onboardingTitle2, style: AppTheme.titleStyle(28)),
+          Text(l10n.onboardingTitle2, style: AppTheme.titleStyle(AppTheme.fontH1)),
           const SizedBox(height: 24),
           Text(
             l10n.onboardingDesc2,
-            style: GoogleFonts.nunito(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+            style: GoogleFonts.nunito(color: Colors.white, fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -70,10 +70,10 @@ class _JokerCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.panelBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         border: Border.all(color: color, width: 1.5),
         boxShadow: const [
-          BoxShadow(color: Color(0xFF111827), offset: Offset(0, 3)),
+          BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 3)),
           BoxShadow(color: Colors.black54, offset: Offset(0, 4), blurRadius: 6),
         ],
       ),
@@ -95,13 +95,13 @@ class _JokerCard extends StatelessWidget {
               children: [
                 Text(
                   title.toUpperCase(),
-                  style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w700, color: color,
+                  style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w700, color: color,
                       shadows: const [Shadow(color: Colors.black38, offset: Offset(0, 2))]),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: GoogleFonts.nunito(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF8ad1ff)),
+                  style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w600, color: AppTheme.blueLabel),
                 ),
               ],
             ),

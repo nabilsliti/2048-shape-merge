@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/core/services/notification_service.dart';
+import 'package:shape_merge/providers/daily_challenge_provider.dart';
+import 'package:shape_merge/providers/streak_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -49,6 +52,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           jokers: storage.jokerInventory,
         );
 
+    // Check streak on every launch — delivers reward and updates state for popup
+    await ref.read(streakProvider.notifier).checkAndUpdate();
+    // Load or generate today's daily challenges
+    await ref.read(dailyChallengeProvider.notifier).checkRenewal();
+    // Init notifications and request permission once; schedule streak reminder.
+    await NotificationService.instance.init();
+    await NotificationService.instance.requestPermission();
+    await NotificationService.instance.scheduleStreakReminder();
+
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
@@ -85,7 +97,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFff2d87).withValues(alpha: 0.3),
+                color: AppTheme.orbPink.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -97,7 +109,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF00d4ff).withValues(alpha: 0.3),
+                color: AppTheme.orbCyan.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -115,16 +127,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         TextSpan(children: [
                           TextSpan(
                             text: 'SHAPE ',
-                            style: AppTheme.titleStyle(54),
+                            style: AppTheme.titleStyle(AppTheme.fontHuge),
                           ),
                           TextSpan(
                             text: 'MERGE\n',
-                            style: AppTheme.titleStyle(54)
+                            style: AppTheme.titleStyle(AppTheme.fontHuge)
                                 .copyWith(color: AppTheme.orangeTop),
                           ),
                           TextSpan(
                             text: '2048',
-                            style: AppTheme.titleStyle(54)
+                            style: AppTheme.titleStyle(AppTheme.fontHuge)
                                 .copyWith(color: AppTheme.orangeTop),
                           ),
                         ]),

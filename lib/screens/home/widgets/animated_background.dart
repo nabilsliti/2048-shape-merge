@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:shape_merge/core/theme/app_theme.dart';
 
 /// Deep space background with stars, nebula and perspective grid.
 /// Reused across splash, home, game and overlays.
@@ -22,10 +23,10 @@ class SpaceBackground extends StatelessWidget {
               center: Alignment(0, -0.3),
               radius: 1.2,
               colors: [
-                Color(0xFF2a2060),
-                Color(0xFF1e1b4b),
-                Color(0xFF140f35),
-                Color(0xFF0d0a2a),
+                AppTheme.spaceDeep1,
+                AppTheme.spaceDeep2,
+                AppTheme.spaceDeep3,
+                AppTheme.spaceDarkest,
               ],
               stops: [0.0, 0.35, 0.7, 1.0],
             ),
@@ -81,11 +82,11 @@ class _SpaceBackgroundPainter extends CustomPainter {
 
     // ── Nebula glow spots ──
     final nebulaPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 40);
-    nebulaPaint.color = const Color(0xFF6a11cb).withValues(alpha: 0.06);
+    nebulaPaint.color = AppTheme.bgTop.withValues(alpha: 0.06);
     canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.15), 100, nebulaPaint);
-    nebulaPaint.color = const Color(0xFF2575fc).withValues(alpha: 0.05);
+    nebulaPaint.color = AppTheme.bgBot.withValues(alpha: 0.05);
     canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.75), 120, nebulaPaint);
-    nebulaPaint.color = const Color(0xFFff2d87).withValues(alpha: 0.03);
+    nebulaPaint.color = AppTheme.orbPink.withValues(alpha: 0.03);
     canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.45), 90, nebulaPaint);
 
     // ── Perspective grid ──
@@ -124,7 +125,7 @@ class _SpaceBackgroundPainter extends CustomPainter {
       final bottomX = t * size.width;
       final distFromCenter = (t - 0.5).abs();
       final alpha = (0.12 - distFromCenter * 0.15).clamp(0.02, 0.12);
-      gridPaint.color = const Color(0xFF4338ca).withValues(alpha: alpha);
+      gridPaint.color = AppTheme.panelBorder.withValues(alpha: alpha);
       canvas.drawLine(Offset(vanishX, vanishY), Offset(bottomX, bottomY), gridPaint);
     }
 
@@ -135,7 +136,7 @@ class _SpaceBackgroundPainter extends CustomPainter {
       final y = vanishY + (bottomY - vanishY) * progress;
       final spreadX = (size.width / 2) * progress;
       final alpha = (0.04 + progress * 0.1).clamp(0.02, 0.14);
-      gridPaint.color = const Color(0xFF4338ca).withValues(alpha: alpha);
+      gridPaint.color = AppTheme.panelBorder.withValues(alpha: alpha);
       canvas.drawLine(Offset(vanishX - spreadX, y), Offset(vanishX + spreadX, y), gridPaint);
     }
   }

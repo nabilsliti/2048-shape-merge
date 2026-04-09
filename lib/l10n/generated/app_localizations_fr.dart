@@ -210,4 +210,123 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get signOutConfirm => 'Te déconnecter ?';
+
+  @override
+  String streakDay(int n) {
+    return 'Jour $n';
+  }
+
+  @override
+  String get streakConnectedToday => 'Connexion du jour validée !';
+
+  @override
+  String get streakBroken => 'Série interrompue';
+
+  @override
+  String get streakBrokenDesc => 'Ton streak s\'est interrompu…';
+
+  @override
+  String get streakSaveNudge =>
+      'Connecte-toi pour ne jamais perdre ton streak.';
+
+  @override
+  String get streakCollect => 'Super !';
+
+  @override
+  String get streakLost => 'Streak perdu';
+
+  @override
+  String get streakLostDesc =>
+      'Reviens chaque jour pour accumuler\ndes bonus plus intéressants.';
+
+  @override
+  String get dailyObjectivesTitle => 'OBJECTIFS DU JOUR';
+
+  @override
+  String objectiveFusions(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Réaliser $n fusions',
+      one: 'Réaliser 1 fusion',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveScore(int n) {
+    return 'Atteindre un score de $n';
+  }
+
+  @override
+  String objectiveParties(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Jouer $n parties',
+      one: 'Jouer 1 partie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveFormeMax(int n) {
+    return 'Atteindre la forme rang $n';
+  }
+
+  @override
+  String objectiveJokersUses(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Utiliser $n jokers',
+      one: 'Utiliser 1 joker',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get objectiveBonusAll => 'Bonus tout compléter';
+
+  @override
+  String get objectiveCompleted => 'Objectif complété !';
+
+  @override
+  String get collectReward => 'Collecter';
+
+  @override
+  String get rewardReceived => 'Récompense reçue !';
+
+  @override
+  String get allObjectivesCompleted => 'Tous les objectifs complétés !';
+
+  @override
+  String get levelBadge => 'Nv';
+
+  @override
+  String levelUp(int n) {
+    return 'NIVEAU $n !';
+  }
+
+  @override
+  String xpGained(int n) {
+    return '+$n XP';
+  }
+
+  @override
+  String xpToNextLevel(int n, int lv) {
+    return '$n XP avant le niveau $lv';
+  }
+
+  @override
+  String get connectToSave => 'Connecte-toi pour sauvegarder';
+
+  @override
+  String get later => 'Plus tard';
+
+  @override
+  String get deleteAccount => 'Supprimer mon compte';
+
+  @override
+  String get deleteAccountConfirm => 'Supprimer définitivement ?';
 }
