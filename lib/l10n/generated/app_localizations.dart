@@ -257,7 +257,7 @@ abstract class AppLocalizations {
   /// No description provided for @jokerBombDesc.
   ///
   /// In en, this message translates to:
-  /// **'Destroys all shapes of the same type and color'**
+  /// **'Targets a shape and destroys all shapes of the same type and color'**
   String get jokerBombDesc;
 
   /// No description provided for @jokerWildcard.
@@ -269,7 +269,7 @@ abstract class AppLocalizations {
   /// No description provided for @jokerWildcardDesc.
   ///
   /// In en, this message translates to:
-  /// **'Merges with any shape of the same level'**
+  /// **'Spawns a special shape that merges with any shape of the same level'**
   String get jokerWildcardDesc;
 
   /// No description provided for @jokerReducer.
@@ -281,8 +281,44 @@ abstract class AppLocalizations {
   /// No description provided for @jokerReducerDesc.
   ///
   /// In en, this message translates to:
-  /// **'Reduces a shape\'s level by 1'**
+  /// **'Reduces a shape\'s level by 1. At level 1, it vanishes!'**
   String get jokerReducerDesc;
+
+  /// No description provided for @jokerRadar.
+  ///
+  /// In en, this message translates to:
+  /// **'Radar'**
+  String get jokerRadar;
+
+  /// No description provided for @jokerRadarDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Reveals all possible merges for 5 seconds'**
+  String get jokerRadarDesc;
+
+  /// No description provided for @jokerEvolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Evolution'**
+  String get jokerEvolution;
+
+  /// No description provided for @jokerEvolutionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Increases a shape\'s level by +1 without merging'**
+  String get jokerEvolutionDesc;
+
+  /// No description provided for @jokerMegaBomb.
+  ///
+  /// In en, this message translates to:
+  /// **'Mega Bomb'**
+  String get jokerMegaBomb;
+
+  /// No description provided for @jokerMegaBombDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Destroys all shapes of the same level, regardless of type'**
+  String get jokerMegaBombDesc;
 
   /// No description provided for @onboardingTitle1.
   ///
@@ -649,6 +685,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete permanently?'**
   String get deleteAccountConfirm;
+
+  /// No description provided for @tutorialObjectiveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OBJECTIVE'**
+  String get tutorialObjectiveLabel;
+
+  /// No description provided for @tutorialObjectiveText.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge identical shapes (same shape + same color + same level) to level up and reach the highest score!'**
+  String get tutorialObjectiveText;
+
+  /// No description provided for @tutorialControlsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTROLS'**
+  String get tutorialControlsLabel;
+
+  /// No description provided for @tutorialControlsText.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag a shape onto an identical shape to merge. If no match, it snaps back.'**
+  String get tutorialControlsText;
+
+  /// No description provided for @tutorialJokersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'JOKERS'**
+  String get tutorialJokersLabel;
+
+  /// No description provided for @tutorialClassicLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get tutorialClassicLabel;
+
+  /// No description provided for @tutorialPremiumLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PREMIUM'**
+  String get tutorialPremiumLabel;
+
+  /// No description provided for @tutorialGameOverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'GAME OVER'**
+  String get tutorialGameOverLabel;
+
+  /// No description provided for @tutorialGameOverText.
+  ///
+  /// In en, this message translates to:
+  /// **'The board fills up with each move. No space + no possible merges = Game Over!'**
+  String get tutorialGameOverText;
+
+  /// No description provided for @tutorialTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SHAPE MERGE 2048'**
+  String get tutorialTitle;
+
+  /// No description provided for @tutorialGoButton.
+  ///
+  /// In en, this message translates to:
+  /// **'GO!'**
+  String get tutorialGoButton;
+
+  /// No description provided for @hudNewBest.
+  ///
+  /// In en, this message translates to:
+  /// **'★ NEW BEST'**
+  String get hudNewBest;
+
+  /// No description provided for @hudBest.
+  ///
+  /// In en, this message translates to:
+  /// **'BEST {n}'**
+  String hudBest(String n);
+
+  /// No description provided for @scoreLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SCORE'**
+  String get scoreLabel;
+
+  /// No description provided for @objectivesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} objectives'**
+  String objectivesSummary(int done, int total);
+
+  /// No description provided for @noScoresYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No scores yet'**
+  String get noScoresYet;
+
+  /// No description provided for @leaderboardYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get leaderboardYou;
+
+  /// No description provided for @leaderboardError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading leaderboard'**
+  String get leaderboardError;
+
+  /// No description provided for @packStarName.
+  ///
+  /// In en, this message translates to:
+  /// **'Star Pack'**
+  String get packStarName;
+
+  /// No description provided for @packCometName.
+  ///
+  /// In en, this message translates to:
+  /// **'Comet Pack'**
+  String get packCometName;
+
+  /// No description provided for @packDiamondName.
+  ///
+  /// In en, this message translates to:
+  /// **'Diamond Pack'**
+  String get packDiamondName;
+
+  /// No description provided for @badgeStarter.
+  ///
+  /// In en, this message translates to:
+  /// **'STARTER'**
+  String get badgeStarter;
+
+  /// No description provided for @badgePopular.
+  ///
+  /// In en, this message translates to:
+  /// **'POPULAR'**
+  String get badgePopular;
+
+  /// No description provided for @badgeBestValue.
+  ///
+  /// In en, this message translates to:
+  /// **'BEST VALUE'**
+  String get badgeBestValue;
+
+  /// No description provided for @purchaseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase successful!'**
+  String get purchaseSuccess;
+
+  /// No description provided for @purchaseError.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase error'**
+  String get purchaseError;
+
+  /// No description provided for @purchasesRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases restored!'**
+  String get purchasesRestored;
+
+  /// No description provided for @restoringPurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for previous purchases…'**
+  String get restoringPurchases;
+
+  /// No description provided for @jokerCategoryClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'CLASSIC'**
+  String get jokerCategoryClassic;
+
+  /// No description provided for @jokerCategoryPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'PREMIUM'**
+  String get jokerCategoryPremium;
+
+  /// No description provided for @noAdsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NO ADS + JOKERS'**
+  String get noAdsTitle;
+
+  /// No description provided for @badgeOneTimePurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'✨ ONE-TIME PURCHASE'**
+  String get badgeOneTimePurchase;
+
+  /// No description provided for @noAdsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove all ads!'**
+  String get noAdsDescription;
+
+  /// No description provided for @sectionJokerPacks.
+  ///
+  /// In en, this message translates to:
+  /// **'JOKER PACKS'**
+  String get sectionJokerPacks;
+
+  /// No description provided for @sectionFreeJoker.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE JOKER'**
+  String get sectionFreeJoker;
+
+  /// No description provided for @badgeFree.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE'**
+  String get badgeFree;
+
+  /// No description provided for @freeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE'**
+  String get freeLabel;
+
+  /// No description provided for @validateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRM'**
+  String get validateButton;
+
+  /// No description provided for @rewardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reward: '**
+  String get rewardLabel;
+
+  /// No description provided for @xpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'XP'**
+  String get xpLabel;
+
+  /// No description provided for @dayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DAY'**
+  String get dayLabel;
+
+  /// No description provided for @levelShortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LV'**
+  String get levelShortLabel;
+
+  /// No description provided for @defaultPlayerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Player'**
+  String get defaultPlayerName;
+
+  /// No description provided for @defaultGuestName.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get defaultGuestName;
+
+  /// No description provided for @okButton.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get okButton;
+
+  /// No description provided for @notifStreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your streak is at risk!'**
+  String get notifStreakTitle;
+
+  /// No description provided for @notifStreakBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a game to keep your streak alive.'**
+  String get notifStreakBody;
+
+  /// No description provided for @notifChannelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Streak'**
+  String get notifChannelName;
+
+  /// No description provided for @notifChannelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders to keep your game streak active.'**
+  String get notifChannelDesc;
+
+  /// No description provided for @musicLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get musicLabel;
+
+  /// No description provided for @languageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LANGUAGE: {lang}'**
+  String languageLabel(String lang);
+
+  /// No description provided for @maxShapesWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 30 shapes'**
+  String get maxShapesWarning;
 }
 
 class _AppLocalizationsDelegate

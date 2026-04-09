@@ -116,7 +116,7 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                             ),
                             child: Column(
                               children: [
-                                Text('SCORE', style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: AppTheme.blueLabel, letterSpacing: 2)),
+                                Text(l10n.scoreLabel, style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: AppTheme.blueLabel, letterSpacing: 2)),
                                 const SizedBox(height: 4),
                                 TweenAnimationBuilder<int>(
                                   tween: IntTween(begin: 0, end: widget.score),
@@ -344,6 +344,7 @@ class _XpAndObjectivesSummary extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final progression = ref.watch(progressionProvider);
     final challenges = ref.watch(dailyChallengeProvider);
     if (progression == null && challenges == null) return const SizedBox.shrink();
@@ -376,7 +377,7 @@ class _XpAndObjectivesSummary extends ConsumerWidget {
                 Icon(RetentionUI.goalIcon, color: RetentionUI.goalColor, size: 12),
                 const SizedBox(width: 4),
                 Text(
-                  '${challenges.completedCount}/${challenges.challenges.length} objectifs',
+                  l10n.objectivesSummary(challenges.completedCount, challenges.challenges.length),
                   style: GoogleFonts.nunito(
                       fontSize: AppTheme.fontMini,
                       color: RetentionUI.goalColor,

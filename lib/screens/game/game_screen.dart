@@ -8,6 +8,7 @@ import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
 import 'package:shape_merge/game/models/game_state.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
@@ -101,7 +102,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final player = ref.read(playerProvider).valueOrNull;
     final entry = LeaderboardEntry(
       uid: user.uid,
-      displayName: player?.displayName ?? user.displayName ?? user.email ?? 'Player',
+      displayName: player?.displayName ?? user.displayName ?? user.email ?? AppLocalizations.of(context)!.defaultPlayerName,
       photoUrl: user.photoURL,
       avatarId: player?.avatarId,
       score: gameState.score,

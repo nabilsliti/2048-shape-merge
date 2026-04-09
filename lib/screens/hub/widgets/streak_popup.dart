@@ -7,6 +7,7 @@ import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
 /// Shows the streak reward popup.
 /// Call [StreakPopup.show] from the hub after checking streakProvider.
@@ -27,6 +28,7 @@ class StreakPopup extends StatelessWidget {
   Widget build(BuildContext context) {
     final streak = result.streak;
     final todaySlot = (streak.nextRewardIndex - 1 + 7) % 7;
+    final l10n = AppLocalizations.of(context)!;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -40,20 +42,20 @@ class StreakPopup extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildHeader(streak),
+            _buildHeader(streak, l10n),
             const SizedBox(height: 20),
-            if (result.streakReset) _buildResetBanner(),
+            if (result.streakReset) _buildResetBanner(l10n),
             if (!result.streakReset) ...[
               _buildWeekRow(todaySlot),
               const SizedBox(height: 20),
-              if (result.reward != null) _buildRewardRow(result.reward!),
+              if (result.reward != null) _buildRewardRow(result.reward!, l10n),
             ],
             if (result.showGuestNudge) ...[
               const SizedBox(height: 16),
-              _buildGuestNudge(),
+              _buildGuestNudge(l10n),
             ],
             const SizedBox(height: 24),
-            _buildCloseButton(context),
+            _buildCloseButton(context, l10n),
           ],
         ),
       ).animate().scale(
@@ -79,7 +81,7 @@ class StreakPopup extends StatelessWidget {
 
   // ── Header ──────────────────────────────────────────────────────────────
 
-  Widget _buildHeader(PlayerStreak streak) {
+  Widget _buildHeader(PlayerStreak streak, AppLocalizations l10n) {
     return Column(
       children: [
         Row(
@@ -88,7 +90,7 @@ class StreakPopup extends StatelessWidget {
             Icon(RetentionUI.streakIcon, color: RetentionUI.streakColor, size: 28),
             const SizedBox(width: 8),
             Text(
-              'Jour ${streak.currentStreak}',
+              l10n.streakDay(streak.currentStreak),
               style: GoogleFonts.fredoka(
                 fontSize: AppTheme.fontH1,
                 fontWeight: FontWeight.w700,
@@ -100,8 +102,8 @@ class StreakPopup extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           result.streakReset
-              ? 'Ton streak s\'est interrompu…'
-              : 'Connexion du jour validée !',
+              ? l10n.streakBrokenDesc
+              : l10n.streakConnectedToday,
           style: GoogleFonts.nunito(
             fontSize: AppTheme.fontXSmall,
             color: Colors.white54,
@@ -114,7 +116,7 @@ class StreakPopup extends StatelessWidget {
 
   // ── Reset banner ─────────────────────────────────────────────────────────
 
-  Widget _buildResetBanner() {
+  Widget _buildResetBanner(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
@@ -127,19 +129,19 @@ class StreakPopup extends StatelessWidget {
           Icon(Icons.warning_amber_rounded, color: RetentionUI.dangerColor, size: 32),
           const SizedBox(height: 8),
           Text(
-            'Streak perdu',
+            l10n.streakLost,
             style: GoogleFonts.fredoka(
                 fontSize: AppTheme.fontBody, fontWeight: FontWeight.w700, color: RetentionUI.dangerColor),
           ),
           const SizedBox(height: 4),
           Text(
-            'Reviens chaque jour pour accumuler\ndes bonus plus intéressants.',
+            l10n.streakLostDesc,
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, color: Colors.white60),
           ),
           const SizedBox(height: 12),
           // Still show today's J1 reward
-          if (result.reward != null) _buildRewardRow(result.reward!),
+          if (result.reward != null) _buildRewardRow(result.reward!, l10n),
         ],
       ),
     ).animate().fadeIn(duration: 400.ms, delay: 200.ms);
@@ -169,7 +171,7 @@ class StreakPopup extends StatelessWidget {
 
   // ── Reward row ────────────────────────────────────────────────────────────
 
-  Widget _buildRewardRow((JokerType, int) reward) {
+  Widget _buildRewardRow((JokerType, int) reward, AppLocalizations l10n) {
     final (jType, amount) = reward;
     final color = JokerUI.color(jType);
 
@@ -186,7 +188,7 @@ class StreakPopup extends StatelessWidget {
           Icon(RetentionUI.rewardIcon, color: RetentionUI.streakColor, size: 18),
           const SizedBox(width: 8),
           Text(
-            'Récompense : ',
+            l10n.rewardLabel,
             style: GoogleFonts.nunito(
                 fontSize: AppTheme.fontXSmall, color: Colors.white60, fontWeight: FontWeight.w600),
           ),
@@ -199,7 +201,7 @@ class StreakPopup extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            _jokerLabel(jType),
+            _jokerLabel(jType, l10n),
             style: GoogleFonts.nunito(
                 fontSize: AppTheme.fontXSmall, color: Colors.white70, fontWeight: FontWeight.w700),
           ),
@@ -213,7 +215,7 @@ class StreakPopup extends StatelessWidget {
 
   // ── Guest nudge ───────────────────────────────────────────────────────────
 
-  Widget _buildGuestNudge() {
+  Widget _buildGuestNudge(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -227,7 +229,7 @@ class StreakPopup extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Connecte-toi pour ne jamais perdre ton streak.',
+              l10n.streakSaveNudge,
               style: GoogleFonts.nunito(
                   fontSize: AppTheme.fontTiny, color: Colors.white54, fontWeight: FontWeight.w600),
             ),
@@ -239,7 +241,7 @@ class StreakPopup extends StatelessWidget {
 
   // ── Close button ──────────────────────────────────────────────────────────
 
-  Widget _buildCloseButton(BuildContext context) {
+  Widget _buildCloseButton(BuildContext context, AppLocalizations l10n) {
     return SizedBox(
       width: double.infinity,
       child: TextButton(
@@ -252,7 +254,7 @@ class StreakPopup extends StatelessWidget {
         ),
         onPressed: () => Navigator.of(context).pop(),
         child: Text(
-          'Super !',
+          l10n.streakCollect,
           style: GoogleFonts.fredoka(
             fontSize: AppTheme.fontRegular,
             fontWeight: FontWeight.w600,
@@ -264,13 +266,13 @@ class StreakPopup extends StatelessWidget {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  static String _jokerLabel(JokerType type) => switch (type) {
-    JokerType.bomb      => 'Bombe',
-    JokerType.wildcard  => 'Wildcard',
-    JokerType.reducer   => 'Réducteur',
-    JokerType.radar     => 'Radar',
-    JokerType.evolution => 'Évolution',
-    JokerType.megaBomb  => 'Méga Bombe',
+  static String _jokerLabel(JokerType type, AppLocalizations l10n) => switch (type) {
+    JokerType.bomb      => l10n.jokerBomb,
+    JokerType.wildcard  => l10n.jokerWildcard,
+    JokerType.reducer   => l10n.jokerReducer,
+    JokerType.radar     => l10n.jokerRadar,
+    JokerType.evolution => l10n.jokerEvolution,
+    JokerType.megaBomb  => l10n.jokerMegaBomb,
   };
 }
 

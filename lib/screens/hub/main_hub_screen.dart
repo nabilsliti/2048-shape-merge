@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/providers/audio_provider.dart';
@@ -199,6 +202,7 @@ class _TopHud extends ConsumerWidget {
                 if (streakCount > 0) ...[
                   RetentionUI.streakBadge(
                     count: streakCount,
+                    dayLabel: AppLocalizations.of(context)!.dayLabel,
                     onTap: streakResult != null
                         ? () => StreakPopup.show(context, streakResult).then((_) {
                               ref.read(streakProvider.notifier).clearResult();
@@ -207,7 +211,7 @@ class _TopHud extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                 ],
-                RetentionUI.levelBadge(level: level),
+                RetentionUI.levelBadge(level: level, levelShortLabel: AppLocalizations.of(context)!.levelShortLabel),
                 const SizedBox(width: 6),
                 _AnimatedXpBadge(currentXP: currentXP, xpNeeded: xpNeeded),
               ],
@@ -252,6 +256,7 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
   @override
   Widget build(BuildContext context) {
     final soundOn = ref.watch(audioProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -294,12 +299,12 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
                 const SizedBox(height: 12),
 
                 // Title
-                Text('RÉGLAGES', style: AppTheme.titleStyle(AppTheme.fontH4)),
+                Text(l10n.settings.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH4)),
                 const SizedBox(height: 20),
 
                 // Music toggle
                 _settingToggle(
-                  'Musique', Icons.music_note, soundOn,
+                  l10n.musicLabel, Icons.music_note, soundOn,
                   (v) => ref.read(audioProvider.notifier).toggle(),
                 ),
                 const SizedBox(height: 16),
@@ -319,7 +324,7 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
                         Flexible(
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Text('LANGUE : FRANÇAIS',
+                            child: Text(l10n.languageLabel('FRANÇAIS'),
                                 style: AppTheme.titleStyle(AppTheme.fontBody)),
                           ),
                         ),
@@ -425,6 +430,8 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
   late final AnimationController _bounce;
   late final AnimationController _plusLabel;
   late final AnimationController _counterRoll;
+  late final AnimationController _ring;
+  late final AnimationController _sparkles;
 
   int _displayXP = 0;
   int _prevXP = 0;
@@ -453,6 +460,12 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
         }
       })
       ..addListener(() => setState(() {}));
+    _ring = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700))
+      ..addListener(() => setState(() {}));
+    _sparkles = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900))
+      ..addListener(() => setState(() {}));
   }
 
   @override
@@ -461,6 +474,8 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
     if (widget.currentXP == oldWidget.currentXP) return;
 
     _bounce.forward(from: 0);
+    _ring.forward(from: 0);
+    _sparkles.forward(from: 0);
 
     if (widget.currentXP > oldWidget.currentXP) {
       setState(() {
@@ -484,6 +499,8 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
     _bounce.dispose();
     _plusLabel.dispose();
     _counterRoll.dispose();
+    _ring.dispose();
+    _sparkles.dispose();
     super.dispose();
   }
 
@@ -551,7 +568,7 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('XP',
+                Text(AppLocalizations.of(context)!.xpLabel,
                     style: AppTheme.titleStyle(AppTheme.fontPico).copyWith(
                         color: AppTheme.goldLabel,
                         letterSpacing: 1,
@@ -575,11 +592,55 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
       ),
     );
 
-    return Stack(
+    // Expanding ring
+    final ringRadius = 30.0 + _ring.value * 50.0;
+    final ringOpacity = (1.0 - _ring.value).clamp(0.0, 1.0) * 0.7;
+
+    return UnconstrainedBox(
       clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        badge,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          badge,
+          // Expanding ring pulse
+          if (_ring.isAnimating)
+            Positioned.fill(
+              child: Center(
+                child: Container(
+                  width: ringRadius * 2,
+                  height: ringRadius * 2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: color.withValues(alpha: ringOpacity),
+                      width: 2.5 * (1 - _ring.value),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          // Sparkle particles
+          if (_sparkles.isAnimating)
+            for (var i = 0; i < 8; i++)
+              Positioned(
+                top: 23 + sin((i / 8) * 2 * pi) * 35 * _sparkles.value - 4,
+                left: 40 + cos((i / 8) * 2 * pi) * 45 * _sparkles.value - 4,
+                child: Opacity(
+                  opacity: (1.0 - _sparkles.value).clamp(0.0, 1.0),
+                  child: i.isEven
+                      ? Icon(Icons.star, size: 8 * (1 - _sparkles.value * 0.5), color: AppTheme.gold)
+                      : Container(
+                          width: 5 * (1 - _sparkles.value * 0.5),
+                          height: 5 * (1 - _sparkles.value * 0.5),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: color,
+                            boxShadow: [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 4)],
+                          ),
+                        ),
+                ),
+              ),
         if (_plusLabel.isAnimating && _gainedXP > 0)
           Positioned(
             top: plusOffset,
@@ -600,7 +661,8 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

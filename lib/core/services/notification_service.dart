@@ -17,6 +17,7 @@ class NotificationService {
   static final instance = NotificationService._();
 
   static const _streakReminderId = 42;
+  // TODO(l10n): move to l10n when BuildContext is available at scheduling time
   static const _channelId = 'shape_merge_streak';
   static const _channelName = 'Série de jeu';
   static const _channelDescription =
@@ -97,6 +98,7 @@ class NotificationService {
 
   /// Schedules (or reschedules) a streak-danger notification 23 h from now.
   /// Cancels any previous streak reminder first.
+  // TODO(l10n): accept localized title/body from caller when BuildContext is available
   Future<void> scheduleStreakReminder({
     String title = 'Votre série est en danger !',
     String body = 'Jouez une partie pour maintenir votre série de jeu.',

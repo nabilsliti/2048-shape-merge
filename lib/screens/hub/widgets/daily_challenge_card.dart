@@ -1,4 +1,6 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +8,7 @@ import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
 
 class DailyChallengeCard extends ConsumerWidget {
@@ -14,6 +17,7 @@ class DailyChallengeCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final challengeState = ref.watch(dailyChallengeProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     if (challengeState == null) return const SizedBox.shrink();
 
@@ -70,7 +74,7 @@ class DailyChallengeCard extends ConsumerWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'MISSIONS DU JOUR',
+                        l10n.dailyObjectivesTitle,
                         style: AppTheme.titleStyle(AppTheme.fontTiny).copyWith(
                           color: AppTheme.goldLabel,
                           letterSpacing: 1,
@@ -82,12 +86,11 @@ class DailyChallengeCard extends ConsumerWidget {
                   const SizedBox(height: 10),
 
                   // Challenges list
-                  ...challengeState.challenges.asMap().entries.map((e) =>
+                  ...challengeState.challenges.map((c) =>
                     _ChallengeRow(
-                      challenge: e.value,
-                      delay: e.key * 80,
+                      challenge: c,
                       onCollect: () => ref.read(dailyChallengeProvider.notifier)
-                          .collectReward(e.value.id),
+                          .collectReward(c.id),
                     ),
                   ),
                 ],
@@ -96,7 +99,7 @@ class DailyChallengeCard extends ConsumerWidget {
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1, end: 0);
+    );
   }
 
 }
@@ -105,19 +108,58 @@ class DailyChallengeCard extends ConsumerWidget {
 // Row per challenge
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ChallengeRow extends StatelessWidget {
+class _ChallengeRow extends StatefulWidget {
   const _ChallengeRow({
     required this.challenge,
-    required this.delay,
     required this.onCollect,
   });
 
   final DailyChallenge challenge;
-  final int delay;
   final VoidCallback onCollect;
 
   @override
+  State<_ChallengeRow> createState() => _ChallengeRowState();
+}
+
+class _ChallengeRowState extends State<_ChallengeRow>
+    with TickerProviderStateMixin {
+  bool _showCollectAnim = false;
+  late final AnimationController _bounceCtrl;
+  late final AnimationController _plusOneCtrl;
+  late final AnimationController _sparkleCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _bounceCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+    _plusOneCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000));
+    _sparkleCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
+  }
+
+  @override
+  void dispose() {
+    _bounceCtrl.dispose();
+    _plusOneCtrl.dispose();
+    _sparkleCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onCollectTap() {
+    setState(() => _showCollectAnim = true);
+    HapticFeedback.heavyImpact();
+    _bounceCtrl.forward(from: 0);
+    _plusOneCtrl.forward(from: 0);
+    _sparkleCtrl.forward(from: 0);
+
+    // Delay actual collect so the animation plays first
+    Future.delayed(const Duration(milliseconds: 900), () {
+      widget.onCollect();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final challenge = widget.challenge;
     final done = challenge.rewardCollected;
     final color = challenge.completed ? RetentionUI.goalColor : Colors.white54;
     final labelColor = done ? Colors.white24 : Colors.white70;
@@ -144,6 +186,8 @@ class _ChallengeRow extends StatelessWidget {
               ),
               if (challenge.rewardCollected)
                 const Icon(Icons.check_circle_rounded, color: RetentionUI.goalColor, size: 18)
+              else if (_showCollectAnim)
+                _buildRewardAnimation(challenge)
               else
                 _collectButton(challenge),
             ],
@@ -166,10 +210,115 @@ class _ChallengeRow extends StatelessWidget {
           ),
         ],
       ),
-    ).animate(delay: Duration(milliseconds: delay)).fadeIn(duration: 300.ms);
+    );
+  }
+
+  Widget _buildRewardAnimation(DailyChallenge challenge) {
+    final rewardColor = switch (challenge.reward) {
+      JokerReward(:final joker) => JokerUI.color(joker),
+      XpReward() => RetentionUI.levelColor,
+    };
+    final rewardIcon = switch (challenge.reward) {
+      JokerReward(:final joker) => JokerUI.icon(joker, size: 22),
+      XpReward() => const Icon(Icons.star_rounded, color: AppTheme.gold, size: 22),
+    };
+    final rewardLabel = switch (challenge.reward) {
+      JokerReward() => '+1',
+      XpReward(:final xp) => '+$xp XP',
+    };
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([_bounceCtrl, _plusOneCtrl, _sparkleCtrl]),
+      builder: (context, _) {
+        // Bounce: 1→1.5→0.9→1
+        final double bounceScale;
+        if (_bounceCtrl.value < 0.3) {
+          bounceScale = 1.0 + (_bounceCtrl.value / 0.3) * 0.5;
+        } else if (_bounceCtrl.value < 0.6) {
+          bounceScale = 1.5 - ((_bounceCtrl.value - 0.3) / 0.3) * 0.6;
+        } else {
+          bounceScale = 0.9 + ((_bounceCtrl.value - 0.6) / 0.4) * 0.1;
+        }
+
+        // +1 float up
+        final plusT = Curves.easeOutCubic.transform(_plusOneCtrl.value);
+        final plusOpacity = (1.0 - _plusOneCtrl.value * 0.8).clamp(0.0, 1.0);
+        final plusOffset = -35.0 * plusT;
+
+        // Glow
+        final glowIntensity = _bounceCtrl.value < 0.5
+            ? _bounceCtrl.value * 2
+            : 2 - _bounceCtrl.value * 2;
+
+        return SizedBox(
+          width: 80,
+          height: 36,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // Sparkles
+              if (_sparkleCtrl.isAnimating)
+                for (var i = 0; i < 6; i++)
+                  Positioned(
+                    top: 18 + math.sin((i / 6) * 2 * math.pi) * 20 * _sparkleCtrl.value,
+                    left: 40 + math.cos((i / 6) * 2 * math.pi) * 25 * _sparkleCtrl.value,
+                    child: Opacity(
+                      opacity: (1.0 - _sparkleCtrl.value).clamp(0.0, 1.0),
+                      child: Container(
+                        width: 4 * (1 - _sparkleCtrl.value * 0.5),
+                        height: 4 * (1 - _sparkleCtrl.value * 0.5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: rewardColor,
+                          boxShadow: [BoxShadow(color: rewardColor.withValues(alpha: 0.6), blurRadius: 4)],
+                        ),
+                      ),
+                    ),
+                  ),
+              // Icon bouncing
+              Transform.scale(
+                scale: _bounceCtrl.isAnimating ? bounceScale : 1.0,
+                child: Container(
+                  decoration: glowIntensity > 0
+                      ? BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: rewardColor.withValues(alpha: glowIntensity * 0.7), blurRadius: 16, spreadRadius: 2),
+                          ],
+                        )
+                      : null,
+                  child: rewardIcon,
+                ),
+              ),
+              // Floating "+1" / "+XP"
+              if (_plusOneCtrl.isAnimating)
+                Positioned(
+                  top: plusOffset,
+                  child: Opacity(
+                    opacity: plusOpacity,
+                    child: Text(
+                      rewardLabel,
+                      style: GoogleFonts.fredoka(
+                        fontSize: AppTheme.fontH4,
+                        fontWeight: FontWeight.w900,
+                        color: rewardColor,
+                        shadows: [
+                          Shadow(color: rewardColor.withValues(alpha: 0.8), blurRadius: 8),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _collectButton(DailyChallenge challenge) {
+    final l10n = AppLocalizations.of(context)!;
     final active = challenge.canCollect;
 
     final Widget rewardWidget = switch (challenge.reward) {
@@ -191,7 +340,7 @@ class _ChallengeRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Collecter',
+              l10n.collectReward,
               style: GoogleFonts.fredoka(
                   fontSize: AppTheme.fontTiny,
                   color: active ? Colors.white : Colors.white38,
@@ -205,7 +354,7 @@ class _ChallengeRow extends StatelessWidget {
     );
     if (active) {
       final btn = Button3D.green(
-        onPressed: onCollect,
+        onPressed: _onCollectTap,
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         borderRadius: 8,
         child: content,
@@ -235,11 +384,14 @@ class _ChallengeRow extends StatelessWidget {
     ChallengeType.jokersUses => Icons.auto_fix_high_rounded,
   };
 
-  String _labelFor(DailyChallenge c) => switch (c.type) {
-    ChallengeType.fusions    => 'Réaliser ${c.target} fusion${c.target > 1 ? 's' : ''}',
-    ChallengeType.score      => 'Atteindre un score de ${c.target}',
-    ChallengeType.parties    => 'Jouer ${c.target} partie${c.target > 1 ? 's' : ''}',
-    ChallengeType.formeMax   => 'Atteindre la forme rang ${c.target}',
-    ChallengeType.jokersUses => 'Utiliser ${c.target} joker${c.target > 1 ? 's' : ''}',
-  };
+  String _labelFor(DailyChallenge c) {
+    final l10n = AppLocalizations.of(context)!;
+    return switch (c.type) {
+      ChallengeType.fusions    => l10n.objectiveFusions(c.target),
+      ChallengeType.score      => l10n.objectiveScore(c.target),
+      ChallengeType.parties    => l10n.objectiveParties(c.target),
+      ChallengeType.formeMax   => l10n.objectiveFormeMax(c.target),
+      ChallengeType.jokersUses => l10n.objectiveJokersUses(c.target),
+    };
+  }
 }

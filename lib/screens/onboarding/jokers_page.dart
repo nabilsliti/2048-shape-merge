@@ -14,9 +14,10 @@ class JokersPage extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
           Text(l10n.onboardingTitle2, style: AppTheme.titleStyle(AppTheme.fontH1)),
           const SizedBox(height: 24),
           Text(
@@ -31,21 +32,43 @@ class JokersPage extends StatelessWidget {
             title: l10n.jokerBomb,
             description: l10n.jokerBombDesc,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _JokerCard(
             icon: JokerUI.icon(JokerType.wildcard, size: 42),
             color: JokerUI.color(JokerType.wildcard),
             title: l10n.jokerWildcard,
             description: l10n.jokerWildcardDesc,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _JokerCard(
             icon: JokerUI.icon(JokerType.reducer, size: 42),
             color: JokerUI.color(JokerType.reducer),
             title: l10n.jokerReducer,
             description: l10n.jokerReducerDesc,
           ),
+          const SizedBox(height: 12),
+          _JokerCard(
+            icon: JokerUI.icon(JokerType.radar, size: 42),
+            color: JokerUI.color(JokerType.radar),
+            title: l10n.jokerRadar,
+            description: l10n.jokerRadarDesc,
+          ),
+          const SizedBox(height: 12),
+          _JokerCard(
+            icon: JokerUI.icon(JokerType.evolution, size: 42),
+            color: JokerUI.color(JokerType.evolution),
+            title: l10n.jokerEvolution,
+            description: l10n.jokerEvolutionDesc,
+          ),
+          const SizedBox(height: 12),
+          _JokerCard(
+            icon: JokerUI.icon(JokerType.megaBomb, size: 42),
+            color: JokerUI.color(JokerType.megaBomb),
+            title: l10n.jokerMegaBomb,
+            description: l10n.jokerMegaBombDesc,
+          ),
         ],
+      ),
       ),
     );
   }
@@ -67,7 +90,7 @@ class _JokerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.panelBg,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),

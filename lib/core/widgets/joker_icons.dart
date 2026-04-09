@@ -75,19 +75,11 @@ class BombPainter extends CustomPainter {
       );
     }
 
-    // Skull mark — simple cross-bones
-    final scx = cx - 1;
-    final scy = cy + 2;
-    // X mark
-    canvas.drawLine(
-      Offset(scx - r * 0.22, scy - r * 0.22),
-      Offset(scx + r * 0.22, scy + r * 0.22),
-      Paint()..color = AppTheme.bombXMark..strokeWidth = 2.5..strokeCap = StrokeCap.round,
-    );
-    canvas.drawLine(
-      Offset(scx + r * 0.22, scy - r * 0.22),
-      Offset(scx - r * 0.22, scy + r * 0.22),
-      Paint()..color = AppTheme.bombXMark..strokeWidth = 2.5..strokeCap = StrokeCap.round,
+    // Skull mark — danger dot
+    canvas.drawCircle(
+      Offset(cx - 1, cy + 2),
+      r * 0.12,
+      Paint()..color = Colors.white.withValues(alpha: 0.7),
     );
   }
 

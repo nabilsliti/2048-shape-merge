@@ -190,7 +190,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                 if (entries.isEmpty) {
                   _debugFirestore();
                   return Center(
-                    child: Text('No scores yet', style: GoogleFonts.nunito(color: AppTheme.muted, fontWeight: FontWeight.w900)),
+                    child: Text(l10n.noScoresYet, style: GoogleFonts.nunito(color: AppTheme.muted, fontWeight: FontWeight.w900)),
                   );
                 }
 
@@ -297,7 +297,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                               ),
                               if (isMe)
                                 Text(
-                                  'You',
+                                  l10n.leaderboardYou,
                                   style: GoogleFonts.nunito(
                                     fontSize: AppTheme.fontMini, fontWeight: FontWeight.w700,
                                     color: meAccent.withValues(alpha: 0.6),
@@ -357,7 +357,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, __) => Center(
-                child: Text('Error loading leaderboard', style: GoogleFonts.nunito(color: AppTheme.redTop, fontWeight: FontWeight.w900)),
+                child: Text(l10n.leaderboardError, style: GoogleFonts.nunito(color: AppTheme.redTop, fontWeight: FontWeight.w900)),
               ),
             ),
           ),

@@ -54,7 +54,7 @@ Future<void> showProfileDialog(BuildContext context, WidgetRef ref) async {
     initialName = player?.displayName ?? user.displayName ?? '';
     initialAvatar = player?.avatarId;
   } else {
-    initialName = localStorage?.guestName ?? 'Guest';
+    initialName = localStorage?.guestName ?? AppLocalizations.of(context)!.defaultGuestName;
     initialAvatar = localStorage?.guestAvatar;
   }
 

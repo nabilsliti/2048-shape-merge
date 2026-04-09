@@ -94,7 +94,7 @@ class RetentionUI {
 
   // ── xpBadge ───────────────────────────────────────────────────
 
-  static Widget xpBadge({required int currentXP, required int xpNeeded, bool expand = false, VoidCallback? onTap}) {
+  static Widget xpBadge({required int currentXP, required int xpNeeded, String xpLabel = 'XP', bool expand = false, VoidCallback? onTap}) {
     const color = AppTheme.xpBadgeBot;
     final w = Container(
       constraints: const BoxConstraints(minWidth: 80, minHeight: 46),
@@ -123,7 +123,7 @@ class RetentionUI {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('XP',
+              Text(xpLabel,
                   style: AppTheme.titleStyle(AppTheme.fontPico).copyWith(
                       color: AppTheme.goldLabel, letterSpacing: 1, height: 1)),
               Text(
@@ -147,7 +147,7 @@ class RetentionUI {
 
   // ── streakBadge ───────────────────────────────────────────────
 
-  static Widget streakBadge({required int count, bool expand = false, VoidCallback? onTap}) {
+  static Widget streakBadge({required int count, String dayLabel = 'DAY', bool expand = false, VoidCallback? onTap}) {
     final w = Container(
       constraints: const BoxConstraints(minWidth: 80, minHeight: 46),
       padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
@@ -182,7 +182,7 @@ class RetentionUI {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('DAY',
+              Text(dayLabel,
                   style: AppTheme.titleStyle(AppTheme.fontPico).copyWith(
                       color: AppTheme.goldLabel, letterSpacing: 1, height: 1)),
               Text(
@@ -206,7 +206,7 @@ class RetentionUI {
 
   // ── levelBadge ────────────────────────────────────────────────
 
-  static Widget levelBadge({required int level, bool expand = false, VoidCallback? onTap}) {
+  static Widget levelBadge({required int level, String levelShortLabel = 'NIV', bool expand = false, VoidCallback? onTap}) {
     final w = Container(
       constraints: const BoxConstraints(minWidth: 80, minHeight: 46),
       padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
@@ -234,7 +234,7 @@ class RetentionUI {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('NIV',
+              Text(levelShortLabel,
                   style: AppTheme.titleStyle(AppTheme.fontPico).copyWith(
                       color: AppTheme.goldLabel, letterSpacing: 1, height: 1)),
               Text(

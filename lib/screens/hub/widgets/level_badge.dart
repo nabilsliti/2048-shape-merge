@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
@@ -22,7 +23,7 @@ class LevelBadge extends ConsumerWidget {
         ? (player?.level ?? localStorage?.playerLevel ?? 1)
         : (localStorage?.playerLevel ?? 1);
 
-    return RetentionUI.levelBadge(level: level, onTap: onTap);
+    return RetentionUI.levelBadge(level: level, levelShortLabel: AppLocalizations.of(context)!.levelShortLabel, onTap: onTap);
   }
 }
 

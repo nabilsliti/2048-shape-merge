@@ -161,7 +161,7 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       const PremiumIcon.save(size: 28),
                       const SizedBox(width: 10),
-                      Text('OK', style: AppTheme.titleStyle(AppTheme.fontBody)),
+                      Text(l10n.okButton, style: AppTheme.titleStyle(AppTheme.fontBody)),
                     ],
                   ),
                 ),

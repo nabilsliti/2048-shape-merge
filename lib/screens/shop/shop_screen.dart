@@ -120,8 +120,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   ],
 
                   // ── PACKS JOKERS section ──
-                  const _SectionHeader(
-                    title: '🎁 PACKS JOKERS',
+                  _SectionHeader(
+                    title: '🎁 ${l10n.sectionJokerPacks}',
                     gradStart: AppTheme.shopSectionCyan,
                     gradEnd: AppTheme.shopSectionPurple,
                   ),
@@ -130,10 +130,10 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   // Pack Étoile (small)
                   _JokerPackCard(
                     emoji: '⭐',
-                    name: 'Pack Étoile',
+                    name: l10n.packStarName,
                     descriptionWidget: _buildPackContents(5, 1, 0, 0),
                     price: iap.price(IapProducts.packStar),
-                    badge: 'STARTER',
+                    badge: l10n.badgeStarter,
                     gradStart: AppTheme.shopPackStar1,
                     gradEnd: AppTheme.shopPackStar2,
                     onBuy: () => _buyProduct(context, ref, IapProducts.packStar),
@@ -143,10 +143,10 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   // Pack Comète (medium)
                   _JokerPackCard(
                     emoji: '☄️',
-                    name: 'Pack Comète',
+                    name: l10n.packCometName,
                     descriptionWidget: _buildPackContents(15, 3, 2, 2),
                     price: iap.price(IapProducts.packComet),
-                    badge: 'POPULAIRE',
+                    badge: l10n.badgePopular,
                     gradStart: AppTheme.shopPackComet1,
                     gradEnd: AppTheme.shopPackComet2,
                     onBuy: () => _buyProduct(context, ref, IapProducts.packComet),
@@ -156,10 +156,10 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   // Pack Diamant (large)
                   _JokerPackCard(
                     emoji: '💎',
-                    name: 'Pack Diamant',
+                    name: l10n.packDiamondName,
                     descriptionWidget: _buildPackContents(40, 8, 5, 5),
                     price: iap.price(IapProducts.packDiamond),
-                    badge: 'BEST VALUE',
+                    badge: l10n.badgeBestValue,
                     gradStart: AppTheme.shopPackDiamond1,
                     gradEnd: AppTheme.shopPackDiamond2,
                     onBuy: () => _buyProduct(context, ref, IapProducts.packDiamond),
@@ -167,8 +167,8 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   const SizedBox(height: 24),
 
                   // ── Watch ad for free joker ──
-                  const _SectionHeader(
-                    title: '🎬 JOKER GRATUIT',
+                  _SectionHeader(
+                    title: '🎬 ${l10n.sectionFreeJoker}',
                     gradStart: AppTheme.orangeTop,
                     gradEnd: AppTheme.radarColor,
                   ),
@@ -205,6 +205,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
       }
 
       if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context)!;
 
       if (result.status == IapStatus.purchased) {
         // Scroll to top to show inventory animation
@@ -215,7 +216,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Achat réussi !', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            content: Text('✅ ${l10n.purchaseSuccess}', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
             backgroundColor: AppTheme.greenTop,
             duration: const Duration(seconds: 2),
           ),
@@ -223,7 +224,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
       } else if (result.status == IapStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.errorMessage ?? 'Erreur d\'achat',
+            content: Text(result.errorMessage ?? l10n.purchaseError,
                 style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
             backgroundColor: AppTheme.redTop,
             duration: const Duration(seconds: 3),
@@ -245,11 +246,12 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
       }
 
       if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context)!;
 
       if (result.status == IapStatus.restored) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Achats restaurés !', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
+            content: Text('✅ ${l10n.purchasesRestored}', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
             backgroundColor: AppTheme.greenTop,
             duration: const Duration(seconds: 2),
           ),
@@ -260,9 +262,10 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     await iap.restorePurchases();
 
     if (context.mounted) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Recherche d\'achats précédents…',
+          content: Text(l10n.restoringPurchases,
               style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
           backgroundColor: AppTheme.blueTop,
           duration: const Duration(seconds: 2),
@@ -370,7 +373,8 @@ class _JokerStock extends StatefulWidget {
   final Widget icon;
   final Color color;
   final int count;
-  const _JokerStock({required this.icon, required this.color, required this.count});
+  final String name;
+  const _JokerStock({required this.icon, required this.color, required this.count, required this.name});
 
   @override
   State<_JokerStock> createState() => _JokerStockState();
@@ -566,6 +570,17 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
                   ),
                   child: Text('×$counterShown'),
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.name,
+                  style: GoogleFonts.fredoka(
+                    fontSize: AppTheme.fontNano,
+                    fontWeight: FontWeight.w600,
+                    color: widget.color.withValues(alpha: 0.8),
+                    height: 1,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),
@@ -617,6 +632,7 @@ class _InventoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inv = inventory;
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         // ── Classique ──
@@ -636,16 +652,16 @@ class _InventoryCard extends StatelessWidget {
                   children: [
                     Icon(Icons.videogame_asset_rounded, color: AppTheme.blueTop, size: 11),
                     const SizedBox(width: 4),
-                    Text('CLASSIQUE',
+                    Text(l10n.jokerCategoryClassic,
                         style: GoogleFonts.fredoka(fontSize: AppTheme.fontNano, fontWeight: FontWeight.w700, color: AppTheme.blueTop, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.bomb, size: 22), color: JokerUI.color(JokerType.bomb), count: inv.bomb))),
-                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.wildcard, size: 22), color: JokerUI.color(JokerType.wildcard), count: inv.wildcard))),
-                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.reducer, size: 18), color: JokerUI.color(JokerType.reducer), count: inv.reducer))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.bomb, size: 22), color: JokerUI.color(JokerType.bomb), count: inv.bomb, name: l10n.jokerBomb))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.wildcard, size: 22), color: JokerUI.color(JokerType.wildcard), count: inv.wildcard, name: l10n.jokerWildcard))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.reducer, size: 18), color: JokerUI.color(JokerType.reducer), count: inv.reducer, name: l10n.jokerReducer))),
                   ],
                 ),
               ],
@@ -670,16 +686,16 @@ class _InventoryCard extends StatelessWidget {
                   children: [
                     Icon(Icons.star_rounded, color: AppTheme.gold, size: 11),
                     const SizedBox(width: 4),
-                    Text('PREMIUM',
+                    Text(l10n.jokerCategoryPremium,
                         style: GoogleFonts.fredoka(fontSize: AppTheme.fontNano, fontWeight: FontWeight.w700, color: AppTheme.gold, letterSpacing: 1)),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.radar, size: 22), color: JokerUI.color(JokerType.radar), count: inv.radar))),
-                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.evolution, size: 22), color: JokerUI.color(JokerType.evolution), count: inv.evolution))),
-                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.megaBomb, size: 22), color: JokerUI.color(JokerType.megaBomb), count: inv.megaBomb))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.radar, size: 22), color: JokerUI.color(JokerType.radar), count: inv.radar, name: l10n.jokerRadar))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.evolution, size: 22), color: JokerUI.color(JokerType.evolution), count: inv.evolution, name: l10n.jokerEvolution))),
+                    Expanded(child: Center(child: _JokerStock(icon: JokerUI.icon(JokerType.megaBomb, size: 22), color: JokerUI.color(JokerType.megaBomb), count: inv.megaBomb, name: l10n.jokerMegaBomb))),
                   ],
                 ),
               ],
@@ -761,6 +777,7 @@ class _NoAdsSectionHeaderState extends State<_NoAdsSectionHeader> with SingleTic
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: _shimmer,
       builder: (context, _) {
@@ -796,7 +813,7 @@ class _NoAdsSectionHeaderState extends State<_NoAdsSectionHeader> with SingleTic
                       ).createShader(bounds);
                     },
                     child: Text(
-                      'ZÉRO PUB + JOKERS',
+                      l10n.noAdsTitle,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
                     ),
@@ -945,6 +962,7 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: Listenable.merge([_shimmer, _pulse]),
       builder: (context, child) {
@@ -1020,7 +1038,7 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
                       gradient: LinearGradient(colors: [AppTheme.gold, AppTheme.goldAntique]),
                       borderRadius: BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusMedium)),
                     ),
-                    child: Text('✨ ACHAT UNIQUE', style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
+                    child: Text(l10n.badgeOneTimePurchase, style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
                   ),
                 ),
               ],
@@ -1053,6 +1071,7 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
   }
 
   Widget _buildContent() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1062,11 +1081,11 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
           shaderCallback: (bounds) => const LinearGradient(
             colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
           ).createShader(bounds),
-          child: Text('ZÉRO PUB + JOKERS', style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: Colors.white)),
+          child: Text(l10n.noAdsTitle, style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: Colors.white)),
         ),
         const SizedBox(height: 5),
         Text(
-          'Supprime toutes les pubs !',
+          l10n.noAdsDescription,
           style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w700, color: Colors.white54, height: 1.3),
         ),
         const SizedBox(height: 6),
@@ -1335,6 +1354,7 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: Listenable.merge([_shimmer, _pulse]),
       builder: (context, _) {
@@ -1424,7 +1444,7 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                         gradient: LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
                         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusMedium)),
                       ),
-                      child: Text('🎬 GRATUIT', style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
+                      child: Text('🎬 ${l10n.badgeFree}', style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
                     ),
                   ),
                 ],
@@ -1446,6 +1466,7 @@ class _AdGratuitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AnimatedBuilder(
       animation: pulse,
       builder: (context, child) {
@@ -1467,7 +1488,7 @@ class _AdGratuitButton extends StatelessWidget {
                 ),
               ],
             ),
-            child: Text('GRATUIT', style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w900, color: Colors.white)),
+            child: Text(l10n.freeLabel, style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w900, color: Colors.white)),
           ),
         );
       },
@@ -1812,7 +1833,7 @@ class _JokerChoicePanelState extends State<_JokerChoicePanel> {
                 children: [
                   const Icon(Icons.check_rounded, color: Colors.white, size: 24),
                   const SizedBox(width: 10),
-                  Text('VALIDER', style: AppTheme.titleStyle(AppTheme.fontBody)),
+                  Text(l10n.validateButton, style: AppTheme.titleStyle(AppTheme.fontBody)),
                 ],
               ),
             ),

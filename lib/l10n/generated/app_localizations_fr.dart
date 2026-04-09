@@ -89,20 +89,42 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get jokerBombDesc =>
-      'Détruit toutes les formes du même type et couleur';
+      'Cible une forme et détruit toutes les formes de même type et couleur';
 
   @override
   String get jokerWildcard => 'Wildcard';
 
   @override
   String get jokerWildcardDesc =>
-      'Fusionne avec n\'importe quelle forme du même niveau';
+      'Invoque une forme spéciale qui fusionne avec n\'importe quelle forme du même niveau';
 
   @override
   String get jokerReducer => 'Réducteur';
 
   @override
-  String get jokerReducerDesc => 'Réduit le niveau d\'une forme de 1';
+  String get jokerReducerDesc =>
+      'Réduit le niveau d\'une forme de 1. Au niveau 1, elle disparaît !';
+
+  @override
+  String get jokerRadar => 'Radar';
+
+  @override
+  String get jokerRadarDesc =>
+      'Révèle toutes les fusions possibles pendant 5 secondes';
+
+  @override
+  String get jokerEvolution => 'Évolution';
+
+  @override
+  String get jokerEvolutionDesc =>
+      'Augmente le niveau d\'une forme de +1 sans fusion';
+
+  @override
+  String get jokerMegaBomb => 'Méga Bombe';
+
+  @override
+  String get jokerMegaBombDesc =>
+      'Détruit toutes les formes du même niveau, peu importe leur type';
 
   @override
   String get onboardingTitle1 => 'Comment jouer';
@@ -329,4 +351,171 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deleteAccountConfirm => 'Supprimer définitivement ?';
+
+  @override
+  String get tutorialObjectiveLabel => 'OBJECTIF';
+
+  @override
+  String get tutorialObjectiveText =>
+      'Fusionne les formes identiques (même forme + même couleur + même niveau) pour monter de niveau et atteindre le score max !';
+
+  @override
+  String get tutorialControlsLabel => 'CONTRÔLES';
+
+  @override
+  String get tutorialControlsText =>
+      'Glisse une forme sur une forme identique pour fusionner. Si pas de match, elle revient à sa place.';
+
+  @override
+  String get tutorialJokersLabel => 'JOKERS';
+
+  @override
+  String get tutorialClassicLabel => 'Classiques';
+
+  @override
+  String get tutorialPremiumLabel => 'PREMIUM';
+
+  @override
+  String get tutorialGameOverLabel => 'FIN DE PARTIE';
+
+  @override
+  String get tutorialGameOverText =>
+      'Le plateau se remplit à chaque mouvement. Plus de place + aucune fusion possible = Game Over !';
+
+  @override
+  String get tutorialTitle => 'SHAPE MERGE 2048';
+
+  @override
+  String get tutorialGoButton => 'GO !';
+
+  @override
+  String get hudNewBest => '★ NOUVEAU RECORD';
+
+  @override
+  String hudBest(String n) {
+    return 'BEST $n';
+  }
+
+  @override
+  String get scoreLabel => 'SCORE';
+
+  @override
+  String objectivesSummary(int done, int total) {
+    return '$done/$total objectifs';
+  }
+
+  @override
+  String get noScoresYet => 'Aucun score pour le moment';
+
+  @override
+  String get leaderboardYou => 'Toi';
+
+  @override
+  String get leaderboardError => 'Erreur de chargement du classement';
+
+  @override
+  String get packStarName => 'Pack Étoile';
+
+  @override
+  String get packCometName => 'Pack Comète';
+
+  @override
+  String get packDiamondName => 'Pack Diamant';
+
+  @override
+  String get badgeStarter => 'STARTER';
+
+  @override
+  String get badgePopular => 'POPULAIRE';
+
+  @override
+  String get badgeBestValue => 'MEILLEUR CHOIX';
+
+  @override
+  String get purchaseSuccess => 'Achat réussi !';
+
+  @override
+  String get purchaseError => 'Erreur d\'achat';
+
+  @override
+  String get purchasesRestored => 'Achats restaurés !';
+
+  @override
+  String get restoringPurchases => 'Recherche d\'achats précédents…';
+
+  @override
+  String get jokerCategoryClassic => 'CLASSIQUE';
+
+  @override
+  String get jokerCategoryPremium => 'PREMIUM';
+
+  @override
+  String get noAdsTitle => 'ZÉRO PUB + JOKERS';
+
+  @override
+  String get badgeOneTimePurchase => '✨ ACHAT UNIQUE';
+
+  @override
+  String get noAdsDescription => 'Supprime toutes les pubs !';
+
+  @override
+  String get sectionJokerPacks => 'PACKS JOKERS';
+
+  @override
+  String get sectionFreeJoker => 'JOKER GRATUIT';
+
+  @override
+  String get badgeFree => 'GRATUIT';
+
+  @override
+  String get freeLabel => 'GRATUIT';
+
+  @override
+  String get validateButton => 'VALIDER';
+
+  @override
+  String get rewardLabel => 'Récompense : ';
+
+  @override
+  String get xpLabel => 'XP';
+
+  @override
+  String get dayLabel => 'JOUR';
+
+  @override
+  String get levelShortLabel => 'NIV';
+
+  @override
+  String get defaultPlayerName => 'Joueur';
+
+  @override
+  String get defaultGuestName => 'Invité';
+
+  @override
+  String get okButton => 'OK';
+
+  @override
+  String get notifStreakTitle => 'Votre série est en danger !';
+
+  @override
+  String get notifStreakBody =>
+      'Jouez une partie pour maintenir votre série de jeu.';
+
+  @override
+  String get notifChannelName => 'Série de jeu';
+
+  @override
+  String get notifChannelDesc =>
+      'Rappels pour garder votre série de jeu active.';
+
+  @override
+  String get musicLabel => 'Musique';
+
+  @override
+  String languageLabel(String lang) {
+    return 'LANGUE : $lang';
+  }
+
+  @override
+  String get maxShapesWarning => 'Max 30 formes';
 }

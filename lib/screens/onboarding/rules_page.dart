@@ -69,7 +69,7 @@ class RulesPage extends StatelessWidget {
               border: Border.all(color: AppTheme.redTop, width: 1.5),
             ),
             child: Text(
-              'Max 30 shapes',
+              l10n.maxShapesWarning,
               style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: AppTheme.redBorder),
             ),
           ),

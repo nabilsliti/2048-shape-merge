@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
 class TutorialOverlay extends StatelessWidget {
@@ -37,54 +38,59 @@ class TutorialOverlay extends StatelessWidget {
               ],
             ),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    '🧬 SHAPE MERGE 2048',
-                    style: AppTheme.titleStyle(AppTheme.fontH2),
-                  ),
-                  const SizedBox(height: 20),
+              child: Builder(
+                builder: (context) {
+                  final l10n = AppLocalizations.of(context)!;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Title
+                      Text(
+                        '🧬 ${l10n.tutorialTitle}',
+                        style: AppTheme.titleStyle(AppTheme.fontH2),
+                      ),
+                      const SizedBox(height: 20),
 
-                  // Objectif
-                  const _InstructionRow(
-                    icon: '🎯',
-                    label: 'OBJECTIF',
-                    text: 'Fusionne les formes identiques (même forme + même couleur + même niveau) pour monter de niveau et atteindre le score max !',
-                  ),
-                  const SizedBox(height: 14),
+                      // Objectif
+                      _InstructionRow(
+                        icon: '🎯',
+                        label: l10n.tutorialObjectiveLabel,
+                        text: l10n.tutorialObjectiveText,
+                      ),
+                      const SizedBox(height: 14),
 
-                  // Contrôles
-                  const _InstructionRow(
-                    icon: '🕹️',
-                    label: 'CONTRÔLES',
-                    text: '👆 Glisse une forme sur une forme identique pour fusionner. Si pas de match, elle revient à sa place.',
-                  ),
-                  const SizedBox(height: 14),
+                      // Contrôles
+                      _InstructionRow(
+                        icon: '🕹️',
+                        label: l10n.tutorialControlsLabel,
+                        text: l10n.tutorialControlsText,
+                      ),
+                      const SizedBox(height: 14),
 
-                  // Jokers
-                  _JokerSection(),
-                  const SizedBox(height: 14),
+                      // Jokers
+                      _JokerSection(),
+                      const SizedBox(height: 14),
 
-                  // Game Over
-                  const _InstructionRow(
-                    icon: '💀',
-                    label: 'FIN DE PARTIE',
-                    text: 'Le plateau se remplit à chaque mouvement. Plus de place + aucune fusion possible = Game Over !',
-                  ),
-                  const SizedBox(height: 24),
+                      // Game Over
+                      _InstructionRow(
+                        icon: '💀',
+                        label: l10n.tutorialGameOverLabel,
+                        text: l10n.tutorialGameOverText,
+                      ),
+                      const SizedBox(height: 24),
 
-                  // GO button
-                  Button3D.green(
-                    onPressed: onDismiss,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 48,
-                      vertical: 14,
-                    ),
-                    child: Text('GO !', style: AppTheme.titleStyle(AppTheme.fontH2)),
-                  ),
-                ],
+                      // GO button
+                      Button3D.green(
+                        onPressed: onDismiss,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 48,
+                          vertical: 14,
+                        ),
+                        child: Text(l10n.tutorialGoButton, style: AppTheme.titleStyle(AppTheme.fontH2)),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
@@ -145,6 +151,7 @@ class _InstructionRow extends StatelessWidget {
 class _JokerSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,9 +161,9 @@ class _JokerSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'JOKERS',
-                style: TextStyle(
+              Text(
+                l10n.tutorialJokersLabel,
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: AppTheme.fontTiny,
                   fontWeight: FontWeight.bold,
@@ -165,33 +172,33 @@ class _JokerSection extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               // ── Classiques ──
-              const Text('— Classiques —',
-                  style: TextStyle(color: Colors.white38, fontSize: AppTheme.fontNano, letterSpacing: 0.8)),
+              Text('— ${l10n.tutorialClassicLabel} —',
+                  style: const TextStyle(color: Colors.white38, fontSize: AppTheme.fontNano, letterSpacing: 0.8)),
               const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.bomb, size: 20), 'Bombe', 'Détruit une forme'),
+              _jokerRow(JokerUI.icon(JokerType.bomb, size: 20), l10n.jokerBomb, l10n.jokerBombDesc),
               const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.wildcard, size: 20), 'Wildcard', 'Fusionne avec n\'importe quelle forme'),
+              _jokerRow(JokerUI.icon(JokerType.wildcard, size: 20), l10n.jokerWildcard, l10n.jokerWildcardDesc),
               const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.reducer, size: 20), 'Réducteur', 'Baisse le niveau d\'une forme'),
+              _jokerRow(JokerUI.icon(JokerType.reducer, size: 20), l10n.jokerReducer, l10n.jokerReducerDesc),
               const SizedBox(height: 6),
               // ── Premium ──
               Row(
                 children: [
                   Expanded(child: Container(height: 1, color: AppTheme.gold.withValues(alpha: 0.4))),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6),
-                    child: Text('★ PREMIUM',
-                        style: TextStyle(color: AppTheme.gold, fontSize: AppTheme.fontPico, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Text('★ ${l10n.tutorialPremiumLabel}',
+                        style: const TextStyle(color: AppTheme.gold, fontSize: AppTheme.fontPico, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   ),
                   Expanded(child: Container(height: 1, color: AppTheme.gold.withValues(alpha: 0.4))),
                 ],
               ),
               const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.radar, size: 20), 'Radar', 'Illumine toutes les paires fusionnables pendant 5s'),
+              _jokerRow(JokerUI.icon(JokerType.radar, size: 20), l10n.jokerRadar, l10n.jokerRadarDesc),
               const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.evolution, size: 20), 'Évolution', 'Monte une forme d\'un niveau'),
+              _jokerRow(JokerUI.icon(JokerType.evolution, size: 20), l10n.jokerEvolution, l10n.jokerEvolutionDesc),
               const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.megaBomb, size: 20), 'Méga Bombe', 'Détruit toutes les formes du même niveau'),
+              _jokerRow(JokerUI.icon(JokerType.megaBomb, size: 20), l10n.jokerMegaBomb, l10n.jokerMegaBombDesc),
             ],
           ),
         ),

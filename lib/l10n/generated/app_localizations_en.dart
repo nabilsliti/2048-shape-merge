@@ -88,19 +88,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jokerBomb => 'Bomb';
 
   @override
-  String get jokerBombDesc => 'Destroys all shapes of the same type and color';
+  String get jokerBombDesc =>
+      'Targets a shape and destroys all shapes of the same type and color';
 
   @override
   String get jokerWildcard => 'Wildcard';
 
   @override
-  String get jokerWildcardDesc => 'Merges with any shape of the same level';
+  String get jokerWildcardDesc =>
+      'Spawns a special shape that merges with any shape of the same level';
 
   @override
   String get jokerReducer => 'Reducer';
 
   @override
-  String get jokerReducerDesc => 'Reduces a shape\'s level by 1';
+  String get jokerReducerDesc =>
+      'Reduces a shape\'s level by 1. At level 1, it vanishes!';
+
+  @override
+  String get jokerRadar => 'Radar';
+
+  @override
+  String get jokerRadarDesc => 'Reveals all possible merges for 5 seconds';
+
+  @override
+  String get jokerEvolution => 'Evolution';
+
+  @override
+  String get jokerEvolutionDesc =>
+      'Increases a shape\'s level by +1 without merging';
+
+  @override
+  String get jokerMegaBomb => 'Mega Bomb';
+
+  @override
+  String get jokerMegaBombDesc =>
+      'Destroys all shapes of the same level, regardless of type';
 
   @override
   String get onboardingTitle1 => 'How to Play';
@@ -324,4 +347,169 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountConfirm => 'Delete permanently?';
+
+  @override
+  String get tutorialObjectiveLabel => 'OBJECTIVE';
+
+  @override
+  String get tutorialObjectiveText =>
+      'Merge identical shapes (same shape + same color + same level) to level up and reach the highest score!';
+
+  @override
+  String get tutorialControlsLabel => 'CONTROLS';
+
+  @override
+  String get tutorialControlsText =>
+      'Drag a shape onto an identical shape to merge. If no match, it snaps back.';
+
+  @override
+  String get tutorialJokersLabel => 'JOKERS';
+
+  @override
+  String get tutorialClassicLabel => 'Classic';
+
+  @override
+  String get tutorialPremiumLabel => 'PREMIUM';
+
+  @override
+  String get tutorialGameOverLabel => 'GAME OVER';
+
+  @override
+  String get tutorialGameOverText =>
+      'The board fills up with each move. No space + no possible merges = Game Over!';
+
+  @override
+  String get tutorialTitle => 'SHAPE MERGE 2048';
+
+  @override
+  String get tutorialGoButton => 'GO!';
+
+  @override
+  String get hudNewBest => '★ NEW BEST';
+
+  @override
+  String hudBest(String n) {
+    return 'BEST $n';
+  }
+
+  @override
+  String get scoreLabel => 'SCORE';
+
+  @override
+  String objectivesSummary(int done, int total) {
+    return '$done/$total objectives';
+  }
+
+  @override
+  String get noScoresYet => 'No scores yet';
+
+  @override
+  String get leaderboardYou => 'You';
+
+  @override
+  String get leaderboardError => 'Error loading leaderboard';
+
+  @override
+  String get packStarName => 'Star Pack';
+
+  @override
+  String get packCometName => 'Comet Pack';
+
+  @override
+  String get packDiamondName => 'Diamond Pack';
+
+  @override
+  String get badgeStarter => 'STARTER';
+
+  @override
+  String get badgePopular => 'POPULAR';
+
+  @override
+  String get badgeBestValue => 'BEST VALUE';
+
+  @override
+  String get purchaseSuccess => 'Purchase successful!';
+
+  @override
+  String get purchaseError => 'Purchase error';
+
+  @override
+  String get purchasesRestored => 'Purchases restored!';
+
+  @override
+  String get restoringPurchases => 'Looking for previous purchases…';
+
+  @override
+  String get jokerCategoryClassic => 'CLASSIC';
+
+  @override
+  String get jokerCategoryPremium => 'PREMIUM';
+
+  @override
+  String get noAdsTitle => 'NO ADS + JOKERS';
+
+  @override
+  String get badgeOneTimePurchase => '✨ ONE-TIME PURCHASE';
+
+  @override
+  String get noAdsDescription => 'Remove all ads!';
+
+  @override
+  String get sectionJokerPacks => 'JOKER PACKS';
+
+  @override
+  String get sectionFreeJoker => 'FREE JOKER';
+
+  @override
+  String get badgeFree => 'FREE';
+
+  @override
+  String get freeLabel => 'FREE';
+
+  @override
+  String get validateButton => 'CONFIRM';
+
+  @override
+  String get rewardLabel => 'Reward: ';
+
+  @override
+  String get xpLabel => 'XP';
+
+  @override
+  String get dayLabel => 'DAY';
+
+  @override
+  String get levelShortLabel => 'LV';
+
+  @override
+  String get defaultPlayerName => 'Player';
+
+  @override
+  String get defaultGuestName => 'Guest';
+
+  @override
+  String get okButton => 'OK';
+
+  @override
+  String get notifStreakTitle => 'Your streak is at risk!';
+
+  @override
+  String get notifStreakBody => 'Play a game to keep your streak alive.';
+
+  @override
+  String get notifChannelName => 'Game Streak';
+
+  @override
+  String get notifChannelDesc => 'Reminders to keep your game streak active.';
+
+  @override
+  String get musicLabel => 'Music';
+
+  @override
+  String languageLabel(String lang) {
+    return 'LANGUAGE: $lang';
+  }
+
+  @override
+  String get maxShapesWarning => 'Max 30 shapes';
 }

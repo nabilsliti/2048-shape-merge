@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
 /// Modern flat HUD — 4 elements distributed flexibly inside the card.
 class HudBar extends StatelessWidget {
@@ -73,7 +74,7 @@ class HudBar extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isNewBest ? '★ NEW BEST' : 'BEST ${_fmt(bestScore)}',
+                        isNewBest ? AppLocalizations.of(context)!.hudNewBest : AppLocalizations.of(context)!.hudBest(_fmt(bestScore)),
                         style: AppTheme.titleStyle(AppTheme.fontPico).copyWith(
                           color: isNewBest
                               ? AppTheme.goldLight
