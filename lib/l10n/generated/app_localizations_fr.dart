@@ -66,6 +66,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get signInGoogle => 'Se connecter avec Google';
 
   @override
+  String get signInSuccess => 'Connexion réussie';
+
+  @override
   String get signInToSave =>
       'Connecte-toi pour sauvegarder ton score et voir le classement';
 
@@ -131,17 +134,27 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingDesc1 =>
-      'Fais glisser des formes identiques pour les fusionner et marquer des points !';
+      'Glisse une forme sur une forme identique pour les fusionner et marquer des points !';
 
   @override
   String get onboardingTitle2 => 'Tes Jokers';
 
   @override
   String get onboardingDesc2 =>
-      'Tu commences avec 3 de chaque joker. Utilise-les judicieusement !';
+      'Utilise tes jokers pour détruire, transformer ou révéler des fusions !';
+
+  @override
+  String get onboardingTitle3 => 'Attention !';
+
+  @override
+  String get onboardingDesc3 =>
+      'Le plateau se remplit à chaque coup. Plus de place = Game Over !';
 
   @override
   String get startPlaying => 'Commencer à jouer';
+
+  @override
+  String get skipTutorial => 'Passer';
 
   @override
   String get next => 'Suivant';
@@ -252,7 +265,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Connecte-toi pour ne jamais perdre ton streak.';
 
   @override
-  String get streakCollect => 'Super !';
+  String get streakCollect => 'Déjà collecté';
 
   @override
   String get streakLost => 'Streak perdu';
@@ -475,6 +488,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rewardLabel => 'Récompense : ';
+
+  @override
+  String get rewardAdded => 'Ajouté à ton inventaire !';
 
   @override
   String get xpLabel => 'XP';

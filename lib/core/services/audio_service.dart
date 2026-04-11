@@ -1,12 +1,12 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AudioService {
   AudioService._();
   static final instance = AudioService._();
 
-  final _player = AudioPlayer();
-  final _musicPlayer = AudioPlayer();
+  final _soloud = SoLoud.instance;
 
   bool _soundEnabled = true;
   bool _musicEnabled = true;
@@ -14,11 +14,51 @@ class AudioService {
   bool get soundEnabled => _soundEnabled;
   bool get musicEnabled => _musicEnabled;
 
+  // ── Pre-loaded audio sources ──────────────────────────────────────────────
+  final Map<String, AudioSource> _sources = {};
+  SoundHandle? _musicHandle;
+
+  static const _sfxFiles = {
+    'merge': 'assets/sounds/merge.mp3',
+    'bomb': 'assets/sounds/bomb.wav',
+    'wildcard': 'assets/sounds/wildcard.wav',
+    'reducer': 'assets/sounds/reducer.wav',
+    'game_over': 'assets/sounds/game_over.wav',
+    'level_up': 'assets/sounds/level_up.wav',
+    'spawn': 'assets/sounds/spawn.wav',
+    'button_tap': 'assets/sounds/button_tap.wav',
+    'high_score': 'assets/sounds/good_merge.wav',
+    'reward': 'assets/sounds/reward_pub.wav',
+  };
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _soundEnabled = prefs.getBool('soundEnabled') ?? true;
     _musicEnabled = prefs.getBool('musicEnabled') ?? true;
-    await playMusic();
+
+    try {
+      if (!_soloud.isInitialized) {
+        await _soloud.init();
+      }
+    } catch (e) {
+      debugPrint('⚠️ SoLoud init failed: $e');
+      return;
+    }
+
+    // Pre-load all SFX into memory
+    for (final entry in _sfxFiles.entries) {
+      try {
+        _sources[entry.key] = await _soloud.loadAsset(entry.value);
+      } catch (e) {
+        debugPrint('⚠️ Failed to load ${entry.key}: $e');
+      }
+    }
+
+    try {
+      await playMusic();
+    } catch (e) {
+      debugPrint('⚠️ playMusic failed: $e');
+    }
   }
 
   // ── Sound effects ─────────────────────────────────────────────────────────
@@ -60,54 +100,54 @@ class AudioService {
   }
 
   Future<void> playMusic() async {
-    if (!_musicEnabled) return;
-    try {
-      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
-      await _musicPlayer.setVolume(0.4);
-      await _musicPlayer.play(AssetSource('sounds/background.mp3'));
-    } catch (_) {}
+    if (!_musicEnabled || !_soloud.isInitialized) return;
+    // No background.mp3 yet — skip silently
   }
 
   Future<void> pauseMusic() async {
-    try {
-      await _musicPlayer.pause();
-    } catch (_) {}
+    if (_musicHandle != null && _soloud.isInitialized) {
+      _soloud.setPause(_musicHandle!, true);
+    }
   }
 
   Future<void> resumeMusic() async {
     if (!_musicEnabled) return;
-    try {
-      await _musicPlayer.resume();
-    } catch (_) {}
-  }
-
-  Future<void> stopMusic() async {
-    try {
-      await _musicPlayer.stop();
-    } catch (_) {}
-  }
-
-  Future<void> play(String fileName) async {
-    if (!_soundEnabled) return;
-    try {
-      await _player.play(AssetSource('sounds/$fileName'));
-    } catch (_) {
-      // Sound files may be placeholders
+    if (_musicHandle != null && _soloud.isInitialized) {
+      _soloud.setPause(_musicHandle!, false);
     }
   }
 
-  Future<void> playMerge() => play('merge.wav');
-  Future<void> playBomb() => play('bomb.wav');
-  Future<void> playWildcard() => play('wildcard.wav');
-  Future<void> playReducer() => play('reducer.wav');
-  Future<void> playGameOver() => play('game_over.wav');
-  Future<void> playLevelUp() => play('level_up.wav');
-  Future<void> playSpawn() => play('spawn.wav');
-  Future<void> playButtonTap() => play('button_tap.wav');
+  Future<void> stopMusic() async {
+    if (_musicHandle != null && _soloud.isInitialized) {
+      await _soloud.stop(_musicHandle!);
+      _musicHandle = null;
+    }
+  }
+
+  void play(String key) {
+    if (!_soundEnabled || !_soloud.isInitialized) return;
+    final source = _sources[key];
+    if (source == null) return;
+    _soloud.play(source);
+  }
+
+  void playMerge() => play('merge');
+  void playBomb() => play('bomb');
+  void playWildcard() => play('wildcard');
+  void playReducer() => play('reducer');
+  void playGameOver() => play('game_over');
+  void playLevelUp() => play('level_up');
+  void playSpawn() => play('spawn');
+  void playButtonTap() => play('button_tap');
+  void playHighScore() => play('high_score');
+  void playReward() => play('reward');
 
   /// Joue un son progressif selon le niveau de combo.
-  Future<void> playCombo(int comboCount) {
-    if (comboCount >= 5) return playLevelUp();
-    return playMerge();
+  void playCombo(int comboCount) {
+    if (comboCount >= 5) {
+      playLevelUp();
+    } else {
+      playMerge();
+    }
   }
 }

@@ -66,6 +66,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInGoogle => 'Sign in with Google';
 
   @override
+  String get signInSuccess => 'Signed in successfully';
+
+  @override
   String get signInToSave =>
       'Sign in to save your score and see the leaderboard';
 
@@ -130,17 +133,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingDesc1 =>
-      'Drag identical shapes to merge them and score points!';
+      'Drag a shape onto an identical one to merge them and score points!';
 
   @override
   String get onboardingTitle2 => 'Your Jokers';
 
   @override
   String get onboardingDesc2 =>
-      'You start with 3 of each joker. Use them wisely!';
+      'Use your jokers to destroy, transform or reveal merges!';
+
+  @override
+  String get onboardingTitle3 => 'Watch Out!';
+
+  @override
+  String get onboardingDesc3 =>
+      'The board fills up with each move. No space left = Game Over!';
 
   @override
   String get startPlaying => 'Start Playing';
+
+  @override
+  String get skipTutorial => 'Skip';
 
   @override
   String get next => 'Next';
@@ -249,7 +262,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streakSaveNudge => 'Sign in to never lose your streak.';
 
   @override
-  String get streakCollect => 'Awesome!';
+  String get streakCollect => 'Already collected';
 
   @override
   String get streakLost => 'Streak lost';
@@ -471,6 +484,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rewardLabel => 'Reward: ';
+
+  @override
+  String get rewardAdded => 'Added to your inventory!';
 
   @override
   String get xpLabel => 'XP';

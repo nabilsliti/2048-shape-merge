@@ -212,6 +212,12 @@ abstract class AppLocalizations {
   /// **'Sign in with Google'**
   String get signInGoogle;
 
+  /// No description provided for @signInSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in successfully'**
+  String get signInSuccess;
+
   /// No description provided for @signInToSave.
   ///
   /// In en, this message translates to:
@@ -329,7 +335,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingDesc1.
   ///
   /// In en, this message translates to:
-  /// **'Drag identical shapes to merge them and score points!'**
+  /// **'Drag a shape onto an identical one to merge them and score points!'**
   String get onboardingDesc1;
 
   /// No description provided for @onboardingTitle2.
@@ -341,14 +347,32 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingDesc2.
   ///
   /// In en, this message translates to:
-  /// **'You start with 3 of each joker. Use them wisely!'**
+  /// **'Use your jokers to destroy, transform or reveal merges!'**
   String get onboardingDesc2;
+
+  /// No description provided for @onboardingTitle3.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Out!'**
+  String get onboardingTitle3;
+
+  /// No description provided for @onboardingDesc3.
+  ///
+  /// In en, this message translates to:
+  /// **'The board fills up with each move. No space left = Game Over!'**
+  String get onboardingDesc3;
 
   /// No description provided for @startPlaying.
   ///
   /// In en, this message translates to:
   /// **'Start Playing'**
   String get startPlaying;
+
+  /// No description provided for @skipTutorial.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skipTutorial;
 
   /// No description provided for @next.
   ///
@@ -557,7 +581,7 @@ abstract class AppLocalizations {
   /// No description provided for @streakCollect.
   ///
   /// In en, this message translates to:
-  /// **'Awesome!'**
+  /// **'Already collected'**
   String get streakCollect;
 
   /// No description provided for @streakLost.
@@ -919,6 +943,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reward: '**
   String get rewardLabel;
+
+  /// No description provided for @rewardAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to your inventory!'**
+  String get rewardAdded;
 
   /// No description provided for @xpLabel.
   ///

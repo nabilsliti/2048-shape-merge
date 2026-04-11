@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
-import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
@@ -32,18 +32,21 @@ class MainHubScreen extends ConsumerStatefulWidget {
 }
 
 class _MainHubScreenState extends ConsumerState<MainHubScreen> {
+  bool _streakPopupShown = false;
+
   @override
   Widget build(BuildContext context) {
     // Initialize IAP early to catch pending purchases
     ref.watch(iapReadyProvider);
 
-    // Show streak popup once when a new streak day is earned
+    // Show streak popup once automatically when a new streak day is earned
     ref.listen(streakProvider, (prev, next) {
-      if (next != null && next.streakIncremented && prev != next) {
+      if (next != null && next.reward != null && !next.rewardClaimed && !_streakPopupShown) {
+        _streakPopupShown = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           StreakPopup.show(context, next).then((_) {
-            ref.read(streakProvider.notifier).clearResult();
+            ref.read(streakProvider.notifier).ensureRewardClaimed();
           });
         });
       }
@@ -67,23 +70,6 @@ class _MainHubScreenState extends ConsumerState<MainHubScreen> {
             left: 0,
             right: 0,
             child: _TopHud(),
-          ),
-
-          // Ad Banner — anchored to bottom, above system nav bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const AdBannerWidget(),
-                Container(
-                  color: AppTheme.panelBg,
-                  height: MediaQuery.of(context).padding.bottom,
-                ),
-              ],
-            ),
           ),
 
           // Level-up overlay — centered, auto-dismisses after 2.5s
@@ -135,6 +121,7 @@ class _MainHubScreenState extends ConsumerState<MainHubScreen> {
 }
 
 class _TopHud extends ConsumerWidget {
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).valueOrNull;
@@ -177,7 +164,7 @@ class _TopHud extends ConsumerWidget {
           // Settings button
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Button3D.purple(
+            child: Button3D.gold(
               padding: EdgeInsets.zero,
               borderRadius: 100,
               onPressed: () {
@@ -205,7 +192,7 @@ class _TopHud extends ConsumerWidget {
                     dayLabel: AppLocalizations.of(context)!.dayLabel,
                     onTap: streakResult != null
                         ? () => StreakPopup.show(context, streakResult).then((_) {
-                              ref.read(streakProvider.notifier).clearResult();
+                              ref.read(streakProvider.notifier).ensureRewardClaimed();
                             })
                         : null,
                   ),
@@ -221,7 +208,7 @@ class _TopHud extends ConsumerWidget {
           // Avatar / Profile button
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Button3D.purple(
+            child: Button3D.gold(
               padding: EdgeInsets.zero,
               borderRadius: 100,
               onPressed: () => showProfileDialog(context, ref),
@@ -229,9 +216,7 @@ class _TopHud extends ConsumerWidget {
                 width: 42,
                 height: 42,
                 child: Center(
-                  child: currentAvatar == '👤'
-                      ? const Icon(Icons.person_rounded, color: Colors.white, size: 24)
-                      : Text(currentAvatar, style: const TextStyle(fontSize: AppTheme.fontH4)),
+                  child: Text(currentAvatar, style: const TextStyle(fontSize: AppTheme.fontH4)),
                 ),
               ),
             ),
@@ -253,9 +238,20 @@ class SettingsModal extends ConsumerStatefulWidget {
 }
 
 class _SettingsModalState extends ConsumerState<SettingsModal> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = 'v${info.version}+${info.buildNumber}');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final soundOn = ref.watch(audioProvider);
+    final musicOn = ref.watch(musicProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return Dialog(
@@ -269,10 +265,10 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
             decoration: BoxDecoration(
               color: AppTheme.panelBg,
               borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-              border: Border.all(color: AppTheme.panelBorder, width: 3),
-              boxShadow: const [
-                BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 8)),
-                BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
+              border: Border.all(color: AppTheme.goldDeep, width: 3),
+              boxShadow: [
+                BoxShadow(color: AppTheme.goldDeep.withValues(alpha: 0.4), offset: const Offset(0, 8)),
+                const BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
               ],
             ),
             child: Column(
@@ -302,10 +298,21 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
                 Text(l10n.settings.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH4)),
                 const SizedBox(height: 20),
 
+                // Sound toggle
+                _settingToggle(
+                  soundOn ? l10n.soundOn : l10n.soundOff,
+                  soundOn ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                  soundOn,
+                  (v) => ref.read(audioProvider.notifier).toggle(),
+                ),
+                const SizedBox(height: 12),
+
                 // Music toggle
                 _settingToggle(
-                  l10n.musicLabel, Icons.music_note, soundOn,
-                  (v) => ref.read(audioProvider.notifier).toggle(),
+                  musicOn ? l10n.musicOn : l10n.musicOff,
+                  musicOn ? Icons.music_note_rounded : Icons.music_off_rounded,
+                  musicOn,
+                  (v) => ref.read(musicProvider.notifier).toggle(),
                 ),
                 const SizedBox(height: 16),
 
@@ -332,10 +339,12 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(_version, style: GoogleFonts.nunito(
+                  fontSize: 12, color: Colors.white38)),
               ],
             ),
           ),
-          // Close (X) button on the top-right edge
           Positioned(
             top: -12,
             right: -12,

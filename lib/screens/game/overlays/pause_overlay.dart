@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -70,7 +71,10 @@ class PauseOverlay extends StatelessWidget {
                     child: Button3D.green(
                       expand: true,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      onPressed: onResume,
+                      onPressed: () {
+                        AudioService.instance.playButtonTap();
+                        onResume();
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
@@ -91,6 +95,7 @@ class PauseOverlay extends StatelessWidget {
                       expand: true,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       onPressed: () {
+                        AudioService.instance.playButtonTap();
                         if (onQuit != null) {
                           onQuit!();
                         } else {
@@ -117,7 +122,10 @@ class PauseOverlay extends StatelessWidget {
               child: Button3D.red(
                 padding: const EdgeInsets.all(8),
                 borderRadius: 20,
-                onPressed: onResume,
+                onPressed: () {
+                  AudioService.instance.playButtonTap();
+                  onResume();
+                },
                 child: const PremiumIcon.close(size: 22),
               ),
             ),

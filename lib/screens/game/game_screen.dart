@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -61,6 +61,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           (previous, next) async {
             if (next > _lastPersistedBest) {
               _lastPersistedBest = next;
+              AudioService.instance.playHighScore();
               final st = await ref.read(localStorageProvider.future);
               await st.setBestScore(next);
 
@@ -164,6 +165,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           // Gradient background (same as shape-rush)
           Positioned.fill(child: AppTheme.backgroundWidget()),
           SafeArea(
+            bottom: false,
             child: Column(
               children: [
                 // HUD bar (same card design)
@@ -268,8 +270,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   ),
                 ),
                 const SizedBox(height: 3),
-                // Ad banner
-                const AdBannerWidget(),
               ],
             ),
           ),

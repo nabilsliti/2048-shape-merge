@@ -1,0 +1,148 @@
+{
+  "identifier" : "F2C5E4A0-8B3D-4E7F-9A1C-2D6F8E3B5A7C",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "pack_star_001",
+      "localizations" : [
+        {
+          "description" : "5 jokers classiques + 1 radar",
+          "displayName" : "Pack Étoile",
+          "locale" : "fr"
+        },
+        {
+          "description" : "5 classic jokers + 1 radar",
+          "displayName" : "Star Pack",
+          "locale" : "en"
+        }
+      ],
+      "productID" : "pack_star",
+      "referenceName" : "Pack Star",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "pack_comet_001",
+      "localizations" : [
+        {
+          "description" : "15 jokers classiques + 3 radar + 2 évolution + 2 méga-bombe",
+          "displayName" : "Pack Comète",
+          "locale" : "fr"
+        },
+        {
+          "description" : "15 classic jokers + 3 radar + 2 evolution + 2 mega-bomb",
+          "displayName" : "Comet Pack",
+          "locale" : "en"
+        }
+      ],
+      "productID" : "pack_comet",
+      "referenceName" : "Pack Comet",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "pack_diamond_001",
+      "localizations" : [
+        {
+          "description" : "40 jokers classiques + 8 radar + 5 évolution + 5 méga-bombe",
+          "displayName" : "Pack Diamant",
+          "locale" : "fr"
+        },
+        {
+          "description" : "40 classic jokers + 8 radar + 5 evolution + 5 mega-bomb",
+          "displayName" : "Diamond Pack",
+          "locale" : "en"
+        }
+      ],
+      "productID" : "pack_diamond",
+      "referenceName" : "Pack Diamond",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "5.49",
+      "familyShareable" : true,
+      "internalID" : "no_ads_001",
+      "localizations" : [
+        {
+          "description" : "Supprime toutes les pubs + 10 jokers classiques + 3 radar + 2 évolution + 2 méga-bombe",
+          "displayName" : "Zéro Pub + Jokers",
+          "locale" : "fr"
+        },
+        {
+          "description" : "Remove all ads + 10 classic jokers + 3 radar + 2 evolution + 2 mega-bomb",
+          "displayName" : "No Ads + Jokers",
+          "locale" : "en"
+        }
+      ],
+      "productID" : "no_ads",
+      "referenceName" : "No Ads",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Transaction Manager"
+      }
+    ],
+    "_locale" : "fr",
+    "_storefront" : "FRA",
+    "_storeKitPaymentDisabledByParentalControls" : false
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

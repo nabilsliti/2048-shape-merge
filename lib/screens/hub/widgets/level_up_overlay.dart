@@ -40,11 +40,12 @@ class _LevelUpContent extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 48),
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
           decoration: BoxDecoration(
-            color: AppTheme.cardBg,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
-            boxShadow: [
-              BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 32, spreadRadius: 4),
+            color: AppTheme.panelBg,
+            borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+            border: Border.all(color: AppTheme.panelBorder, width: 3),
+            boxShadow: const [
+              BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 8)),
+              BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
             ],
           ),
           child: Column(

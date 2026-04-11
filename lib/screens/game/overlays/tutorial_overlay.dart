@@ -1,143 +1,123 @@
 import 'package:flutter/material.dart';
-import 'package:shape_merge/core/constants/joker_types.dart';
-import 'package:shape_merge/core/constants/joker_ui.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
-class TutorialOverlay extends StatelessWidget {
+class TutorialOverlay extends StatefulWidget {
   const TutorialOverlay({required this.onDismiss, super.key});
 
   final VoidCallback onDismiss;
 
   @override
+  State<TutorialOverlay> createState() => _TutorialOverlayState();
+}
+
+class _TutorialOverlayState extends State<TutorialOverlay> {
+  final _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final slides = [
+      _Slide(emoji: '🔀', title: l10n.onboardingTitle1, desc: l10n.onboardingDesc1),
+      _Slide(emoji: '🃏', title: l10n.onboardingTitle2, desc: l10n.onboardingDesc2),
+      _Slide(emoji: '💀', title: l10n.onboardingTitle3, desc: l10n.onboardingDesc3),
+    ];
+
+    final isLast = _page == slides.length - 1;
+
     return Stack(
       fit: StackFit.expand,
       children: [
         const SpaceBackground(darken: 0.6),
-        Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.panelBg,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-              border: Border.all(color: AppTheme.panelBorder, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.purpleTop.withValues(alpha: 0.3),
-                  blurRadius: 30,
-                  spreadRadius: 4,
-                ),
-                const BoxShadow(
-                  color: Colors.black54,
-                  offset: Offset(0, 8),
-                  blurRadius: 16,
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              child: Builder(
-                builder: (context) {
-                  final l10n = AppLocalizations.of(context)!;
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Title
-                      Text(
-                        '🧬 ${l10n.tutorialTitle}',
-                        style: AppTheme.titleStyle(AppTheme.fontH2),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Objectif
-                      _InstructionRow(
-                        icon: '🎯',
-                        label: l10n.tutorialObjectiveLabel,
-                        text: l10n.tutorialObjectiveText,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Contrôles
-                      _InstructionRow(
-                        icon: '🕹️',
-                        label: l10n.tutorialControlsLabel,
-                        text: l10n.tutorialControlsText,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Jokers
-                      _JokerSection(),
-                      const SizedBox(height: 14),
-
-                      // Game Over
-                      _InstructionRow(
-                        icon: '💀',
-                        label: l10n.tutorialGameOverLabel,
-                        text: l10n.tutorialGameOverText,
-                      ),
-                      const SizedBox(height: 24),
-
-                      // GO button
-                      Button3D.green(
-                        onPressed: onDismiss,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 48,
-                          vertical: 14,
-                        ),
-                        child: Text(l10n.tutorialGoButton, style: AppTheme.titleStyle(AppTheme.fontH2)),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InstructionRow extends StatelessWidget {
-  const _InstructionRow({
-    required this.icon,
-    required this.label,
-    required this.text,
-  });
-
-  final String icon;
-  final String label;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(icon, style: const TextStyle(fontSize: AppTheme.fontH4)),
-        const SizedBox(width: 10),
-        Expanded(
+        SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: AppTheme.fontTiny,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
+              // Skip button
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, right: 16),
+                  child: TextButton(
+                    onPressed: widget.onDismiss,
+                    child: Text(
+                      l10n.skipTutorial,
+                      style: GoogleFonts.nunito(
+                        color: Colors.white54,
+                        fontSize: AppTheme.fontRegular,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: AppTheme.fontSmall,
-                  height: 1.3,
+
+              // Slides
+              Expanded(
+                child: PageView.builder(
+                  controller: _controller,
+                  onPageChanged: (i) => setState(() => _page = i),
+                  itemCount: slides.length,
+                  itemBuilder: (_, i) => slides[i],
+                ),
+              ),
+
+              // Dots
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(slides.length, (i) {
+                    final active = i == _page;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: active ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: active ? AppTheme.gold : Colors.white24,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+
+              // Button
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+                child: Button3D.green(
+                  expand: true,
+                  onPressed: () {
+                    if (isLast) {
+                      widget.onDismiss();
+                    } else {
+                      _controller.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: Text(
+                      isLast ? l10n.startPlaying : l10n.next,
+                      style: GoogleFonts.fredoka(
+                        fontSize: AppTheme.fontBody,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -148,91 +128,40 @@ class _InstructionRow extends StatelessWidget {
   }
 }
 
-class _JokerSection extends StatelessWidget {
+class _Slide extends StatelessWidget {
+  const _Slide({required this.emoji, required this.title, required this.desc});
+
+  final String emoji;
+  final String title;
+  final String desc;
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('🃏', style: TextStyle(fontSize: AppTheme.fontH4)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.tutorialJokersLabel,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: AppTheme.fontTiny,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // ── Classiques ──
-              Text('— ${l10n.tutorialClassicLabel} —',
-                  style: const TextStyle(color: Colors.white38, fontSize: AppTheme.fontNano, letterSpacing: 0.8)),
-              const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.bomb, size: 20), l10n.jokerBomb, l10n.jokerBombDesc),
-              const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.wildcard, size: 20), l10n.jokerWildcard, l10n.jokerWildcardDesc),
-              const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.reducer, size: 20), l10n.jokerReducer, l10n.jokerReducerDesc),
-              const SizedBox(height: 6),
-              // ── Premium ──
-              Row(
-                children: [
-                  Expanded(child: Container(height: 1, color: AppTheme.gold.withValues(alpha: 0.4))),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text('★ ${l10n.tutorialPremiumLabel}',
-                        style: const TextStyle(color: AppTheme.gold, fontSize: AppTheme.fontPico, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  ),
-                  Expanded(child: Container(height: 1, color: AppTheme.gold.withValues(alpha: 0.4))),
-                ],
-              ),
-              const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.radar, size: 20), l10n.jokerRadar, l10n.jokerRadarDesc),
-              const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.evolution, size: 20), l10n.jokerEvolution, l10n.jokerEvolutionDesc),
-              const SizedBox(height: 4),
-              _jokerRow(JokerUI.icon(JokerType.megaBomb, size: 20), l10n.jokerMegaBomb, l10n.jokerMegaBombDesc),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 72)),
+          const SizedBox(height: 24),
+          Text(
+            title.toUpperCase(),
+            style: AppTheme.titleStyle(AppTheme.fontH1),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _jokerRow(Widget icon, String name, String desc) {
-    return Row(
-      children: [
-        icon,
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: '$name — ',
-                  style: const TextStyle(
-                    color: AppTheme.gold,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextSpan(text: desc),
-              ],
-            ),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: AppTheme.fontSmall,
-              height: 1.3,
+          const SizedBox(height: 16),
+          Text(
+            desc,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              color: Colors.white70,
+              fontSize: AppTheme.fontBody,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

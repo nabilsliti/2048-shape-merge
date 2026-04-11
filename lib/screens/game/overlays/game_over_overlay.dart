@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
@@ -48,6 +49,7 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
+    AudioService.instance.playGameOver();
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -201,7 +203,10 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                                 child: Button3D.red(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   borderRadius: 18,
-                                  onPressed: () => context.go('/home'),
+                                  onPressed: () {
+                                    AudioService.instance.playButtonTap();
+                                    context.go('/home');
+                                  },
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -217,7 +222,10 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                                 child: Button3D.green(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   borderRadius: 18,
-                                  onPressed: widget.onReplay,
+                                  onPressed: () {
+                                    AudioService.instance.playButtonTap();
+                                    widget.onReplay();
+                                  },
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [

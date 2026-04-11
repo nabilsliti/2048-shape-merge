@@ -298,6 +298,9 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       _dragStartOffset = null;
     });
 
+    // Play merge sound at the start of the fly animation (not after)
+    AudioService.instance.playMerge();
+
     _flyToCtrl!.forward();
   }
 
@@ -320,11 +323,9 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       } else {
         HapticFeedback.mediumImpact();
       }
-      // Progressive sound
+      // Progressive sound (combo only — basic merge already played at fly start)
       if (result.comboCount >= 3) {
         AudioService.instance.playCombo(result.comboCount);
-      } else {
-        AudioService.instance.playMerge();
       }
       widget.onMerge?.call(
         Offset(result.mergedShape!.x, result.mergedShape!.y),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
@@ -33,11 +34,11 @@ const avatarList = [
   {'id': 'heart', 'emoji': '❤️'},
 ];
 
-/// Returns emoji string for a given avatar ID (or default)
+/// Returns emoji string for a given avatar ID (or first avatar as default)
 String avatarEmoji(String? avatarId) {
-  if (avatarId == null) return '👤';
+  if (avatarId == null) return avatarList.first['emoji']!;
   final match = avatarList.where((a) => a['id'] == avatarId);
-  return match.isNotEmpty ? match.first['emoji']! : '👤';
+  return match.isNotEmpty ? match.first['emoji']! : avatarList.first['emoji']!;
 }
 
 /// Shows the profile editing dialog — works for both signed-in and guest users
@@ -79,7 +80,19 @@ Future<void> showProfileDialog(BuildContext context, WidgetRef ref) async {
 
   // Handle sign in
   if (result.signIn) {
-    await ref.read(authServiceProvider).signInWithGoogle();
+    final authService = ref.read(authServiceProvider);
+    final cred = await authService.signInWithGoogle();
+    if (!context.mounted) return;
+    if (cred != null) {
+      _showSignInOverlay(context);
+    } else if (authService.lastError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Sign-In error: ${authService.lastError}'),
+          duration: const Duration(seconds: 10),
+        ),
+      );
+    }
     ref.invalidate(playerProvider);
     return;
   }
@@ -105,6 +118,89 @@ class _ProfileResult {
   final bool signOut;
   final bool signIn;
   const _ProfileResult(this.name, this.avatarId, {this.signOut = false, this.signIn = false});
+}
+
+void _showSignInOverlay(BuildContext context) {
+  final overlay = Overlay.of(context);
+  late final OverlayEntry entry;
+
+  entry = OverlayEntry(
+    builder: (_) => _SignInOverlayContent(
+      message: AppLocalizations.of(context)!.signInSuccess,
+      onDone: () => entry.remove(),
+    ),
+  );
+
+  overlay.insert(entry);
+}
+
+class _SignInOverlayContent extends StatefulWidget {
+  const _SignInOverlayContent({required this.message, required this.onDone});
+  final String message;
+  final VoidCallback onDone;
+
+  @override
+  State<_SignInOverlayContent> createState() => _SignInOverlayContentState();
+}
+
+class _SignInOverlayContentState extends State<_SignInOverlayContent> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 2200), widget.onDone);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Material(
+        type: MaterialType.transparency,
+        child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 48),
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+          decoration: BoxDecoration(
+            color: AppTheme.panelBg,
+            borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+            border: Border.all(color: AppTheme.panelBorder, width: 3),
+            boxShadow: const [
+              BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 8)),
+              BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 48)
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scaleXY(begin: 1, end: 1.2, duration: 700.ms, curve: Curves.easeInOut),
+              const SizedBox(height: 12),
+              Text(
+                widget.message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.fredoka(
+                  fontSize: AppTheme.fontH2,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
+            ],
+          ),
+        )
+            .animate()
+            .scale(
+              begin: const Offset(0.7, 0.7),
+              end: const Offset(1, 1),
+              duration: 400.ms,
+              curve: Curves.easeOutBack,
+            )
+            .fadeIn(duration: 300.ms)
+            .then(delay: 1500.ms)
+            .fadeOut(duration: 400.ms),
+      ),
+      ),
+    );
+  }
 }
 
 class _ProfileEditDialog extends StatefulWidget {

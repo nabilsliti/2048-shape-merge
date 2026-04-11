@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
+import 'package:shape_merge/core/widgets/joker_icons.dart';
 
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
@@ -56,6 +57,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
 
     if (!isSignedIn) {
       return SafeArea(
+        bottom: false,
         child: Column(
           children: [
             Padding(
@@ -66,14 +68,14 @@ class LeaderboardScreenContent extends ConsumerWidget {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Button3D.yellow(
+                      child: Button3D.gold(
                         padding: EdgeInsets.zero,
                         borderRadius: 22,
                         onPressed: () => context.go('/home'),
                         child: const SizedBox(
                           width: 44,
                           height: 44,
-                          child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                          child: PremiumIcon.back(size: 22),
                         ),
                       ),
                     ),
@@ -144,8 +146,6 @@ class LeaderboardScreenContent extends ConsumerWidget {
                 ),
               ),
             ),
-            // Ad banner
-            const AdBannerWidget(),
           ],
         ),
       );
@@ -154,6 +154,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
     final leaderboard = ref.watch(leaderboardProvider);
 
     return SafeArea(
+      bottom: false,
       child: Column(
         children: [
           Padding(
@@ -164,14 +165,14 @@ class LeaderboardScreenContent extends ConsumerWidget {
                 children: [
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Button3D.yellow(
+                    child: Button3D.gold(
                       padding: EdgeInsets.zero,
                       borderRadius: 22,
                       onPressed: () => context.go('/home'),
                       child: const SizedBox(
                         width: 44,
                         height: 44,
-                        child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                        child: PremiumIcon.back(size: 22),
                       ),
                     ),
                   ),
@@ -208,6 +209,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                   const accents = [AppTheme.goldLight, AppTheme.medalSilver2, AppTheme.medalBronze2];
                   const meAccent = AppTheme.leaderMyRank;
                   final accent = isMe ? meAccent : (isTop3 ? accents[visualIndex] : Colors.white.withValues(alpha: 0.08));
+                  final levelColor = AppTheme.colorForLevel(entry.maxLevel);
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 6),
@@ -282,7 +284,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                           child: Text(avatarEmoji(entry.avatarId), style: const TextStyle(fontSize: AppTheme.fontRegular)),
                         ),
                         const SizedBox(width: 8),
-                        // ── Name ──
+                        // ── Name + Level ──
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,14 +297,31 @@ class LeaderboardScreenContent extends ConsumerWidget {
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (isMe)
-                                Text(
-                                  l10n.leaderboardYou,
-                                  style: GoogleFonts.nunito(
-                                    fontSize: AppTheme.fontMini, fontWeight: FontWeight.w700,
-                                    color: meAccent.withValues(alpha: 0.6),
+                              const SizedBox(height: 1),
+                              Row(
+                                children: [
+                                  Icon(RetentionUI.levelIcon, color: levelColor, size: 11),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Niv. ${entry.maxLevel}',
+                                    style: GoogleFonts.fredoka(
+                                      fontSize: AppTheme.fontMini,
+                                      fontWeight: FontWeight.w600,
+                                      color: levelColor.withValues(alpha: 0.8),
+                                    ),
                                   ),
-                                ),
+                                  if (isMe) ...[
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      l10n.leaderboardYou,
+                                      style: GoogleFonts.nunito(
+                                        fontSize: AppTheme.fontMini, fontWeight: FontWeight.w700,
+                                        color: meAccent.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -361,8 +380,6 @@ class LeaderboardScreenContent extends ConsumerWidget {
               ),
             ),
           ),
-          // Ad banner
-          const AdBannerWidget(),
         ],
       ),
     );

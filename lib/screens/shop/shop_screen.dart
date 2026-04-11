@@ -1,15 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
-import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
@@ -67,6 +68,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     adsService.loadRewardedAd();
 
     return SafeArea(
+      bottom: false,
       child: Column(
         children: [
           Padding(
@@ -77,14 +79,17 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                 children: [
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Button3D.yellow(
+                    child: Button3D.gold(
                       padding: EdgeInsets.zero,
                       borderRadius: 22,
-                      onPressed: () => context.go('/home'),
+                      onPressed: () {
+                        AudioService.instance.playButtonTap();
+                        context.go('/home');
+                      },
                       child: const SizedBox(
                         width: 44,
                         height: 44,
-                        child: Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                        child: PremiumIcon.back(size: 22),
                       ),
                     ),
                   ),
@@ -180,13 +185,10 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                   ),
                   const SizedBox(height: 24),
 
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
-          // Ad banner
-          if (!noAds) const AdBannerWidget(),
         ],
       ),
     );
@@ -194,6 +196,28 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
 
   Future<void> _buyProduct(BuildContext context, WidgetRef ref, String productId) async {
     final iap = ref.read(iapServiceProvider);
+
+    // Debug: show store status
+    if (!iap.storeAvailable) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Store not available'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+    if (!iap.products.containsKey(productId)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product "$productId" not found. Loaded: ${iap.products.keys.toList()}'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      return;
+    }
 
     // Register a one-shot status listener for feedback
     iap.onStatusChanged = (result) {
@@ -347,6 +371,9 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     );
 
     if (chosenType == null) return; // user tapped RETOUR
+
+    // Play reward sound immediately on validation
+    AudioService.instance.playReward();
 
     // Scroll to top so the inventory animation is visible
     if (_scrollController.hasClients) {
@@ -1008,17 +1035,14 @@ class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          GestureDetector(
-                            onTap: widget.onBuy,
-                            child: _AnimatedPriceButton(price: widget.price, large: true),
-                          ),
+                          _AnimatedPriceButton(price: widget.price, large: true, onTap: widget.onBuy),
                         ],
                       ),
                     ],
                   ),
                 ),
                 // Shimmer
-                Positioned.fill(child: CustomPaint(painter: _ShimmerPainter(_shimmer.value))),
+                Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _ShimmerPainter(_shimmer.value)))),
                 // Sparkle particles
                 Positioned.fill(
                   child: IgnorePointer(
@@ -1215,15 +1239,12 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
                       ),
                       const SizedBox(width: 8),
                       // Price button
-                      GestureDetector(
-                        onTap: widget.onBuy,
-                        child: _AnimatedPriceButton(price: widget.price, large: true),
-                      ),
+                      _AnimatedPriceButton(price: widget.price, large: true, onTap: widget.onBuy),
                     ],
                   ),
                 ),
                 // Shimmer
-                Positioned.fill(child: CustomPaint(painter: _ShimmerPainter(_shimmer.value))),
+                Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _ShimmerPainter(_shimmer.value)))),
                 // Sparkle particles
                 Positioned.fill(
                   child: IgnorePointer(
@@ -1238,15 +1259,17 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
                   top: 0,
                   left: 10,
                   right: 10,
-                  child: Container(
-                    height: 2.5,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [
-                        widget.gradStart.withValues(alpha: 0),
-                        widget.gradStart,
-                        widget.gradStart.withValues(alpha: 0),
-                      ]),
-                      borderRadius: BorderRadius.circular(2),
+                  child: IgnorePointer(
+                    child: Container(
+                      height: 2.5,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [
+                          widget.gradStart.withValues(alpha: 0),
+                          widget.gradStart,
+                          widget.gradStart.withValues(alpha: 0),
+                        ]),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
                 ),
@@ -1285,7 +1308,7 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
 
   Widget _buildEmoji() {
     return AnimatedBuilder(
-      animation: _pulse,
+      animation: Listenable.merge([_pulse, _shimmer]),
       builder: (context, child) {
         final scale = 1.0 + _pulse.value * 0.1;
         final bounce = math.sin(_pulse.value * math.pi * 2) * 3;
@@ -1294,24 +1317,43 @@ class _JokerPackCardState extends State<_JokerPackCard> with TickerProviderState
           offset: Offset(0, bounce),
           child: Transform.scale(
             scale: scale,
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: widget.gradStart.withValues(alpha: glow), blurRadius: 16)],
-              ),
-              child: Center(
-                child: Text(
-                  widget.emoji,
-                  style: TextStyle(
-                    fontSize: AppTheme.fontLarge,
-                    shadows: [
-                      Shadow(color: widget.gradStart.withValues(alpha: 0.8), blurRadius: 12),
-                      const Shadow(color: Colors.black38, offset: Offset(0, 3), blurRadius: 2),
-                    ],
+            child: SizedBox(
+              width: 64,
+              height: 64,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Laser ring (diamond only)
+                  if (widget.emoji == '💎')
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _LaserRingPainter(
+                          progress: _shimmer.value,
+                          color: widget.gradStart,
+                        ),
+                      ),
+                    ),
+                  // Glow circle
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [BoxShadow(color: widget.gradStart.withValues(alpha: glow), blurRadius: 16)],
+                    ),
                   ),
-                ),
+                  // Emoji
+                  Text(
+                    widget.emoji,
+                    style: TextStyle(
+                      fontSize: AppTheme.fontLarge,
+                      shadows: [
+                        Shadow(color: widget.gradStart.withValues(alpha: 0.8), blurRadius: 12),
+                        const Shadow(color: Colors.black38, offset: Offset(0, 3), blurRadius: 2),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1433,7 +1475,7 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                     ),
                   ),
                   // Shimmer
-                  Positioned.fill(child: CustomPaint(painter: _ShimmerPainter(_shimmer.value))),
+                  Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _ShimmerPainter(_shimmer.value)))),
                   // Badge
                   Positioned(
                     top: 2,
@@ -1497,65 +1539,86 @@ class _AdGratuitButton extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Animated price button — pulsing green CTA
+// Animated price button — pulsing green CTA with tap bounce
 // ═══════════════════════════════════════════════════════════════
 class _AnimatedPriceButton extends StatefulWidget {
   final String price;
   final bool large;
-  const _AnimatedPriceButton({required this.price, this.large = false});
+  final VoidCallback? onTap;
+  const _AnimatedPriceButton({required this.price, this.large = false, this.onTap});
 
   @override
   State<_AnimatedPriceButton> createState() => _AnimatedPriceButtonState();
 }
 
-class _AnimatedPriceButtonState extends State<_AnimatedPriceButton> with SingleTickerProviderStateMixin {
+class _AnimatedPriceButtonState extends State<_AnimatedPriceButton> with TickerProviderStateMixin {
   late final AnimationController _pulse;
+  late final AnimationController _tap;
+  late final Animation<double> _tapScale;
 
   @override
   void initState() {
     super.initState();
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat(reverse: true);
+    _tap = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    _tapScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.80), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.80, end: 1.12), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 1.12, end: 0.97), weight: 15),
+      TweenSequenceItem(tween: Tween(begin: 0.97, end: 1.0), weight: 20),
+    ]).animate(CurvedAnimation(parent: _tap, curve: Curves.easeOut));
   }
 
   @override
-  void dispose() { _pulse.dispose(); super.dispose(); }
+  void dispose() { _pulse.dispose(); _tap.dispose(); super.dispose(); }
+
+  void _handleTap() {
+    _tap.forward(from: 0);
+    HapticFeedback.lightImpact();
+    widget.onTap?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, child) {
-        final scale = 1.0 + _pulse.value * 0.04;
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: widget.large ? 11 : 8,
-              vertical: widget.large ? 8 : 6,
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
-              borderRadius: BorderRadius.circular(AppTheme.radiusXXTiny),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.25 + _pulse.value * 0.2), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.shopPackStar1.withValues(alpha: 0.3 + _pulse.value * 0.3),
-                  offset: const Offset(0, 4),
-                  blurRadius: 10 + _pulse.value * 6,
-                  spreadRadius: _pulse.value * 2,
+    return GestureDetector(
+      onTap: _handleTap,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_pulse, _tap]),
+        builder: (context, child) {
+          final pulseScale = 1.0 + _pulse.value * 0.04;
+          final tapS = _tap.isAnimating ? _tapScale.value : 1.0;
+          final glowBoost = _tap.isAnimating ? 0.4 : 0.0;
+          return Transform.scale(
+            scale: pulseScale * tapS,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.large ? 11 : 8,
+                vertical: widget.large ? 8 : 6,
+              ),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
+                borderRadius: BorderRadius.circular(AppTheme.radiusXXTiny),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.25 + _pulse.value * 0.2 + glowBoost), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.shopPackStar1.withValues(alpha: 0.3 + _pulse.value * 0.3 + glowBoost),
+                    offset: const Offset(0, 4),
+                    blurRadius: 10 + _pulse.value * 6 + glowBoost * 10,
+                    spreadRadius: _pulse.value * 2 + glowBoost * 4,
+                  ),
+                ],
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  widget.price,
+                  style: GoogleFonts.fredoka(fontSize: widget.large ? AppTheme.fontH4 : AppTheme.fontH3, fontWeight: FontWeight.w900, color: Colors.white),
                 ),
-              ],
-            ),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                widget.price,
-                style: GoogleFonts.fredoka(fontSize: widget.large ? AppTheme.fontH4 : AppTheme.fontH3, fontWeight: FontWeight.w900, color: Colors.white),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -1677,6 +1740,77 @@ class _ShieldNoPainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Laser ring painter — rotating arc with glow trail (from shape-rush)
+// ═══════════════════════════════════════════════════════════════
+class _LaserRingPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  _LaserRingPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 2;
+    final startAngle = progress * 2 * math.pi;
+
+    // Main bright arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      math.pi * 0.5,
+      false,
+      Paint()
+        ..color = color.withValues(alpha: 0.9)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Glow trail
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      math.pi * 0.5,
+      false,
+      Paint()
+        ..color = color.withValues(alpha: 0.35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+
+    // Opposite faint arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle + math.pi,
+      math.pi * 0.35,
+      false,
+      Paint()
+        ..color = color.withValues(alpha: 0.15)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Sparkle dot at arc tip
+    final tipAngle = startAngle + math.pi * 0.5;
+    final tipX = center.dx + radius * math.cos(tipAngle);
+    final tipY = center.dy + radius * math.sin(tipAngle);
+    canvas.drawCircle(
+      Offset(tipX, tipY),
+      3,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.9)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_LaserRingPainter old) => old.progress != progress;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Shimmer painter — diagonal light sweep
 // ═══════════════════════════════════════════════════════════════
 class _ShimmerPainter extends CustomPainter {
@@ -1791,7 +1925,10 @@ class _JokerChoicePanelState extends State<_JokerChoicePanel> {
             child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 40),
           ),
           const SizedBox(height: 12),
-          Text(l10n.chooseJoker.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH4)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(l10n.chooseJoker.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
+          ),
           const SizedBox(height: 20),
 
           // Joker choices

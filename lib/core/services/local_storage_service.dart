@@ -25,6 +25,7 @@ class LocalStorageService {
   static const _currentXPKey              = 'currentXP';
   static const _totalXPKey                = 'totalXP';
   // Nudge flags — each shown only once
+  static const _rewardClaimedDateKey        = 'rewardClaimedDate';
   static const _nudgeStreak3Key            = 'nudgeStreak3Shown';
   static const _nudgeStreak7Key            = 'nudgeStreak7Shown';
   static const _nudgeLevel5Key             = 'nudgeLevel5Shown';
@@ -97,6 +98,9 @@ class LocalStorageService {
 
   int get nextRewardIndex => _prefs.getInt(_nextRewardIndexKey) ?? 0;
   Future<void> setNextRewardIndex(int v) => _prefs.setInt(_nextRewardIndexKey, v);
+
+  String? get rewardClaimedDate => _prefs.getString(_rewardClaimedDateKey);
+  Future<void> setRewardClaimedDate(String date) => _prefs.setString(_rewardClaimedDateKey, date);
 
   // ── Level / XP (guest mode) ──────────────────────────────────────────────
   int get playerLevel => _prefs.getInt(_playerLevelKey) ?? 1;

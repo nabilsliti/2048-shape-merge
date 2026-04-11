@@ -18,10 +18,14 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
   StreakNotifier(this._ref) : super(null);
 
   final Ref _ref;
+  bool _isProcessing = false;
 
   /// Called at app launch (SplashScreen) and on app resume (AppLifecycleState.resumed).
-  /// Delivers the joker reward via gameStateProvider if a new streak day was earned.
+  /// Computes streak but does NOT deliver jokers — call [claimStreakReward] from the popup.
   Future<void> checkAndUpdate() async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+    try {
     final service = _ref.read(streakServiceProvider);
     final storage = await _ref.read(localStorageProvider.future);
     final user = _ref.read(authStateProvider).valueOrNull;
@@ -38,43 +42,66 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
           storage: storage,
         );
       } else {
-        // Player doc not yet created — fall back to guest logic until it's ready
         result = await service.checkAndUpdateGuest(storage);
       }
     } else {
       result = await service.checkAndUpdateGuest(storage);
     }
 
-    // Deliver joker reward if a new streak day was earned
-    if (result.streakIncremented && result.reward != null) {
-      final (jokerType, amount) = result.reward!;
-      _ref.read(gameStateProvider.notifier).addJokers(jokerType, amount);
-    }
-
     if (mounted) state = result;
+    } finally {
+      _isProcessing = false;
+    }
   }
 
-  /// Call on sign-in to migrate guest streak → Firestore.
-  /// Then run checkAndUpdate to refresh state.
-  Future<void> migrateAndRefresh(User user) async {
-    final service = _ref.read(streakServiceProvider);
+  /// Delivers the joker reward to the game inventory. Called from the popup collect button.
+  Future<void> claimStreakReward() async {
+    if (state == null || state!.rewardClaimed || state!.reward == null) return;
+    final (jokerType, amount) = state!.reward!;
+    _ref.read(gameStateProvider.notifier).addJokers(jokerType, amount);
+
+    // Persist claimed date
     final storage = await _ref.read(localStorageProvider.future);
-    final firestore = _ref.read(firestoreServiceProvider);
-    final player = await _ref.read(playerProvider.future);
+    await storage.setRewardClaimedDate(PlayerStreak.todayKey());
 
-    if (player != null) {
-      await service.migrateGuestToFirestore(
-        player: player,
-        storage: storage,
-        firestore: firestore,
-      );
+    if (mounted) {
+      state = state!.copyWith(rewardClaimed: true);
     }
+  }
 
+  /// Whether the reward has been claimed today.
+  bool get rewardClaimed => state?.rewardClaimed ?? false;
+
+  /// Call on sign-in to migrate guest streak → Firestore.
+  Future<void> migrateAndRefresh(User user) async {
+    // Acquire the processing lock so a concurrent checkAndUpdate (e.g. from
+    // didChangeAppLifecycleState.resumed) cannot run during migration.
+    if (_isProcessing) return;
+    _isProcessing = true;
+    try {
+      final service = _ref.read(streakServiceProvider);
+      final storage = await _ref.read(localStorageProvider.future);
+      final firestore = _ref.read(firestoreServiceProvider);
+      final player = await _ref.read(playerProvider.future);
+
+      if (player != null) {
+        await service.migrateGuestToFirestore(
+          player: player,
+          storage: storage,
+          firestore: firestore,
+        );
+      }
+
+      // Invalidate playerProvider so checkAndUpdate reads fresh Firestore data
+      _ref.invalidate(playerProvider);
+    } finally {
+      _isProcessing = false;
+    }
     await checkAndUpdate();
   }
 
-  /// Clears the result — used after the popup is dismissed.
-  void clearResult() {
-    if (mounted) state = null;
+  /// Auto-claims the reward if not yet done (safety net for dismiss via ✕).
+  void ensureRewardClaimed() {
+    if (!rewardClaimed) claimStreakReward();
   }
 }

@@ -106,12 +106,16 @@ class IapService {
     );
 
     final response = await _iap.queryProductDetails(IapProducts.allIds);
+    debugPrint('💰 IAP: queried ${IapProducts.allIds}, found ${response.productDetails.length}, notFound ${response.notFoundIDs}');
     if (response.notFoundIDs.isNotEmpty) {
       debugPrint('💰 IAP: products not found → ${response.notFoundIDs}');
     }
     for (final p in response.productDetails) {
       products[p.id] = p;
       debugPrint('💰 IAP: loaded ${p.id} → ${p.price}');
+    }
+    if (products.isEmpty) {
+      debugPrint('💰 IAP: ⚠️ NO products loaded! Check Play Console product IDs and app signing.');
     }
   }
 
@@ -178,7 +182,7 @@ class IapService {
     LocalStorageService storage,
   ) {
     for (final p in updates) {
-      debugPrint('💰 IAP update: ${p.productID} → ${p.status}');
+      debugPrint('💰 IAP update: ${p.productID} → ${p.status} error=${p.error?.message} code=${p.error?.code} details=${p.error?.details}');
 
       switch (p.status) {
         case PurchaseStatus.pending:

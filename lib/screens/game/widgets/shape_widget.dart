@@ -253,13 +253,9 @@ class _ShapePainter extends CustomPainter {
       highlightPaint,
     );
 
-    // Highlighted merge target ring
+    // Highlighted merge target ring (drag)
     if (isHighlighted) {
-      final ringPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5;
-      canvas.drawCircle(center, radius + 4, ringPaint);
+      _drawHighlightRing(canvas, center, radius, Colors.white);
     }
 
     // Radar highlight ring (colored per group)
@@ -267,17 +263,23 @@ class _ShapePainter extends CustomPainter {
       final groupColor = radarGroupIndex >= 0
           ? _radarGroupColors[radarGroupIndex % _radarGroupColors.length]
           : AppTheme.radarColor;
-      final radarPaint = Paint()
-        ..color = groupColor.withValues(alpha: 0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0;
-      canvas.drawCircle(center, radius + 6, radarPaint);
-      // Soft glow in group color
-      final glowRadar = Paint()
-        ..color = groupColor.withValues(alpha: 0.25)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-      canvas.drawCircle(center, radius + 6, glowRadar);
+      _drawHighlightRing(canvas, center, radius, groupColor);
     }
+  }
+
+  /// Unified highlight ring + glow (used for drag-matching and radar)
+  void _drawHighlightRing(Canvas canvas, Offset center, double radius, Color color) {
+    // Ring
+    final ringPaint = Paint()
+      ..color = color.withValues(alpha: 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+    canvas.drawCircle(center, radius + 5, ringPaint);
+    // Soft glow
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(center, radius + 5, glowPaint);
   }
 
   void _drawPath(Canvas canvas, ShapeType type, Offset center, double radius, Paint paint) {

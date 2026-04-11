@@ -22,7 +22,7 @@ class StreakService {
       nextRewardIndex: storage.nextRewardIndex,
     );
 
-    final result = _compute(current, storage.nudgeStreak3Shown);
+    final result = _compute(current, nudgeAlreadyShown: storage.nudgeStreak3Shown, rewardClaimedDate: storage.rewardClaimedDate);
     await _saveToStorage(result.streak, storage);
 
     // Mark nudge seen if we're triggering it
@@ -49,7 +49,7 @@ class StreakService {
       nextRewardIndex: player.nextRewardIndex,
     );
 
-    final result = _compute(current, false); // nudge not shown for signed-in users
+    final result = _compute(current, nudgeAlreadyShown: false, rewardClaimedDate: storage.rewardClaimedDate);
     await _saveToFirestore(player.uid, result.streak, firestore);
     await _saveToStorage(result.streak, storage); // keep local in sync for migration
     return result;
@@ -69,12 +69,45 @@ class StreakService {
     final localDate = storage.lastLoginDate;
     final localIndex = storage.nextRewardIndex;
 
-    // Keep the better values: max streak, most recent date
+    final today = PlayerStreak.todayKey();
+    final yesterday = PlayerStreak.yesterdayKey();
+
+    // Compute the correct streak for today based on Firestore's date context:
+    // - If Firestore already updated today → keep as-is
+    // - If Firestore last login was yesterday → consecutive day, increment
+    // - Otherwise → streak is broken, reset to 1
+    int mergedStreak;
+    int mergedIndex;
+
+    if (player.lastLoginDate == today) {
+      // Firestore already handled today (e.g. another device)
+      mergedStreak = player.currentStreak;
+      mergedIndex = player.nextRewardIndex;
+    } else if (player.lastLoginDate == yesterday) {
+      // Consecutive day — increment from Firestore
+      mergedStreak = player.currentStreak + 1;
+      mergedIndex = (player.nextRewardIndex + 1) % 7;
+    } else {
+      // Streak broken or first ever — reset
+      mergedStreak = 1;
+      mergedIndex = 1;
+    }
+
+    // If guest had a higher streak from today, prefer it
+    if (localDate == today && localStreak > mergedStreak) {
+      mergedStreak = localStreak;
+      mergedIndex = localIndex;
+    }
+
+    // Ensure longestStreak invariant: always >= currentStreak
+    final mergedLongest = [localLongest, player.longestStreak, mergedStreak]
+        .reduce((a, b) => a > b ? a : b);
+
     final merged = PlayerStreak(
-      currentStreak: localStreak > player.currentStreak ? localStreak : player.currentStreak,
-      longestStreak: localLongest > player.longestStreak ? localLongest : player.longestStreak,
-      lastLoginDate: _laterDate(localDate, player.lastLoginDate),
-      nextRewardIndex: localStreak >= player.currentStreak ? localIndex : player.nextRewardIndex,
+      currentStreak: mergedStreak,
+      longestStreak: mergedLongest,
+      lastLoginDate: today,
+      nextRewardIndex: mergedIndex,
     );
 
     await _saveToFirestore(player.uid, merged, firestore);
@@ -85,16 +118,25 @@ class StreakService {
   // Core computation (pure — no side effects)
   // ─────────────────────────────────────────────
 
-  StreakCheckResult _compute(PlayerStreak current, bool nudgeAlreadyShown) {
+  StreakCheckResult _compute(PlayerStreak current, {required bool nudgeAlreadyShown, required String? rewardClaimedDate}) {
     final today = PlayerStreak.todayKey();
     final yesterday = PlayerStreak.yesterdayKey();
+    final claimedToday = rewardClaimedDate == today;
 
-    // Already logged in today — no change
+    // Already logged in today — no streak change, but reward may still be pending
     if (current.lastLoginDate == today) {
+      // Provide the pending reward using the *previous* index (the one that was
+      // computed when the streak was incremented earlier today).
+      // nextRewardIndex already advanced, so the awarded index is (next - 1 + 7) % 7.
+      final pendingReward = claimedToday
+          ? null
+          : PlayerStreak.rewardForIndex((current.nextRewardIndex - 1 + 7) % 7);
+
       return StreakCheckResult(
         streakIncremented: false,
         streakReset: false,
-        reward: null,
+        reward: pendingReward,
+        rewardClaimed: claimedToday,
         streak: current,
       );
     }
@@ -116,7 +158,8 @@ class StreakService {
     }
 
     final newLongest = newStreak > current.longestStreak ? newStreak : current.longestStreak;
-    final reward = PlayerStreak.rewardForIndex(current.nextRewardIndex);
+    // On reset the cycle restarts at index 0 (bomb); on consecutive day use planned index.
+    final reward = PlayerStreak.rewardForIndex(reset ? 0 : current.nextRewardIndex);
 
     final updatedStreak = PlayerStreak(
       currentStreak: newStreak,
@@ -155,16 +198,5 @@ class StreakService {
     } catch (e) {
       debugPrint('❌ StreakService: Firestore save failed: $e');
     }
-  }
-
-  // ─────────────────────────────────────────────
-  // Date helpers
-  // ─────────────────────────────────────────────
-
-  /// Returns the later of two "YYYY-MM-DD" strings (null is treated as oldest).
-  String? _laterDate(String? a, String? b) {
-    if (a == null) return b;
-    if (b == null) return a;
-    return a.compareTo(b) >= 0 ? a : b;
   }
 }

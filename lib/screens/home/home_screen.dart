@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -114,7 +115,11 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                   // ── Play button — full width Button3D green ──
                   Button3D.green(
                     expand: true,
-                    onPressed: () => context.go('/game'),
+                    onPressed: () {
+                      AudioService.instance.playButtonTap();
+                      ref.read(gameStateProvider.notifier).startNewGame();
+                      context.go('/game');
+                    },
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       child: Transform.translate(
                         offset: const Offset(-14, 0),
@@ -135,9 +140,12 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                   Row(
                     children: [
                       Expanded(
-                        child: Button3D.purple(
+                        child: Button3D.orange(
                           expand: true,
-                          onPressed: () => context.go('/shop'),
+                          onPressed: () {
+                            AudioService.instance.playButtonTap();
+                            context.go('/shop');
+                          },
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -157,7 +165,10 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                       Expanded(
                         child: Button3D.orange(
                           expand: true,
-                          onPressed: () => context.go('/leaderboard'),
+                          onPressed: () {
+                            AudioService.instance.playButtonTap();
+                            context.go('/leaderboard');
+                          },
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
 
 import 'package:shape_merge/providers/game_state_provider.dart';
@@ -19,6 +20,7 @@ final iapInitProvider = FutureProvider<void>((ref) async {
 
   // Wire delivery: when a product is purchased → add jokers
   iap.onProductDelivered = (productId) {
+    AudioService.instance.playReward();
     final freeAmount = IapProducts.packContents[productId] ?? 0;
     final premium = IapProducts.premiumContents[productId];
     final notifier = ref.read(gameStateProvider.notifier);

@@ -3,8 +3,27 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
+
+/// Persistent shell that keeps a single [AdBannerWidget] alive across routes.
+class AdShell extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
+  const AdShell({super.key, required this.navigationShell});
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    return Column(
+      children: [
+        Expanded(child: navigationShell),
+        const AdBannerWidget(),
+        SizedBox(height: bottomPadding),
+      ],
+    );
+  }
+}
 
 class AdBannerWidget extends ConsumerStatefulWidget {
   const AdBannerWidget({super.key});
@@ -72,7 +91,7 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget> {
     final noAds = ref.watch(noAdsPurchasedProvider);
     if (noAds) return const SizedBox.shrink();
     if (!_isLoaded || _bannerAd == null) {
-      return const SizedBox(height: 60);
+      return const SizedBox.shrink();
     }
     return SizedBox(
       width: double.infinity,

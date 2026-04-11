@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
@@ -131,7 +132,10 @@ class HudBar extends StatelessWidget {
           Button3D.red(
             padding: const EdgeInsets.all(8),
             borderRadius: 10,
-            onPressed: onPause,
+            onPressed: () {
+              AudioService.instance.playButtonTap();
+              onPause?.call();
+            },
             child: const Icon(Icons.pause, color: Colors.white, size: 18),
           ),
         ],

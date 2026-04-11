@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
@@ -151,6 +152,11 @@ class _ChallengeRowState extends State<_ChallengeRow>
     _plusOneCtrl.forward(from: 0);
     _sparkleCtrl.forward(from: 0);
 
+    // Play sound after animation starts visually
+    Future.delayed(const Duration(milliseconds: 400), () {
+      AudioService.instance.playReward();
+    });
+
     // Delay actual collect so the animation plays first
     Future.delayed(const Duration(milliseconds: 900), () {
       widget.onCollect();
@@ -216,7 +222,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
   Widget _buildRewardAnimation(DailyChallenge challenge) {
     final rewardColor = switch (challenge.reward) {
       JokerReward(:final joker) => JokerUI.color(joker),
-      XpReward() => RetentionUI.levelColor,
+      XpReward() => AppTheme.gold,
     };
     final rewardIcon = switch (challenge.reward) {
       JokerReward(:final joker) => JokerUI.icon(joker, size: 22),
@@ -224,7 +230,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
     };
     final rewardLabel = switch (challenge.reward) {
       JokerReward() => '+1',
-      XpReward(:final xp) => '+$xp XP',
+      XpReward(:final xp) => '+$xp',
     };
 
     return AnimatedBuilder(
@@ -291,22 +297,36 @@ class _ChallengeRowState extends State<_ChallengeRow>
                   child: rewardIcon,
                 ),
               ),
-              // Floating "+1" / "+XP"
+              // Floating "+1" / "+50 XP"
               if (_plusOneCtrl.isAnimating)
                 Positioned(
                   top: plusOffset,
                   child: Opacity(
                     opacity: plusOpacity,
-                    child: Text(
-                      rewardLabel,
-                      style: GoogleFonts.fredoka(
-                        fontSize: AppTheme.fontH4,
-                        fontWeight: FontWeight.w900,
-                        color: rewardColor,
-                        shadows: [
-                          Shadow(color: rewardColor.withValues(alpha: 0.8), blurRadius: 8),
-                        ],
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          rewardLabel,
+                          style: GoogleFonts.fredoka(
+                            fontSize: AppTheme.fontH4,
+                            fontWeight: FontWeight.w900,
+                            color: rewardColor,
+                            shadows: [
+                              Shadow(color: rewardColor.withValues(alpha: 0.8), blurRadius: 8),
+                            ],
+                          ),
+                        ),
+                        if (challenge.reward is XpReward)
+                          Text(
+                            ' XP',
+                            style: GoogleFonts.fredoka(
+                              fontSize: AppTheme.fontTiny,
+                              fontWeight: FontWeight.w700,
+                              color: rewardColor.withValues(alpha: 0.8),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -322,7 +342,10 @@ class _ChallengeRowState extends State<_ChallengeRow>
     final active = challenge.canCollect;
 
     final Widget rewardWidget = switch (challenge.reward) {
-      JokerReward(:final joker) => JokerUI.icon(joker, size: 14),
+      JokerReward(:final joker) => Opacity(
+          opacity: active ? 1.0 : 0.3,
+          child: JokerUI.icon(joker, size: 14),
+        ),
       XpReward(:final xp) => Text(
           '+$xp XP',
           style: GoogleFonts.fredoka(
@@ -357,6 +380,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
         onPressed: _onCollectTap,
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         borderRadius: 8,
+        depth: 3,
         child: content,
       );
       return btn
@@ -372,6 +396,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
       onPressed: null,
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       borderRadius: 8,
+      depth: 3,
       child: content,
     );
   }

@@ -21,6 +21,7 @@ import 'package:shape_merge/screens/hub/main_hub_screen.dart';
 import 'package:shape_merge/screens/game/game_screen.dart';
 import 'package:shape_merge/screens/shop/shop_screen.dart';
 import 'package:shape_merge/screens/leaderboard/leaderboard_screen.dart';
+import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 
 final _router = GoRouter(
   initialLocation: '/',
@@ -29,21 +30,22 @@ final _router = GoRouter(
       path: '/',
       builder: (_, __) => const SplashScreen(),
     ),
-    GoRoute(
-      path: '/home',
-      builder: (_, __) => const MainHubScreen(),
-    ),
-    GoRoute(
-      path: '/game',
-      builder: (_, __) => const GameScreen(),
-    ),
-    GoRoute(
-      path: '/shop',
-      builder: (_, __) => const ShopScreen(),
-    ),
-    GoRoute(
-      path: '/leaderboard',
-      builder: (_, __) => const LeaderboardScreen(),
+    StatefulShellRoute.indexedStack(
+      builder: (_, __, navigationShell) => AdShell(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/home', builder: (_, __) => const MainHubScreen()),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/game', builder: (_, __) => const GameScreen()),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/shop', builder: (_, __) => const ShopScreen()),
+        ]),
+        StatefulShellBranch(routes: [
+          GoRoute(path: '/leaderboard', builder: (_, __) => const LeaderboardScreen()),
+        ]),
+      ],
     ),
   ],
 );

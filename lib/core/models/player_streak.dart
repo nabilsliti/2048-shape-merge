@@ -64,6 +64,9 @@ class StreakCheckResult {
   /// Joker reward earned today — null if no new reward (already logged today or reset).
   final (JokerType, int)? reward;
 
+  /// True if today's reward has been claimed.
+  final bool rewardClaimed;
+
   /// Snapshot of the streak after the update.
   final PlayerStreak streak;
 
@@ -75,6 +78,23 @@ class StreakCheckResult {
     required this.streakReset,
     required this.reward,
     required this.streak,
+    this.rewardClaimed = false,
     this.showGuestNudge = false,
   });
+
+  StreakCheckResult copyWith({
+    bool? streakIncremented,
+    bool? streakReset,
+    bool? rewardClaimed,
+    bool? showGuestNudge,
+  }) {
+    return StreakCheckResult(
+      streakIncremented: streakIncremented ?? this.streakIncremented,
+      streakReset: streakReset ?? this.streakReset,
+      reward: reward,
+      streak: streak,
+      rewardClaimed: rewardClaimed ?? this.rewardClaimed,
+      showGuestNudge: showGuestNudge ?? this.showGuestNudge,
+    );
+  }
 }
