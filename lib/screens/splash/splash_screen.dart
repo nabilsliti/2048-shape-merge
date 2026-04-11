@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
+import 'package:shape_merge/providers/leaderboard_provider.dart';
+import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -47,10 +50,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     final notifier = ref.read(gameStateProvider.notifier);
     notifier.setStorage(storage);
-    notifier.loadSavedState(
-          bestScore: storage.bestScore,
-          jokers: storage.jokerInventory,
-        );
+
+    // If signed in, load jokers from Firestore; otherwise from localStorage
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user != null) {
+      final firestoreService = ref.read(firestoreServiceProvider);
+      notifier.setSignedIn(user.uid, firestoreService);
+      final player = await ref.read(playerProvider.future);
+      notifier.loadSavedState(
+        bestScore: player?.bestScore ?? storage.bestScore,
+        jokers: player?.jokerInventory ?? storage.jokerInventory,
+      );
+    } else {
+      notifier.loadSavedState(
+        bestScore: storage.bestScore,
+        jokers: storage.jokerInventory,
+      );
+    }
 
     // Check streak on every launch — delivers reward and updates state for popup
     await ref.read(streakProvider.notifier).checkAndUpdate();

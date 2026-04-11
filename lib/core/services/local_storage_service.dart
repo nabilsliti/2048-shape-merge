@@ -125,6 +125,11 @@ class LocalStorageService {
   bool get nudgeObjectives3DaysShown => _prefs.getBool(_nudgeObjectives3DaysKey) ?? false;
   Future<void> setNudgeObjectives3DaysShown() => _prefs.setBool(_nudgeObjectives3DaysKey, true);
 
+  // ── Migration flag ────────────────────────────────────────────────────────
+  static const _migrationV2DoneKey = 'migrationV2Done';
+  bool get migrationV2Done => _prefs.getBool(_migrationV2DoneKey) ?? false;
+  Future<void> setMigrationV2Done() => _prefs.setBool(_migrationV2DoneKey, true);
+
   // ── Daily challenges (guest mode) ─────────────────────────────────────────
   static const _dailyChallengesKey = 'dailyChallengesJson';
   String? get dailyChallengesJson => _prefs.getString(_dailyChallengesKey);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
+import 'package:shape_merge/core/services/firestore_service.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
 export 'package:shape_merge/providers/local_storage_provider.dart';
@@ -27,13 +28,31 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   Size? _boardSize;
   LocalStorageService? _storage;
+  FirestoreService? _firestoreService;
+  String? _uid;
 
   void setBoardSize(Size size) => _boardSize = size;
 
   void setStorage(LocalStorageService storage) => _storage = storage;
 
+  /// Set signed-in context so jokers are persisted to Firestore instead of localStorage.
+  void setSignedIn(String uid, FirestoreService firestoreService) {
+    _uid = uid;
+    _firestoreService = firestoreService;
+  }
+
+  /// Clear signed-in context (sign-out). Jokers go back to localStorage.
+  void clearSignedIn() {
+    _uid = null;
+    _firestoreService = null;
+  }
+
   void _saveJokers() {
-    _storage?.saveJokerInventory(state.jokerInventory);
+    if (_uid != null && _firestoreService != null) {
+      _firestoreService!.updateJokerInventory(_uid!, state.jokerInventory);
+    } else {
+      _storage?.saveJokerInventory(state.jokerInventory);
+    }
   }
 
   void startNewGame() {

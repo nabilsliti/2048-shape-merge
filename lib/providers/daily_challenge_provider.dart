@@ -36,7 +36,6 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
       loaded = await service.loadOrGenerateSigned(
         uid: user.uid,
         firestore: firestore,
-        storage: storage,
         playerLevel: playerLevel,
       );
     } else {
@@ -122,7 +121,6 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
         state,
         uid: user.uid,
         firestore: firestore,
-        storage: storage,
       );
     } else {
       await service.syncProgressGuest(state, storage);

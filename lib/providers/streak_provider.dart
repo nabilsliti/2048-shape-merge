@@ -60,9 +60,16 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
     final (jokerType, amount) = state!.reward!;
     _ref.read(gameStateProvider.notifier).addJokers(jokerType, amount);
 
-    // Persist claimed date
-    final storage = await _ref.read(localStorageProvider.future);
-    await storage.setRewardClaimedDate(PlayerStreak.todayKey());
+    // Persist claimed date — Firestore if signed in, localStorage if guest
+    final todayKey = PlayerStreak.todayKey();
+    final user = _ref.read(authStateProvider).valueOrNull;
+    if (user != null) {
+      final firestore = _ref.read(firestoreServiceProvider);
+      await firestore.updateRewardClaimedDate(user.uid, todayKey);
+    } else {
+      final storage = await _ref.read(localStorageProvider.future);
+      await storage.setRewardClaimedDate(todayKey);
+    }
 
     if (mounted) {
       state = state!.copyWith(rewardClaimed: true);

@@ -14,7 +14,7 @@ final playerProvider = FutureProvider<Player?>((ref) async {
   var player = await firestoreService.getPlayer(user.uid);
 
   if (player == null) {
-    // First time: create player from Google profile + merge local data
+    // First time sign-in: create player from Google profile + local guest data
     player = Player(
       uid: user.uid,
       displayName: user.displayName ?? user.email ?? 'Player',
@@ -22,38 +22,54 @@ final playerProvider = FutureProvider<Player?>((ref) async {
       bestScore: storage.bestScore,
       gamesPlayed: 0,
       totalMerges: 0,
+      jokerInventory: storage.jokerInventory,
+      noAdsPurchased: storage.noAdsPurchased,
+      rewardClaimedDate: storage.rewardClaimedDate,
       level: storage.playerLevel,
       currentXP: storage.currentXP,
       totalXP: storage.totalXP,
     );
     await firestoreService.savePlayer(player);
-    debugPrint('✅ New player created with local data: bestScore=${player.bestScore}, level=${player.level}');
+    debugPrint('✅ New player created from local data: bestScore=${player.bestScore}, level=${player.level}');
     return player;
   }
 
-  // Existing player: merge local data if local is better (guest played before signing in)
-  var p = player!;
-  final mergedBest = storage.bestScore > p.bestScore ? storage.bestScore : p.bestScore;
-  final mergedLevel = storage.playerLevel > p.level ? storage.playerLevel : p.level;
-  final mergedXP = storage.totalXP > p.totalXP ? storage.totalXP : p.totalXP;
-  final mergedCurrentXP = storage.playerLevel > p.level ? storage.currentXP : p.currentXP;
+  // Existing player: Firestore is the single source of truth.
+  // One-shot migration: if this is the first login after the v2 update,
+  // migrate local data (jokers, noAdsPurchased, rewardClaimedDate) to Firestore.
+  if (!storage.migrationV2Done) {
+    var needsUpdate = false;
+    var updated = player;
 
-  if (mergedBest > p.bestScore || mergedLevel > p.level || mergedXP > p.totalXP) {
-    try {
-      await firestoreService.updateBestScore(user.uid, mergedBest);
-      await firestoreService.updateXP(user.uid, level: mergedLevel, currentXP: mergedCurrentXP, totalXP: mergedXP);
-      debugPrint('✅ Player synced: bestScore=$mergedBest, level=$mergedLevel, XP=$mergedCurrentXP');
-      p = p.copyWith(bestScore: mergedBest, level: mergedLevel, currentXP: mergedCurrentXP, totalXP: mergedXP);
-    } catch (e) {
-      debugPrint('⚠️ Player merge failed: $e');
+    // Migrate jokers if Firestore has none but localStorage does
+    final localJokers = storage.jokerInventory;
+    final fsJokers = player.jokerInventory;
+    if (fsJokers.bomb == 0 && fsJokers.wildcard == 0 && fsJokers.reducer == 0 &&
+        (localJokers.bomb > 0 || localJokers.wildcard > 0 || localJokers.reducer > 0 ||
+         localJokers.radar > 0 || localJokers.evolution > 0 || localJokers.megaBomb > 0)) {
+      updated = updated.copyWith(jokerInventory: localJokers);
+      needsUpdate = true;
     }
+
+    // Migrate noAdsPurchased
+    if (!player.noAdsPurchased && storage.noAdsPurchased) {
+      updated = updated.copyWith(noAdsPurchased: true);
+      needsUpdate = true;
+    }
+
+    // Migrate rewardClaimedDate
+    if (player.rewardClaimedDate == null && storage.rewardClaimedDate != null) {
+      updated = updated.copyWith(rewardClaimedDate: storage.rewardClaimedDate);
+      needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+      await firestoreService.savePlayer(updated);
+      debugPrint('✅ Migration v2: jokers/noAds/rewardClaimed migrated to Firestore');
+      player = updated;
+    }
+    await storage.setMigrationV2Done();
   }
 
-  // Also sync Firestore → local if Firestore has better data
-  if (p.bestScore > storage.bestScore) await storage.setBestScore(p.bestScore);
-  if (p.level > storage.playerLevel) await storage.setPlayerLevel(p.level);
-  if (p.currentXP > storage.currentXP) await storage.setCurrentXP(p.currentXP);
-  if (p.totalXP > storage.totalXP) await storage.setTotalXP(p.totalXP);
-
-  return p;
+  return player;
 });

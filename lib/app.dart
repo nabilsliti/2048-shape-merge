@@ -15,6 +15,7 @@ import 'package:shape_merge/providers/daily_challenge_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
+import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
 import 'package:shape_merge/screens/splash/splash_screen.dart';
 import 'package:shape_merge/screens/hub/main_hub_screen.dart';
@@ -101,12 +102,22 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
 
   @override
   Widget build(BuildContext context) {
-    // Migrate guest streak → Firestore on sign-in
+    // Migrate guest streak → Firestore on sign-in; reset providers on sign-out
     ref.listen<AsyncValue<User?>>(authStateProvider, (prev, next) {
       final prevUser = prev?.valueOrNull;
       final nextUser = next.valueOrNull;
       if (prevUser == null && nextUser != null) {
+        // Sign-in: set Firestore context and migrate
+        final notifier = ref.read(gameStateProvider.notifier);
+        notifier.setSignedIn(nextUser.uid, ref.read(firestoreServiceProvider));
         ref.read(streakProvider.notifier).migrateAndRefresh(nextUser);
+      } else if (prevUser != null && nextUser == null) {
+        // Sign-out: reset all account-scoped providers
+        ref.read(gameStateProvider.notifier).clearSignedIn();
+        ref.invalidate(playerProvider);
+        ref.invalidate(streakProvider);
+        ref.invalidate(dailyChallengeProvider);
+        ref.invalidate(progressionProvider);
       }
     });
 
@@ -131,8 +142,6 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
             bestScore: best,
             jokers: ref.read(gameStateProvider).jokerInventory,
           );
-          // Persist everywhere
-          ref.read(localStorageProvider.future).then((s) => s.setBestScore(best));
           if (best > player.bestScore) {
             ref.read(firestoreServiceProvider).updateBestScore(player.uid, best);
           }

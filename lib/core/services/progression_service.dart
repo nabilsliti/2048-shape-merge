@@ -72,7 +72,6 @@ class ProgressionService {
     required int totalXP,
     required int xpToAdd,
     required FirestoreService firestore,
-    required LocalStorageService storage,
   }) async {
     var level = currentLevel;
     var xp = currentXP + xpToAdd;
@@ -92,11 +91,6 @@ class ProgressionService {
     } catch (e) {
       debugPrint('❌ XP Firestore update failed: $e');
     }
-
-    // Keep local in sync for guest migration
-    await storage.setPlayerLevel(level);
-    await storage.setCurrentXP(xp);
-    await storage.setTotalXP(total);
 
     return (level: level, currentXP: xp, leveledUp: levelsGained);
   }

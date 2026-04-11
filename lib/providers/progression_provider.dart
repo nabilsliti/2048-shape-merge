@@ -68,7 +68,6 @@ class ProgressionNotifier extends StateNotifier<ProgressionResult?> {
         totalXP: player.totalXP,
         xpToAdd: xpGained,
         firestore: firestore,
-        storage: storage,
       );
     } else {
       result = await _ref.read(progressionServiceProvider).addXPGuest(
@@ -110,7 +109,6 @@ class ProgressionNotifier extends StateNotifier<ProgressionResult?> {
         totalXP: player.totalXP,
         xpToAdd: xp,
         firestore: firestore,
-        storage: storage,
       );
       _ref.invalidate(playerProvider);
     } else {

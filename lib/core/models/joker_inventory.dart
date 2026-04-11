@@ -57,9 +57,9 @@ class JokerInventory {
       bomb: bomb + amount,
       wildcard: wildcard + amount,
       reducer: reducer + amount,
-      radar: radar,
-      evolution: evolution,
-      megaBomb: megaBomb,
+      radar: radar + amount,
+      evolution: evolution + amount,
+      megaBomb: megaBomb + amount,
     );
   }
 

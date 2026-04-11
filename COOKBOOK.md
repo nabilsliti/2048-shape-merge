@@ -7,7 +7,7 @@
 
 ## Étape 1 — Ajouter les champs manquants au Player Firestore
 
-- [ ] **Prompt 1.1–1.7**
+- [x] **Prompt 1.1–1.7**
 ```
 Dans le projet 2048-shape-merge, ajoute les champs manquants au modèle Player Firestore :
 
@@ -25,7 +25,7 @@ Dans le projet 2048-shape-merge, ajoute les champs manquants au modèle Player F
 
 ## Étape 2 — Modifier `playerProvider` : Firestore = source unique
 
-- [ ] **Prompt 2.1–2.5**
+- [x] **Prompt 2.1–2.5**
 ```
 Dans 2048-shape-merge, modifie `lib/providers/player_provider.dart` pour que Firestore soit la source unique de données quand l'utilisateur est connecté :
 
@@ -42,7 +42,7 @@ Lancer `dart analyze` — 0 erreurs obligatoire.
 
 ## Étape 3 — Modifier `gameStateProvider` : jokers depuis Player (connecté)
 
-- [ ] **Prompt 3.1–3.5**
+- [x] **Prompt 3.1–3.5**
 ```
 Dans 2048-shape-merge, modifie la gestion des jokers pour utiliser Firestore quand connecté :
 
@@ -59,7 +59,7 @@ Lancer `dart analyze` — 0 erreurs obligatoire.
 
 ## Étape 4 — Modifier `streakProvider/Service` : rewardClaimedDate en Firestore
 
-- [ ] **Prompt 4.1–4.4**
+- [x] **Prompt 4.1–4.4**
 ```
 Dans 2048-shape-merge, migre `rewardClaimedDate` vers Firestore quand connecté :
 
@@ -75,7 +75,7 @@ Lancer `dart analyze` — 0 erreurs obligatoire.
 
 ## Étape 5 — Modifier `progressionProvider/Service` : XP uniquement Firestore
 
-- [ ] **Prompt 5.1–5.5**
+- [x] **Prompt 5.1–5.5**
 ```
 Dans 2048-shape-merge, supprime les écritures localStorage doublons pour la progression XP quand connecté :
 
@@ -92,7 +92,7 @@ Lancer `dart analyze` — 0 erreurs obligatoire.
 
 ## Étape 6 — Modifier `dailyChallengeProvider` : Firestore uniquement (connecté)
 
-- [ ] **Prompt 6.1–6.3**
+- [x] **Prompt 6.1–6.3**
 ```
 Dans 2048-shape-merge, supprime les écritures localStorage doublons pour les daily challenges quand connecté :
 
@@ -107,7 +107,7 @@ Lancer `dart analyze` — 0 erreurs obligatoire.
 
 ## Étape 7 — Nettoyage au sign-out / switch de compte
 
-- [ ] **Prompt 7.1–7.5**
+- [x] **Prompt 7.1–7.5**
 ```
 Dans 2048-shape-merge, assure que le sign-out/switch de compte ne fuit aucune donnée :
 
@@ -124,7 +124,7 @@ Lancer `dart analyze` — 0 erreurs obligatoire.
 
 ## Étape 8 — Migration des utilisateurs existants (1er lancement post-update)
 
-- [ ] **Prompt 8.1–8.5**
+- [x] **Prompt 8.1–8.5**
 ```
 Dans 2048-shape-merge, gère la migration one-shot pour les utilisateurs existants qui ont des données en localStorage mais pas encore en Firestore :
 
@@ -141,7 +141,7 @@ Lancer `dart analyze` — 0 erreurs obligatoire.
 
 ## Étape 9 — Nettoyage final migration
 
-- [ ] **Prompt 9.1–9.5**
+- [x] **Prompt 9.1–9.5**
 ```
 Dans 2048-shape-merge, nettoyage final de la migration Firestore :
 
@@ -174,7 +174,7 @@ Dans 2048-shape-merge, corrige le leak du timer radar dans `game_state_provider.
 3. `dart analyze` — 0 erreurs
 ```
 
-- [ ] **Prompt 10C — addAll() incomplet**
+- [x] **Prompt 10C — addAll() incomplet**
 ```
 Dans 2048-shape-merge, corrige `JokerInventory.addAll()` qui n'ajoute que 3 types sur 6 :
 

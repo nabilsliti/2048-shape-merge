@@ -49,9 +49,9 @@ class StreakService {
       nextRewardIndex: player.nextRewardIndex,
     );
 
-    final result = _compute(current, nudgeAlreadyShown: false, rewardClaimedDate: storage.rewardClaimedDate);
+    // Read rewardClaimedDate from Player (Firestore) when signed in
+    final result = _compute(current, nudgeAlreadyShown: false, rewardClaimedDate: player.rewardClaimedDate);
     await _saveToFirestore(player.uid, result.streak, firestore);
-    await _saveToStorage(result.streak, storage); // keep local in sync for migration
     return result;
   }
 

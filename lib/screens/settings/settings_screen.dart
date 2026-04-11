@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shape_merge/core/services/firestore_service.dart';
-import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
+import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 import 'package:shape_merge/screens/settings/profile_dialog.dart';

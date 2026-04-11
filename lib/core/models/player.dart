@@ -18,6 +18,8 @@ class Player {
   final int currentXP;
   final int totalXP;
   final List<String> unlockedRewards;
+  final bool noAdsPurchased;
+  final String? rewardClaimedDate;
 
   const Player({
     required this.uid,
@@ -36,6 +38,8 @@ class Player {
     this.currentXP = 0,
     this.totalXP = 0,
     this.unlockedRewards = const [],
+    this.noAdsPurchased = false,
+    this.rewardClaimedDate,
   });
 
   Player copyWith({
@@ -54,6 +58,8 @@ class Player {
     int? currentXP,
     int? totalXP,
     List<String>? unlockedRewards,
+    bool? noAdsPurchased,
+    String? rewardClaimedDate,
   }) {
     return Player(
       uid: uid,
@@ -72,6 +78,8 @@ class Player {
       currentXP: currentXP ?? this.currentXP,
       totalXP: totalXP ?? this.totalXP,
       unlockedRewards: unlockedRewards ?? this.unlockedRewards,
+      noAdsPurchased: noAdsPurchased ?? this.noAdsPurchased,
+      rewardClaimedDate: rewardClaimedDate ?? this.rewardClaimedDate,
     );
   }
 
@@ -84,6 +92,8 @@ class Player {
       'totalMerges': totalMerges,
       'gamesPlayed': gamesPlayed,
       'jokerInventory': jokerInventory.toMap(),
+      'noAdsPurchased': noAdsPurchased,
+      'rewardClaimedDate': rewardClaimedDate,
       'currentStreak': currentStreak,
       'longestStreak': longestStreak,
       'lastLoginDate': lastLoginDate,
@@ -96,7 +106,8 @@ class Player {
   }
 
   factory Player.fromFirestore(String uid, Map<String, Object?> data) {
-    final jokerMap = data['jokerInventory'] as Map<String, Object?>?;
+    final rawJoker = data['jokerInventory'];
+    final jokerMap = rawJoker is Map<String, Object?> ? rawJoker : null;
     return Player(
       uid: uid,
       displayName: data['displayName'] as String? ?? '',
@@ -116,6 +127,8 @@ class Player {
       currentXP: data['currentXP'] as int? ?? 0,
       totalXP: data['totalXP'] as int? ?? 0,
       unlockedRewards: (data['unlockedRewards'] as List<Object?>?)?.cast<String>() ?? [],
+      noAdsPurchased: data['noAdsPurchased'] as bool? ?? false,
+      rewardClaimedDate: data['rewardClaimedDate'] as String?,
     );
   }
 }

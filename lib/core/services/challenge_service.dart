@@ -50,7 +50,6 @@ class ChallengeService {
   Future<DailyChallengeState> loadOrGenerateSigned({
     required String uid,
     required FirestoreService firestore,
-    required LocalStorageService storage,
     required int playerLevel,
   }) async {
     final doc = await firestore.getDailyChallenges(uid);
@@ -65,7 +64,6 @@ class ChallengeService {
       playerLevel: playerLevel,
     );
     await firestore.saveDailyChallenges(uid, state);
-    await _saveGuest(state, storage); // keep local in sync
     return state;
   }
 
@@ -73,10 +71,8 @@ class ChallengeService {
     DailyChallengeState state, {
     required String uid,
     required FirestoreService firestore,
-    required LocalStorageService storage,
   }) async {
     await firestore.saveDailyChallenges(uid, state);
-    await _saveGuest(state, storage);
   }
 
   // ── Progress update ────────────────────────────────────────────────────────

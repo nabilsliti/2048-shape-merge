@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
+import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/models/player.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
@@ -155,6 +156,24 @@ class FirestoreService {
     } catch (e) {
       debugPrint('⚠️ deleteAccount: leaderboard entry removal failed: $e');
     }
+  }
+
+  Future<void> updateJokerInventory(String uid, JokerInventory inventory) async {
+    await _playerRef(uid).set({
+      'jokerInventory': inventory.toMap(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateRewardClaimedDate(String uid, String date) async {
+    await _playerRef(uid).set({
+      'rewardClaimedDate': date,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> updateNoAdsPurchased(String uid, {required bool value}) async {
+    await _playerRef(uid).set({
+      'noAdsPurchased': value,
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateProfile(String uid, {String? displayName, String? avatarId}) async {
