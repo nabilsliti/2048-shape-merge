@@ -4,7 +4,9 @@ import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
 
+import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/leaderboard_provider.dart';
 
 // ──────────────────────────────────────────────────────────────
 // IAP Provider — singleton that initializes and exposes IapService
@@ -58,6 +60,11 @@ final iapReadyProvider = FutureProvider<bool>((ref) async {
         (result.status == IapStatus.purchased ||
          result.status == IapStatus.restored)) {
       ref.read(noAdsPurchasedProvider.notifier).state = true;
+      // Sync to Firestore if signed in
+      final user = ref.read(authStateProvider).valueOrNull;
+      if (user != null) {
+        ref.read(firestoreServiceProvider).updateNoAdsPurchased(user.uid, value: true);
+      }
     }
   };
 

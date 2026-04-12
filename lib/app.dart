@@ -113,7 +113,15 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
         ref.read(streakProvider.notifier).migrateAndRefresh(nextUser);
       } else if (prevUser != null && nextUser == null) {
         // Sign-out: reset all account-scoped providers
-        ref.read(gameStateProvider.notifier).clearSignedIn();
+        final notifier = ref.read(gameStateProvider.notifier);
+        notifier.clearSignedIn();
+        // Reload guest data from localStorage to prevent data leaking
+        ref.read(localStorageProvider.future).then((storage) {
+          notifier.loadSavedState(
+            bestScore: storage.bestScore,
+            jokers: storage.jokerInventory,
+          );
+        });
         ref.invalidate(playerProvider);
         ref.invalidate(streakProvider);
         ref.invalidate(dailyChallengeProvider);
