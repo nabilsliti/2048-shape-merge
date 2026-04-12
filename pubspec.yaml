@@ -1,7 +1,7 @@
 name: shape_merge
 description: '2048 Shape Merge — A shape fusion puzzle game.'
 publish_to: 'none'
-version: 1.0.0+12
+version: 1.0.0+13
 
 environment:
   sdk: ^3.7.2
@@ -73,6 +73,7 @@ flutter:
   assets:
     - assets/sounds/
     - assets/icon/
+    - assets/images/removed_bg/
 
 flutter_launcher_icons:
   android: true

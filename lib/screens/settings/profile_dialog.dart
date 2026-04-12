@@ -86,9 +86,10 @@ Future<void> showProfileDialog(BuildContext context, WidgetRef ref) async {
     if (cred != null) {
       _showSignInOverlay(context);
     } else if (authService.lastError != null) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Sign-In error: ${authService.lastError}'),
+          content: Text(l10n.signInError(authService.lastError!)),
           duration: const Duration(seconds: 10),
         ),
       );

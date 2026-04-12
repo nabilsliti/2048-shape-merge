@@ -201,8 +201,6 @@ class LeaderboardScreenContent extends ConsumerWidget {
                 final myIndex = entries.indexWhere((e) => e.uid == myUid);
                 final meEntry = myIndex >= 0 ? entries[myIndex] : null;
                 final myRank = myIndex >= 0 ? myIndex + 1 : null;
-                // Show sticky card only if user is NOT visible in the list
-                final bool showStickyMe = meEntry != null && myRank != null && myRank > 10;
 
                 // ── Shared card builder ──
                 Widget buildCard(LeaderboardEntry entry, int rank, bool isMe, bool isTop3, int visualIndex) {
@@ -349,29 +347,42 @@ class LeaderboardScreenContent extends ConsumerWidget {
                   );
                 }
 
-                return Column(
-                  children: [
-                    // ── Scrollable list ──
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(left: 12, right: 12, top: 16, bottom: 6),
-                        itemCount: entries.length,
-                        itemBuilder: (context, index) {
-                          final entry = entries[index];
-                          final rank = index + 1;
-                          final isTop3 = index < 3;
-                          final isMe = entry.uid == myUid;
-                          return buildCard(entry, rank, isMe, isTop3, index);
-                        },
-                      ),
-                    ),
-                    // ── Sticky "my rank" card (only if not in visible list) ──
-                    if (showStickyMe)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        child: buildCard(meEntry, myRank, true, false, 0),
-                      ),
-                  ],
+                // Build display list: top 10 + separator + my rank (if outside top 10)
+                final top10 = entries.length > 10 ? entries.sublist(0, 10) : entries;
+                final showSeparator = meEntry != null && myRank != null && myRank > 10;
+
+                final itemCount = top10.length + (showSeparator ? 2 : 0); // +1 separator +1 my card
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(left: 12, right: 12, top: 16, bottom: 6),
+                  itemCount: itemCount,
+                  itemBuilder: (context, index) {
+                    if (index < top10.length) {
+                      final entry = top10[index];
+                      final rank = index + 1;
+                      final isTop3 = index < 3;
+                      final isMe = entry.uid == myUid;
+                      return buildCard(entry, rank, isMe, isTop3, index);
+                    }
+                    // Separator "..."
+                    if (index == top10.length) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Center(
+                          child: Text(
+                            '•  •  •',
+                            style: GoogleFonts.fredoka(
+                              fontSize: AppTheme.fontBody,
+                              color: Colors.white24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    // My rank card
+                    return buildCard(meEntry!, myRank!, true, false, 0);
+                  },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),

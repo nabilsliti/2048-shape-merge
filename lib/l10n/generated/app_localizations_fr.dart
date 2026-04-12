@@ -406,7 +406,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String hudBest(String n) {
-    return 'BEST $n';
+    return 'RECORD $n';
   }
 
   @override
@@ -534,4 +534,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get maxShapesWarning => 'Max 30 formes';
+
+  @override
+  String get storeNotAvailable => 'Boutique indisponible';
+
+  @override
+  String signInError(String error) {
+    return 'Erreur de connexion : $error';
+  }
 }

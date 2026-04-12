@@ -39,6 +39,15 @@ class _MainHubScreenState extends ConsumerState<MainHubScreen> {
     // Initialize IAP early to catch pending purchases
     ref.watch(iapReadyProvider);
 
+    // Reset auto-show guard when account changes so the popup can show again
+    ref.listen(authStateProvider, (prev, next) {
+      final prevUid = prev?.valueOrNull?.uid;
+      final nextUid = next.valueOrNull?.uid;
+      if (prevUid != nextUid) {
+        _streakPopupShown = false;
+      }
+    });
+
     // Show streak popup once automatically when a new streak day is earned
     ref.listen(streakProvider, (prev, next) {
       if (next != null && next.reward != null && !next.rewardClaimed && !_streakPopupShown) {
@@ -538,10 +547,10 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
             .clamp(0, widget.xpNeeded)
         : _displayXP;
 
-    // Floating +N XP label
+    // Floating +N XP label (floats downward to stay visible below status bar)
     final plusProgress = Curves.easeOutCubic.transform(_plusLabel.value);
     final plusOpacity = (1.0 - _plusLabel.value * 1.2).clamp(0.0, 1.0);
-    final plusOffset = -48.0 * plusProgress;
+    final plusOffset = 50.0 * plusProgress;
 
     const color = AppTheme.xpBadgeBot;
 
@@ -652,19 +661,19 @@ class _AnimatedXpBadgeState extends State<_AnimatedXpBadge>
               ),
         if (_plusLabel.isAnimating && _gainedXP > 0)
           Positioned(
-            top: plusOffset,
+            bottom: plusOffset - 46,
             child: Opacity(
               opacity: plusOpacity,
               child: Text(
                 '+$_gainedXP XP',
                 style: GoogleFonts.fredoka(
-                  fontSize: AppTheme.fontXSmall,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  fontSize: AppTheme.fontBody,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.gold,
                   shadows: [
                     Shadow(
-                        color: color.withValues(alpha: 0.9), blurRadius: 8),
-                    const Shadow(color: Colors.black54, blurRadius: 4),
+                        color: AppTheme.gold.withValues(alpha: 0.8), blurRadius: 10),
+                    const Shadow(color: Colors.black87, blurRadius: 6),
                   ],
                 ),
               ),

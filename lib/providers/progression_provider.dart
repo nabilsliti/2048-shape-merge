@@ -69,6 +69,7 @@ class ProgressionNotifier extends StateNotifier<ProgressionResult?> {
         xpToAdd: xpGained,
         firestore: firestore,
       );
+      _ref.invalidate(playerProvider);
     } else {
       result = await _ref.read(progressionServiceProvider).addXPGuest(
         storage,
@@ -110,7 +111,6 @@ class ProgressionNotifier extends StateNotifier<ProgressionResult?> {
         xpToAdd: xp,
         firestore: firestore,
       );
-      _ref.invalidate(playerProvider);
     } else {
       result = await _ref.read(progressionServiceProvider).addXPGuest(
         storage,
@@ -118,6 +118,10 @@ class ProgressionNotifier extends StateNotifier<ProgressionResult?> {
       );
     }
 
+    // Set state BEFORE invalidating playerProvider so the XP chip sees
+    // the change via progressionResult (triggers +N XP floating animation).
+    // If we invalidate first, playerProvider refetch delivers the new XP
+    // before progressionResult is set, so didUpdateWidget sees no delta.
     if (mounted) {
       state = ProgressionResult(
         xpGained: xp,
@@ -125,6 +129,10 @@ class ProgressionNotifier extends StateNotifier<ProgressionResult?> {
         levelsGained: result.leveledUp,
         currentXP: result.currentXP,
       );
+    }
+
+    if (user != null) {
+      _ref.invalidate(playerProvider);
     }
   }
 }

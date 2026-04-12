@@ -167,7 +167,7 @@
   "tutorialTitle": "SHAPE MERGE 2048",
   "tutorialGoButton": "GO !",
   "hudNewBest": "★ NOUVEAU RECORD",
-  "hudBest": "BEST {n}",
+  "hudBest": "RECORD {n}",
   "@hudBest": {
     "placeholders": {
       "n": {"type": "String"}
@@ -223,5 +223,12 @@
       "lang": {"type": "String"}
     }
   },
-  "maxShapesWarning": "Max 30 formes"
+  "maxShapesWarning": "Max 30 formes",
+  "storeNotAvailable": "Boutique indisponible",
+  "signInError": "Erreur de connexion : {error}",
+  "@signInError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
 }

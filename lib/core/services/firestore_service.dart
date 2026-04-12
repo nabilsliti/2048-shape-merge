@@ -20,7 +20,7 @@ class FirestoreService {
       final docRef = _leaderboardRef.doc(entry.uid);
       final doc = await docRef.get();
 
-      if (!doc.exists || (doc.data()?['score'] as int? ?? 0) < entry.score) {
+      if (!doc.exists || ((doc.data()?['score'] as num?)?.toInt() ?? 0) < entry.score) {
         await docRef.set(entry.toFirestore());
         debugPrint('✅ Score submitted: ${entry.score} for ${entry.uid}');
       } else {
@@ -97,7 +97,7 @@ class FirestoreService {
     try {
       final doc = await _leaderboardRef.doc(uid).get();
       if (doc.exists) {
-        return (doc.data()?['score'] as int?) ?? 0;
+        return (doc.data()?['score'] as num?)?.toInt() ?? 0;
       }
     } catch (e) {
       debugPrint('⚠️ getLeaderboardScore failed: $e');

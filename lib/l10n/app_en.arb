@@ -223,5 +223,12 @@
       "lang": {"type": "String"}
     }
   },
-  "maxShapesWarning": "Max 30 shapes"
+  "maxShapesWarning": "Max 30 shapes",
+  "storeNotAvailable": "Store not available",
+  "signInError": "Sign-in error: {error}",
+  "@signInError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
 }

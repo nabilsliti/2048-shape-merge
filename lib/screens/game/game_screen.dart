@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
+import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
 import 'package:shape_merge/game/models/game_state.dart';
@@ -21,6 +21,7 @@ import 'package:shape_merge/screens/game/overlays/tutorial_overlay.dart';
 import 'package:shape_merge/screens/game/widgets/game_board.dart';
 import 'package:shape_merge/screens/game/widgets/hud_bar.dart';
 import 'package:shape_merge/screens/game/widgets/joker_bar.dart';
+import 'package:shape_merge/screens/game/widgets/joker_effect.dart';
 import 'package:shape_merge/screens/game/widgets/merge_effect.dart';
 import 'package:shape_merge/screens/game/widgets/score_popup.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
@@ -51,27 +52,28 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         final prefs = await SharedPreferences.getInstance();
         final seen = prefs.getBool(_tutorialSeenKey) ?? false;
 
-        // Load persisted best score for comparison
-        final storage = await ref.read(localStorageProvider.future);
-        _lastPersistedBest = storage.bestScore;
+        // Load persisted best score for comparison — use gameState (loaded
+        // from Firestore for signed-in users) as single source of truth.
+        _lastPersistedBest = ref.read(gameStateProvider).bestScore;
 
         // Listen for best score changes and persist immediately
         ref.listenManual(
           gameStateProvider.select((s) => s.bestScore),
           (previous, next) async {
             if (next > _lastPersistedBest) {
-              _lastPersistedBest = next;
-              AudioService.instance.playHighScore();
-              final st = await ref.read(localStorageProvider.future);
-              await st.setBestScore(next);
+              // Signal to Home screen that a new record was set
+              ref.read(newRecordPendingProvider.notifier).state = true;
 
-              // Submit to leaderboard in real-time
               final user = ref.read(authStateProvider).valueOrNull;
               if (user != null) {
+                // Signed-in: persist to Firestore only (don't pollute localStorage)
                 final gameState = ref.read(gameStateProvider);
                 _submitScore(user, gameState);
-                // Also update bestScore in player document
                 ref.read(firestoreServiceProvider).updateBestScore(user.uid, next);
+              } else {
+                // Guest: persist to localStorage
+                final st = await ref.read(localStorageProvider.future);
+                await st.setBestScore(next);
               }
             }
           },
@@ -91,13 +93,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     await prefs.setBool(_tutorialSeenKey, true);
     if (!mounted) return;
     setState(() => _showTutorial = false);
+    _lastPersistedBest = ref.read(gameStateProvider).bestScore;
     ref.read(gameStateProvider.notifier).startNewGame();
   }
 
   void _submitScore(User user, GameState gameState) {
-    debugPrint('🎯 _submitScore called: score=${gameState.score}, uid=${user.uid}');
+    // Use the higher of current game score and account bestScore for leaderboard
+    final bestForLeaderboard = gameState.score > gameState.bestScore
+        ? gameState.score
+        : gameState.bestScore;
+    debugPrint('🎯 _submitScore called: score=$bestForLeaderboard (game=${gameState.score}, best=${gameState.bestScore}), uid=${user.uid}');
     final now = DateTime.now();
-    // Bug B5 fix: use ISO week number via intl (now.day was wrong — day of month != week)
     final weekNum = ((now.difference(DateTime(now.year, 1, 1)).inDays + DateTime(now.year, 1, 1).weekday - 1) ~/ 7) + 1;
     final weekKey = '${now.year}-W${weekNum.toString().padLeft(2, '0')}';
     final player = ref.read(playerProvider).valueOrNull;
@@ -106,7 +112,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       displayName: player?.displayName ?? user.displayName ?? user.email ?? AppLocalizations.of(context)!.defaultPlayerName,
       photoUrl: user.photoURL,
       avatarId: player?.avatarId,
-      score: gameState.score,
+      score: bestForLeaderboard,
       maxLevel: gameState.maxLevelReached,
       mergeCount: gameState.mergeCount,
       timestamp: now,
@@ -218,6 +224,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                   onMerge: (pos, color, points, comboCount) {
                                     _addMergeEffect(pos, color, points, comboCount);
                                   },
+                                  onJokerUsed: (pos, jokerType) {
+                                    _addJokerEffect(pos, jokerType);
+                                  },
                                 ),
                               ),
                             ],
@@ -300,10 +309,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               score: gameState.score,
               mergeCount: gameState.mergeCount,
               isVictory: GameEngine.isVictory(gameState),
-              isNewRecord: gameState.score > 0 && gameState.score >= gameState.bestScore,
+              isNewRecord: gameState.score > 0 && gameState.score > _lastPersistedBest,
               isSignedIn: isSignedIn,
               onReplay: () {
                 _scoreSubmitted = false;
+                _lastPersistedBest = ref.read(gameStateProvider).bestScore;
                 ref.read(gameStateProvider.notifier).startNewGame();
               },
               onSignIn: () async {
@@ -311,7 +321,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 final signedUser = ref.read(authStateProvider).valueOrNull;
                 if (signedUser != null && !_scoreSubmitted) {
                   _scoreSubmitted = true;
-                  _submitScore(signedUser, gameState);
+                  // Read fresh gameState (bestScore may have been updated by auth listener)
+                  _submitScore(signedUser, ref.read(gameStateProvider));
                 }
               },
             ),
@@ -344,6 +355,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           comboCount: comboCount,
           onComplete: () => setState(() {
             _effects.removeWhere((e) => e.key == popupKey);
+          }),
+        ),
+      );
+    });
+  }
+
+  void _addJokerEffect(Offset position, JokerType jokerType) {
+    setState(() {
+      final effectKey = UniqueKey();
+      _effects.add(
+        JokerEffect(
+          key: effectKey,
+          position: position,
+          jokerType: jokerType,
+          onComplete: () => setState(() {
+            _effects.removeWhere((e) => e.key == effectKey);
           }),
         ),
       );

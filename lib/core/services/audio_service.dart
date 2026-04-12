@@ -29,6 +29,8 @@ class AudioService {
     'button_tap': 'assets/sounds/button_tap.wav',
     'high_score': 'assets/sounds/good_merge.wav',
     'reward': 'assets/sounds/reward_pub.wav',
+    'merge_abort': 'assets/sounds/merge-abort.wav',
+    'new_record': 'assets/sounds/new-record.wav',
   };
 
   Future<void> init() async {
@@ -138,8 +140,10 @@ class AudioService {
   void playGameOver() => play('game_over');
   void playLevelUp() => play('level_up');
   void playSpawn() => play('spawn');
+  void playMergeAbort() => play('merge_abort');
   void playButtonTap() => play('button_tap');
   void playHighScore() => play('high_score');
+  void playNewRecord() => play('new_record');
   void playReward() => play('reward');
 
   /// Joue un son progressif selon le niveau de combo.

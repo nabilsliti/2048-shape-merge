@@ -151,10 +151,22 @@ class GameEngine {
     return state.copyWith(shapes: updatedShapes);
   }
 
+  /// Re-check game state after external mutations (joker usage).
+  /// Spawns shapes if board is empty or has no pairs.
+  static GameState checkAfterJoker(GameState state, Size boardSize) {
+    return _checkGameState(state, boardSize);
+  }
+
   static GameState _checkGameState(GameState state, Size boardSize) {
     if (state.shapes.isEmpty) {
-      // Victory!
-      return state.copyWith(gameActive: false);
+      // Board cleared — spawn fresh shapes so the game continues
+      final shapes = <GameShape>[];
+      var attempts = 0;
+      while (shapes.length < 3 && attempts < 6) {
+        shapes.add(SpawnManager.spawnShape(shapes, boardSize, mergeRate: state.recentMergeRate, totalMerges: state.mergeCount));
+        attempts++;
+      }
+      return state.copyWith(shapes: shapes);
     }
 
     if (state.shapes.length >= maxShapes) {

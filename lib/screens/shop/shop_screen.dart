@@ -200,8 +200,9 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     // Debug: show store status
     if (!iap.storeAvailable) {
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Store not available'), backgroundColor: Colors.red),
+          SnackBar(content: Text(l10n.storeNotAvailable), backgroundColor: Colors.red),
         );
       }
       return;

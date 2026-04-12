@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
@@ -14,8 +15,9 @@ import 'package:shape_merge/screens/game/widgets/shape_widget.dart';
 
 class GameBoard extends ConsumerStatefulWidget {
   final void Function(Offset position, Color color, int points, int comboCount)? onMerge;
+  final void Function(Offset position, JokerType jokerType)? onJokerUsed;
 
-  const GameBoard({super.key, this.onMerge});
+  const GameBoard({super.key, this.onMerge, this.onJokerUsed});
 
   @override
   ConsumerState<GameBoard> createState() => _GameBoardState();
@@ -172,14 +174,17 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       case JokerMode.bomb:
         notifier.useBomb(shape);
         AudioService.instance.playBomb();
+        widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.bomb);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.reducer:
         notifier.useReducer(shape);
         AudioService.instance.playReducer();
+        widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.reducer);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.wildcard:
         notifier.spawnWildcard(shape.level);
         AudioService.instance.playWildcard();
+        widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.wildcard);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.evolution:
         final evoResult = JokerHandler.useEvolution(
@@ -188,6 +193,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         if (evoResult.evolvedShape != null) {
           AudioService.instance.playMerge();
           HapticFeedback.heavyImpact();
+          widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.evolution);
           widget.onMerge?.call(
             Offset(evoResult.evolvedShape!.x, evoResult.evolvedShape!.y),
             evoResult.evolvedShape!.color,
@@ -198,6 +204,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.megaBomb:
         notifier.useMegaBomb(shape);
+        widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.megaBomb);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.radar:
         // Radar activates on tap of the orb, not a shape tap
@@ -259,7 +266,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       });
 
       HapticFeedback.selectionClick();
-      AudioService.instance.playSpawn();
+      AudioService.instance.playMergeAbort();
 
       setState(() {
         _draggingId = null;

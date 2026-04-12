@@ -97,7 +97,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const SizedBox(height: 90),
+                  const SizedBox(height: 24),
 
                   // ── Best Score — floating premium display ──
                   _BestScoreDisplay(
@@ -105,12 +105,12 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                     score: gameState.bestScore,
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // ── Daily challenges card ──
                   const DailyChallengeCard(),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // ── Play button — full width Button3D green ──
                   Button3D.green(
@@ -134,57 +134,44 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                       ),
                     ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // ── Shop & Leaderboard — premium Button3D row ──
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Button3D.orange(
-                          expand: true,
-                          onPressed: () {
-                            AudioService.instance.playButtonTap();
-                            context.go('/shop');
-                          },
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 44,
-                                  height: 44,
-                                  child: CustomPaint(painter: _JokerBagPainter()),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(l10n.shop.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontTiny)),
-                              ],
+                  SizedBox(
+                    height: 80,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Button3D.orange(
+                            expand: true,
+                            onPressed: () {
+                              AudioService.instance.playButtonTap();
+                              context.go('/shop');
+                            },
+                              padding: const EdgeInsets.all(4),
+                              child: Image.asset(
+                                'assets/images/removed_bg/shop.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                          ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Button3D.orange(
-                          expand: true,
-                          onPressed: () {
-                            AudioService.instance.playButtonTap();
-                            context.go('/leaderboard');
-                          },
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 44,
-                                  height: 44,
-                                  child: CustomPaint(painter: _TrophyPainter()),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(l10n.leaderboard.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontTiny)),
-                              ],
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Button3D.orange(
+                            expand: true,
+                            onPressed: () {
+                              AudioService.instance.playButtonTap();
+                              context.go('/leaderboard');
+                            },
+                              padding: const EdgeInsets.all(4),
+                              child: Image.asset(
+                                'assets/images/removed_bg/podium.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                          ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 70), // space for ad banner
@@ -257,19 +244,24 @@ class _GlassMenuButtonState extends State<_GlassMenuButton> {
 // ═══════════════════════════════════════════════════════════════
 // Best Score Display — floating premium trophy + score (no card)
 // ═══════════════════════════════════════════════════════════════
-class _BestScoreDisplay extends StatefulWidget {
+class _BestScoreDisplay extends ConsumerStatefulWidget {
   final String label;
   final int score;
 
   const _BestScoreDisplay({required this.label, required this.score});
 
   @override
-  State<_BestScoreDisplay> createState() => _BestScoreDisplayState();
+  ConsumerState<_BestScoreDisplay> createState() => _BestScoreDisplayState();
 }
 
-class _BestScoreDisplayState extends State<_BestScoreDisplay>
-    with SingleTickerProviderStateMixin {
+class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
+    with TickerProviderStateMixin {
   late final AnimationController _pulse;
+  late final AnimationController _celebCtrl;
+  late final AnimationController _confettiCtrl;
+  late final AnimationController _glowCtrl;
+  late final List<_HomeConfetti> _confettiPieces;
+  bool _pendingCelebration = false;
 
   @override
   void initState() {
@@ -278,308 +270,305 @@ class _BestScoreDisplayState extends State<_BestScoreDisplay>
       vsync: this,
       duration: const Duration(milliseconds: 2400),
     )..repeat(reverse: true);
+    _celebCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3500),
+    );
+    _confettiCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 5000),
+    );
+    _glowCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _confettiPieces = _generateConfetti();
+
+    // Listen to newRecordPending — fires even when branch is inactive.
+    // Store flag, trigger animation only when branch becomes visible.
+    ref.listenManual(newRecordPendingProvider, (previous, next) {
+      if (next) {
+        ref.read(newRecordPendingProvider.notifier).state = false;
+        _pendingCelebration = true;
+        _tryCelebrate();
+      }
+    });
+  }
+
+  /// Start celebration only if tickers are active (branch is visible).
+  /// Called from the listener and from didChangeDependencies (which fires
+  /// when the IndexedStack re-enables TickerMode for this branch).
+  void _tryCelebrate() {
+    if (!_pendingCelebration) return;
+    // TickerMode is false when this branch is behind another
+    // in the StatefulShellRoute.indexedStack.
+    if (!TickerMode.valuesOf(context).enabled) return;
+    _pendingCelebration = false;
+    _celebCtrl.forward(from: 0);
+    _confettiCtrl.forward(from: 0);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // When switching back to the Home branch, TickerMode becomes true
+    // and didChangeDependencies fires. Trigger pending celebration now.
+    _tryCelebrate();
   }
 
   @override
   void dispose() {
     _pulse.dispose();
+    _celebCtrl.dispose();
+    _confettiCtrl.dispose();
+    _glowCtrl.dispose();
     super.dispose();
+  }
+
+  static List<_HomeConfetti> _generateConfetti() {
+    final rng = math.Random();
+    return List.generate(28, (i) => _HomeConfetti(
+      x: rng.nextDouble(),
+      speed: 0.4 + rng.nextDouble() * 0.8,
+      drift: (rng.nextDouble() - 0.5) * 0.5,
+      rotation: rng.nextDouble() * math.pi * 2,
+      rotSpeed: (rng.nextDouble() - 0.5) * 8,
+      width: 4 + rng.nextDouble() * 5,
+      height: 6 + rng.nextDouble() * 8,
+      color: [
+        const Color(0xFFFF4444),
+        const Color(0xFF44AAFF),
+        const Color(0xFFFFD700),
+        const Color(0xFF44FF88),
+        const Color(0xFFFF44FF),
+        const Color(0xFFFF8800),
+        const Color(0xFF8844FF),
+      ][i % 7],
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, _) {
-        final p = _pulse.value;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Glowing trophy icon
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.gold.withValues(alpha: 0.15 + p * 0.20),
-                    blurRadius: 24 + p * 16,
-                    spreadRadius: -2 + p * 6,
-                  ),
-                ],
-              ),
-              child: CustomPaint(painter: _TrophyPainter()),
-            ),
-            const SizedBox(height: 8),
-
-            // Label
-            Text(
-              widget.label,
-              style: GoogleFonts.nunito(
-                fontSize: AppTheme.fontMini,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.goldDim.withValues(alpha: 0.7 + p * 0.3),
-                letterSpacing: 3,
-              ),
-            ),
-            const SizedBox(height: 2),
-
-            // Score — big gold gradient numbers
-            Text(
-              '${widget.score}',
-              style: GoogleFonts.fredoka(
-                fontSize: AppTheme.fontDisplay,
-                fontWeight: FontWeight.w900,
-                foreground: Paint()
-                  ..shader = const LinearGradient(
-                    colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
-                  ).createShader(const Rect.fromLTWH(0, 0, 200, 50)),
-                shadows: [
-                  Shadow(
-                    color: AppTheme.gold.withValues(alpha: 0.3 + p * 0.2),
-                    blurRadius: 12 + p * 8,
-                  ),
-                  const Shadow(
-                    color: Colors.black38,
-                    offset: Offset(0, 2),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-            ),
-
-            // Decorative gold line
-            Container(
-              width: 80 + p * 20,
-              height: 2,
-              margin: const EdgeInsets.only(top: 4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(1),
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.gold.withValues(alpha: 0.0),
-                    AppTheme.gold.withValues(alpha: 0.5 + p * 0.3),
-                    AppTheme.gold.withValues(alpha: 0.0),
-                  ],
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        // Confetti rain — always in the tree, renders nothing when idle
+        AnimatedBuilder(
+          animation: _confettiCtrl,
+          builder: (context, _) {
+            if (!_confettiCtrl.isAnimating) return const SizedBox.shrink();
+            return Positioned(
+              left: -40,
+              top: -30,
+              right: -40,
+              bottom: -30,
+              child: CustomPaint(
+                painter: _HomeConfettiPainter(
+                  pieces: _confettiPieces,
+                  progress: _confettiCtrl.value,
                 ),
               ),
-            ),
-          ],
-        );
-      },
+            );
+          },
+        ),
+        AnimatedBuilder(
+          animation: Listenable.merge([_pulse, _celebCtrl]),
+          builder: (context, _) {
+            final p = _pulse.value;
+
+            // Trophy bounce
+            final double trophyScale;
+            final double glowExtra;
+            if (_celebCtrl.isAnimating) {
+              if (_celebCtrl.value < 0.12) {
+                trophyScale = 1.0 + (_celebCtrl.value / 0.12) * 0.5;
+                glowExtra = _celebCtrl.value / 0.12;
+              } else if (_celebCtrl.value < 0.25) {
+                trophyScale = 1.5 - ((_celebCtrl.value - 0.12) / 0.13) * 0.4;
+                glowExtra = 1.0 - ((_celebCtrl.value - 0.12) / 0.13) * 0.5;
+              } else if (_celebCtrl.value < 0.4) {
+                final t = (_celebCtrl.value - 0.25) / 0.15;
+                trophyScale = 1.1 + math.sin(t * math.pi * 2) * 0.06;
+                glowExtra = 0.5 * (1 - t);
+              } else {
+                trophyScale = 1.0;
+                glowExtra = 0.0;
+              }
+            } else {
+              trophyScale = 1.0;
+              glowExtra = 0.0;
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Glowing trophy icon with celebration bounce
+                Padding(
+                  padding: const EdgeInsets.only(top: 24),
+                  child: Transform.scale(
+                  scale: trophyScale,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.gold.withValues(
+                            alpha: 0.15 + p * 0.20 + glowExtra * 0.4,
+                          ),
+                            blurRadius: 24 + p * 16 + glowExtra * 20,
+                            spreadRadius: -2 + p * 6 + glowExtra * 8,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/images/removed_bg/trophy.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+
+                Text(
+                  widget.label,
+                  style: GoogleFonts.nunito(
+                    fontSize: AppTheme.fontMini,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.goldDim.withValues(alpha: 0.7 + p * 0.3),
+                    letterSpacing: 3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+
+                // Score with shimmer sweep during celebration + persistent glow
+                Builder(builder: (_) {
+                  // Shimmer during celebration burst
+                  final shimmerActive = _celebCtrl.isAnimating &&
+                      _celebCtrl.value > 0.05 && _celebCtrl.value < 0.55;
+                  final shimmerT = shimmerActive
+                      ? ((_celebCtrl.value - 0.05) / 0.5).clamp(0.0, 1.0)
+                      : 0.0;
+                  final glowAlpha = glowExtra > 0 ? 0.7 : 0.0;
+                  final glowBlur = glowExtra > 0 ? 16.0 : 0.0;
+
+                  final scoreWidget = _scoreText(p, glowAlpha, glowBlur);
+
+                  if (shimmerActive) {
+                    return ShaderMask(
+                      shaderCallback: (bounds) {
+                        final shimmerX = bounds.width * (shimmerT * 2 - 0.3);
+                        return LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: const [
+                            Colors.white,
+                            Color(0xFFFFF8E0),
+                            Colors.white,
+                          ],
+                          stops: [
+                            (shimmerX / bounds.width - 0.15).clamp(0.0, 1.0),
+                            (shimmerX / bounds.width).clamp(0.0, 1.0),
+                            (shimmerX / bounds.width + 0.15).clamp(0.0, 1.0),
+                          ],
+                        ).createShader(bounds);
+                      },
+                      blendMode: BlendMode.modulate,
+                      child: scoreWidget,
+                    );
+                  }
+                  return scoreWidget;
+                }),
+
+                // Decorative gold line
+                Container(
+                  width: 80 + p * 20,
+                  height: 2,
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(1),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.gold.withValues(alpha: 0.0),
+                        AppTheme.gold.withValues(alpha: 0.5 + p * 0.3),
+                        AppTheme.gold.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _scoreText(double p, double glowAlpha, double glowBlur) {
+    final hasGlow = glowAlpha > 0;
+    return Text(
+      '${widget.score}',
+      style: GoogleFonts.fredoka(
+        fontSize: AppTheme.fontDisplay,
+        fontWeight: FontWeight.w900,
+        foreground: Paint()
+          ..shader = const LinearGradient(
+            colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
+          ).createShader(const Rect.fromLTWH(0, 0, 200, 50)),
+        shadows: [
+          Shadow(
+            color: AppTheme.gold.withValues(alpha: hasGlow ? glowAlpha : 0.3 + p * 0.2),
+            blurRadius: hasGlow ? glowBlur : 12 + p * 8,
+          ),
+          const Shadow(
+            color: Colors.black38,
+            offset: Offset(0, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Joker Bag Painter — premium hand-drawn shopping bag icon
-// ═══════════════════════════════════════════════════════════════
-class _JokerBagPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // Shadow
-    final shadowPath = Path()
-      ..moveTo(w * 0.15, h * 0.35)
-      ..lineTo(w * 0.20, h * 0.92)
-      ..quadraticBezierTo(w * 0.22, h, w * 0.32, h)
-      ..lineTo(w * 0.68, h)
-      ..quadraticBezierTo(w * 0.78, h, w * 0.80, h * 0.92)
-      ..lineTo(w * 0.85, h * 0.35)
-      ..close();
-    canvas.drawPath(shadowPath.shift(const Offset(0, 2)), Paint()..color = Colors.black.withValues(alpha: 0.25));
-
-    // Bag body — purple gradient
-    final bag = Path()
-      ..moveTo(w * 0.15, h * 0.35)
-      ..lineTo(w * 0.20, h * 0.90)
-      ..quadraticBezierTo(w * 0.22, h * 0.98, w * 0.32, h * 0.98)
-      ..lineTo(w * 0.68, h * 0.98)
-      ..quadraticBezierTo(w * 0.78, h * 0.98, w * 0.80, h * 0.90)
-      ..lineTo(w * 0.85, h * 0.35)
-      ..close();
-
-    canvas.drawPath(bag, Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: const [AppTheme.bagPurpleLight, AppTheme.bagPurpleMid, AppTheme.bagPurpleDark],
-      ).createShader(Rect.fromLTWH(0, 0, w, h)));
-
-    // Bag border
-    canvas.drawPath(bag, Paint()..color = AppTheme.bagBorder..style = PaintingStyle.stroke..strokeWidth = 1.5);
-
-    // Bag flap — top rectangle
-    final flap = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.12, h * 0.30, w * 0.76, h * 0.12),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(flap, Paint()
-      ..shader = const LinearGradient(
-        colors: [AppTheme.bagFlapLight, AppTheme.bagFlapDark],
-      ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawRRect(flap, Paint()..color = AppTheme.bagBorder..style = PaintingStyle.stroke..strokeWidth = 1.2);
-
-    // Handle — arch
-    final handle = Path()
-      ..moveTo(w * 0.35, h * 0.32)
-      ..quadraticBezierTo(w * 0.35, h * 0.08, w * 0.50, h * 0.08)
-      ..quadraticBezierTo(w * 0.65, h * 0.08, w * 0.65, h * 0.32);
-    canvas.drawPath(handle, Paint()
-      ..color = AppTheme.bagHandle
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..strokeCap = StrokeCap.round);
-    canvas.drawPath(handle, Paint()
-      ..color = AppTheme.bagBorder
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..strokeCap = StrokeCap.round);
-
-    // Star on bag
-    _drawStar(canvas, Offset(w * 0.50, h * 0.68), w * 0.14, AppTheme.gold, AppTheme.victoryBadgeBot);
-
-    // Shine highlight
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.22, h * 0.45, w * 0.12, h * 0.20), const Radius.circular(6)),
-      Paint()..color = Colors.white.withValues(alpha: 0.20),
-    );
-  }
-
-  void _drawStar(Canvas canvas, Offset center, double r, Color c1, Color c2) {
-    final path = Path();
-    for (var i = 0; i < 10; i++) {
-      final a = (i * math.pi / 5) - math.pi / 2;
-      final sr = i.isEven ? r : r * 0.45;
-      final px = center.dx + math.cos(a) * sr;
-      final py = center.dy + math.sin(a) * sr;
-      if (i == 0) path.moveTo(px, py); else path.lineTo(px, py);
-    }
-    path.close();
-    canvas.drawPath(path, Paint()
-      ..shader = RadialGradient(colors: [c1, c2]).createShader(
-        Rect.fromCircle(center: center, radius: r)));
-    canvas.drawPath(path, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 0.8);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+// ── Home confetti data + painter ──
+class _HomeConfetti {
+  final double x, speed, drift, rotation, rotSpeed, width, height;
+  final Color color;
+  const _HomeConfetti({
+    required this.x, required this.speed, required this.drift,
+    required this.rotation, required this.rotSpeed, required this.width,
+    required this.height, required this.color,
+  });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Trophy Painter — premium hand-drawn trophy icon
-// ═══════════════════════════════════════════════════════════════
-class _TrophyPainter extends CustomPainter {
+class _HomeConfettiPainter extends CustomPainter {
+  final List<_HomeConfetti> pieces;
+  final double progress;
+  _HomeConfettiPainter({required this.pieces, required this.progress});
+
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // Shadow
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.25, h * 0.88, w * 0.50, h * 0.08), const Radius.circular(3)),
-      Paint()..color = Colors.black.withValues(alpha: 0.2),
-    );
-
-    // Base plate
-    final basePlate = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.25, h * 0.84, w * 0.50, h * 0.10),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(basePlate, Paint()
-      ..shader = const LinearGradient(
-        colors: [AppTheme.goldPale, AppTheme.goldAntique, AppTheme.goldBronze],
-      ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawRRect(basePlate, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.0);
-
-    // Stem
-    final stem = Path()
-      ..moveTo(w * 0.42, h * 0.62)
-      ..lineTo(w * 0.42, h * 0.84)
-      ..lineTo(w * 0.58, h * 0.84)
-      ..lineTo(w * 0.58, h * 0.62)
-      ..close();
-    canvas.drawPath(stem, Paint()
-      ..shader = const LinearGradient(
-        colors: [AppTheme.gold, AppTheme.goldAntique],
-      ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawPath(stem, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.0);
-
-    // Cup body
-    final cup = Path()
-      ..moveTo(w * 0.20, h * 0.10)
-      ..lineTo(w * 0.25, h * 0.55)
-      ..quadraticBezierTo(w * 0.28, h * 0.65, w * 0.42, h * 0.65)
-      ..lineTo(w * 0.58, h * 0.65)
-      ..quadraticBezierTo(w * 0.72, h * 0.65, w * 0.75, h * 0.55)
-      ..lineTo(w * 0.80, h * 0.10)
-      ..close();
-
-    // Cup shadow
-    canvas.drawPath(cup.shift(const Offset(0, 2)), Paint()..color = Colors.black.withValues(alpha: 0.2));
-
-    // Cup gradient
-    canvas.drawPath(cup, Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: const [AppTheme.goldPale, AppTheme.gold, AppTheme.goldAntique, AppTheme.goldBronze],
-        stops: const [0.0, 0.3, 0.7, 1.0],
-      ).createShader(Rect.fromLTWH(0, 0, w, h)));
-    canvas.drawPath(cup, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.5);
-
-    // Left handle
-    final lHandle = Path()
-      ..moveTo(w * 0.20, h * 0.18)
-      ..quadraticBezierTo(w * 0.04, h * 0.20, w * 0.06, h * 0.35)
-      ..quadraticBezierTo(w * 0.08, h * 0.48, w * 0.22, h * 0.45);
-    canvas.drawPath(lHandle, Paint()..color = AppTheme.gold..style = PaintingStyle.stroke..strokeWidth = 3.5..strokeCap = StrokeCap.round);
-    canvas.drawPath(lHandle, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.2..strokeCap = StrokeCap.round);
-
-    // Right handle
-    final rHandle = Path()
-      ..moveTo(w * 0.80, h * 0.18)
-      ..quadraticBezierTo(w * 0.96, h * 0.20, w * 0.94, h * 0.35)
-      ..quadraticBezierTo(w * 0.92, h * 0.48, w * 0.78, h * 0.45);
-    canvas.drawPath(rHandle, Paint()..color = AppTheme.gold..style = PaintingStyle.stroke..strokeWidth = 3.5..strokeCap = StrokeCap.round);
-    canvas.drawPath(rHandle, Paint()..color = AppTheme.goldDark..style = PaintingStyle.stroke..strokeWidth = 1.2..strokeCap = StrokeCap.round);
-
-    // Star on cup
-    _drawStar(canvas, Offset(w * 0.50, h * 0.35), w * 0.12);
-
-    // Shine highlight
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.28, h * 0.16, w * 0.10, h * 0.22), const Radius.circular(5)),
-      Paint()..color = Colors.white.withValues(alpha: 0.25),
-    );
-
-    // Rim highlight
-    canvas.drawLine(
-      Offset(w * 0.24, h * 0.12),
-      Offset(w * 0.76, h * 0.12),
-      Paint()..color = AppTheme.goldPale.withValues(alpha: 0.6)..strokeWidth = 1.5..strokeCap = StrokeCap.round,
-    );
-  }
-
-  void _drawStar(Canvas canvas, Offset center, double r) {
-    final path = Path();
-    for (var i = 0; i < 10; i++) {
-      final a = (i * math.pi / 5) - math.pi / 2;
-      final sr = i.isEven ? r : r * 0.45;
-      final px = center.dx + math.cos(a) * sr;
-      final py = center.dy + math.sin(a) * sr;
-      if (i == 0) path.moveTo(px, py); else path.lineTo(px, py);
+    for (final c in pieces) {
+      final t = (progress * c.speed).clamp(0.0, 1.0);
+      final x = size.width * c.x + c.drift * size.width * t;
+      final y = -10 + size.height * 1.3 * t;
+      final rot = c.rotation + c.rotSpeed * t;
+      final opacity = t < 0.8 ? 1.0 : (1.0 - (t - 0.8) / 0.2);
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(rot);
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset.zero, width: c.width, height: c.height),
+        Paint()..color = c.color.withValues(alpha: opacity),
+      );
+      canvas.restore();
     }
-    path.close();
-    canvas.drawPath(path, Paint()..color = Colors.white.withValues(alpha: 0.7));
-    canvas.drawPath(path, Paint()..color = AppTheme.goldDark.withValues(alpha: 0.5)..style = PaintingStyle.stroke..strokeWidth = 0.7);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_HomeConfettiPainter old) => old.progress != progress;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -799,17 +788,28 @@ class _FloatingShapesPainter extends CustomPainter {
   final double progress;
   _FloatingShapesPainter(this.progress);
 
+  // [phaseX, phaseY, size, speedX, speedY, rotSpeed, shapeType, ampX, ampY]
   static const _shapes = [
-    [0.0, 0.5, 55.0, 1, 1, 1, 0],
-    [0.6, 1.3, 45.0, 1, 1, 1, 1],
-    [1.3, 2.1, 60.0, 1, 1, 1, 2],
-    [1.9, 0.3, 50.0, 1, 1, 1, 3],
-    [2.5, 1.8, 58.0, 1, 1, 1, 4],
-    [3.1, 0.9, 42.0, 1, 1, 1, 0],
-    [3.8, 2.5, 65.0, 1, 1, 1, 3],
-    [4.4, 1.1, 48.0, 1, 1, 1, 1],
-    [5.0, 2.8, 55.0, 1, 1, 1, 2],
-    [5.7, 0.2, 52.0, 1, 1, 1, 4],
+    [0.0, 0.5, 55.0, 1.0, 0.7, 1.0, 0, 0.9, 0.8],
+    [0.6, 1.3, 45.0, 0.6, 1.2, 1.0, 1, 0.7, 0.9],
+    [1.3, 2.1, 60.0, 1.3, 0.5, 1.0, 2, 0.8, 0.6],
+    [1.9, 0.3, 50.0, 0.8, 1.0, 1.0, 3, 0.6, 1.0],
+    [2.5, 1.8, 58.0, 1.1, 0.9, 1.0, 4, 1.0, 0.5],
+    [3.1, 0.9, 42.0, 0.5, 1.4, 1.0, 0, 0.5, 0.9],
+    [3.8, 2.5, 65.0, 1.0, 0.6, 1.0, 3, 0.9, 0.7],
+    [4.4, 1.1, 48.0, 0.7, 1.1, 1.0, 1, 0.6, 1.0],
+    [5.0, 2.8, 55.0, 1.2, 0.4, 1.0, 2, 1.0, 0.8],
+    [5.7, 0.2, 52.0, 0.4, 1.3, 1.0, 4, 0.8, 0.6],
+    [0.3, 1.7, 38.0, 1.4, 0.8, 0.7, 2, 0.7, 0.5],
+    [0.9, 2.6, 44.0, 0.9, 1.5, 1.3, 0, 0.5, 0.8],
+    [1.6, 0.8, 35.0, 0.3, 0.6, 0.5, 4, 0.9, 1.0],
+    [2.2, 2.3, 50.0, 1.5, 1.0, 0.9, 1, 0.6, 0.7],
+    [2.8, 0.6, 40.0, 0.7, 0.3, 1.1, 3, 1.0, 0.9],
+    [3.4, 1.5, 32.0, 1.0, 1.3, 0.8, 0, 0.8, 0.4],
+    [4.0, 0.1, 46.0, 0.5, 0.9, 1.4, 2, 0.4, 1.0],
+    [4.7, 2.0, 36.0, 1.3, 0.5, 0.6, 4, 0.7, 0.6],
+    [5.3, 1.4, 42.0, 0.8, 1.1, 1.2, 1, 0.9, 0.8],
+    [5.9, 2.9, 30.0, 0.6, 0.7, 0.4, 3, 0.5, 0.9],
   ];
 
   @override
@@ -821,15 +821,19 @@ class _FloatingShapesPainter extends CustomPainter {
     final cy = size.height / 2;
 
     for (final s in _shapes) {
-      final phaseX = s[0];
-      final phaseY = s[1];
+      final phaseX = s[0].toDouble();
+      final phaseY = s[1].toDouble();
       final shapeSize = s[2].toDouble();
-      final rotSpeed = s[5];
+      final speedX = s[3].toDouble();
+      final speedY = s[4].toDouble();
+      final rotSpeed = s[5].toDouble();
       final shapeType = s[6].toInt();
+      final ampX = s[7].toDouble();
+      final ampY = s[8].toDouble();
 
       final t = progress * math.pi * 2;
-      final x = cx + math.sin(t + phaseX) * halfW;
-      final y = cy + math.cos(t + phaseY) * halfH;
+      final x = cx + math.sin(t * speedX + phaseX) * halfW * ampX;
+      final y = cy + math.cos(t * speedY + phaseY) * halfH * ampY;
       final rot = t * rotSpeed;
 
       final alpha = (0.15 + math.sin(t + phaseX) * 0.1).clamp(0.05, 0.25);

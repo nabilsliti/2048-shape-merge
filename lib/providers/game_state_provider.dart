@@ -11,6 +11,11 @@ import 'package:shape_merge/game/logic/joker_handler.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 
+/// Signals that a new best-score was just achieved during gameplay.
+/// Set to `true` in game_screen when bestScore increases.
+/// Consumed (read + reset) by home_screen to trigger celebration.
+final newRecordPendingProvider = StateProvider<bool>((ref) => false);
+
 final gameStateProvider =
     StateNotifierProvider<GameStateNotifier, GameState>((ref) {
   return GameStateNotifier();
@@ -64,6 +69,13 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = state.copyWith(jokersUsedThisGame: state.jokersUsedThisGame + 1);
   }
 
+  /// After destructive jokers (bomb, megaBomb, reducer), respawn shapes
+  /// if the board is empty or has no mergeable pairs.
+  void _checkAfterJoker() {
+    if (_boardSize == null) return;
+    state = GameEngine.checkAfterJoker(state, _boardSize!);
+  }
+
   void loadSavedState({required int bestScore, required JokerInventory jokers}) {
     state = state.copyWith(bestScore: bestScore, jokerInventory: jokers);
   }
@@ -104,6 +116,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
     );
     _incrementJokerUsed();
     _saveJokers();
+    _checkAfterJoker();
   }
 
   void spawnWildcard(int level) {
@@ -135,6 +148,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
     );
     _incrementJokerUsed();
     _saveJokers();
+    _checkAfterJoker();
   }
 
   void useEvolution(GameShape target) {
@@ -173,6 +187,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
     );
     _incrementJokerUsed();
     _saveJokers();
+    _checkAfterJoker();
   }
 
   Timer? _radarTimer;

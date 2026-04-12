@@ -1027,6 +1027,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Max 30 shapes'**
   String get maxShapesWarning;
+
+  /// No description provided for @storeNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Store not available'**
+  String get storeNotAvailable;
+
+  /// No description provided for @signInError.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in error: {error}'**
+  String signInError(String error);
 }
 
 class _AppLocalizationsDelegate

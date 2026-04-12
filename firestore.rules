@@ -17,6 +17,12 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
+
+      // Subcollections (e.g. dailyChallenges)
+      match /data/{docId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
     }
 
     // ── Leaderboard ─────────────────────────────────────

@@ -29,10 +29,16 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (_, __) => const SplashScreen(),
+      pageBuilder: (_, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: const SplashScreen(),
+      ),
     ),
     StatefulShellRoute.indexedStack(
-      builder: (_, __, navigationShell) => AdShell(navigationShell: navigationShell),
+      pageBuilder: (_, state, navigationShell) => NoTransitionPage(
+        key: state.pageKey,
+        child: AdShell(navigationShell: navigationShell),
+      ),
       branches: [
         StatefulShellBranch(routes: [
           GoRoute(path: '/home', builder: (_, __) => const MainHubScreen()),
@@ -102,51 +108,76 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
 
   @override
   Widget build(BuildContext context) {
-    // Migrate guest streak → Firestore on sign-in; reset providers on sign-out
+    // Handle sign-in / sign-out / account-switch
     ref.listen<AsyncValue<User?>>(authStateProvider, (prev, next) {
       final prevUser = prev?.valueOrNull;
       final nextUser = next.valueOrNull;
-      if (prevUser == null && nextUser != null) {
-        // Sign-in: set Firestore context and migrate
-        final notifier = ref.read(gameStateProvider.notifier);
+
+      final isSameUser = prevUser?.uid == nextUser?.uid;
+      if (isSameUser) return;
+
+      final notifier = ref.read(gameStateProvider.notifier);
+
+      // Always reset account-scoped providers on any change (sign-in, sign-out,
+      // or direct switch). This prevents race conditions when Google fires
+      // A→null then null→B as two separate events.
+      ref.invalidate(playerProvider);
+      ref.invalidate(streakProvider);
+      ref.read(dailyChallengeProvider.notifier).reset();
+      ref.invalidate(progressionProvider);
+
+      // ── Entering an account ──
+      if (nextUser != null) {
         notifier.setSignedIn(nextUser.uid, ref.read(firestoreServiceProvider));
         ref.read(streakProvider.notifier).migrateAndRefresh(nextUser);
-      } else if (prevUser != null && nextUser == null) {
-        // Sign-out: reset all account-scoped providers
-        final notifier = ref.read(gameStateProvider.notifier);
+        // Load the new account's data (bestScore + jokers) from Firestore
+        ref.read(playerProvider.future).then((player) {
+          if (player != null) {
+            notifier.loadSavedState(
+              bestScore: player.bestScore,
+              jokers: player.jokerInventory,
+            );
+          }
+        });
+        // Reload daily challenges for the new account
+        ref.read(dailyChallengeProvider.notifier).checkRenewal();
+      } else {
+        // ── Going to guest mode ──
         notifier.clearSignedIn();
-        // Reload guest data from localStorage to prevent data leaking
+        // Reload guest data from localStorage
         ref.read(localStorageProvider.future).then((storage) {
           notifier.loadSavedState(
             bestScore: storage.bestScore,
             jokers: storage.jokerInventory,
           );
         });
-        ref.invalidate(playerProvider);
-        ref.invalidate(streakProvider);
-        ref.invalidate(dailyChallengeProvider);
-        ref.invalidate(progressionProvider);
+        // Reload guest daily challenges + streak
+        ref.read(dailyChallengeProvider.notifier).checkRenewal();
+        ref.read(streakProvider.notifier).checkAndUpdate();
       }
     });
 
-    // Sync gameState (bestScore, level, XP) when player data is available
+    // Sync gameState when player data becomes available (also on re-fetch)
     ref.listen<AsyncValue<Player?>>(playerProvider, (prev, next) {
       final player = next.valueOrNull;
       if (player == null) return;
-      final gameState = ref.read(gameStateProvider);
-      // Sync bestScore: also check leaderboard asynchronously
-      if (player.bestScore > gameState.bestScore) {
-        ref.read(gameStateProvider.notifier).loadSavedState(
-          bestScore: player.bestScore,
-          jokers: gameState.jokerInventory,
-        );
-      }
+
+      // Guard: ignore stale cached data if user is signed out
+      final currentUser = ref.read(authStateProvider).valueOrNull;
+      if (currentUser == null) return;
+
+      // Always set the player's bestScore + jokers (may be lower on new account)
+      final notifier = ref.read(gameStateProvider.notifier);
+      notifier.loadSavedState(
+        bestScore: player.bestScore,
+        jokers: player.jokerInventory,
+      );
+
       // Also fetch leaderboard score (may be higher than Player.bestScore)
       ref.read(firestoreServiceProvider).getLeaderboardScore(player.uid).then((lbScore) {
-        final best = [player.bestScore, lbScore, gameState.bestScore]
-            .reduce((a, b) => a > b ? a : b);
+        final best = [player.bestScore, lbScore].reduce((a, b) => a > b ? a : b);
         if (best > ref.read(gameStateProvider).bestScore) {
-          ref.read(gameStateProvider.notifier).loadSavedState(
+          notifier.loadSavedState(
             bestScore: best,
             jokers: ref.read(gameStateProvider).jokerInventory,
           );

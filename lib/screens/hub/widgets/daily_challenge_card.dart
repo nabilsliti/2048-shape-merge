@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
@@ -138,6 +137,18 @@ class _ChallengeRowState extends State<_ChallengeRow>
   }
 
   @override
+  void didUpdateWidget(covariant _ChallengeRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.challenge.id != widget.challenge.id ||
+        widget.challenge.rewardCollected != oldWidget.challenge.rewardCollected) {
+      _showCollectAnim = false;
+      _bounceCtrl.reset();
+      _plusOneCtrl.reset();
+      _sparkleCtrl.reset();
+    }
+  }
+
+  @override
   void dispose() {
     _bounceCtrl.dispose();
     _plusOneCtrl.dispose();
@@ -152,12 +163,8 @@ class _ChallengeRowState extends State<_ChallengeRow>
     _plusOneCtrl.forward(from: 0);
     _sparkleCtrl.forward(from: 0);
 
-    // Play sound after animation starts visually
-    Future.delayed(const Duration(milliseconds: 400), () {
-      AudioService.instance.playReward();
-    });
-
-    // Delay actual collect so the animation plays first
+    // Delay actual collect so the animation plays first;
+    // sound is played by collectReward() in sync with the actual delivery.
     Future.delayed(const Duration(milliseconds: 900), () {
       widget.onCollect();
     });

@@ -4,23 +4,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 
 /// Overlay shown for 2.5s after a level-up.
 /// Displayed as a Stack layer in MainHubScreen.
-class LevelUpOverlay extends ConsumerWidget {
+class LevelUpOverlay extends ConsumerStatefulWidget {
   const LevelUpOverlay({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final result = ref.watch(progressionProvider);
-    if (result == null || result.levelsGained == 0) return const SizedBox.shrink();
+  ConsumerState<LevelUpOverlay> createState() => _LevelUpOverlayState();
+}
 
-    // Auto-dismiss after 2.5s
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      ref.read(progressionProvider.notifier).clearResult();
-    });
+class _LevelUpOverlayState extends ConsumerState<LevelUpOverlay> {
+  int? _shownLevel;
+
+  @override
+  Widget build(BuildContext context) {
+    final result = ref.watch(progressionProvider);
+    if (result == null || result.levelsGained == 0) {
+      _shownLevel = null;
+      return const SizedBox.shrink();
+    }
+
+    // Only schedule dismiss once per level-up (guard against rebuild re-triggers)
+    if (_shownLevel != result.newLevel) {
+      _shownLevel = result.newLevel;
+      AudioService.instance.playLevelUp();
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        if (mounted) ref.read(progressionProvider.notifier).clearResult();
+      });
+    }
 
     return _LevelUpContent(result: result);
   }

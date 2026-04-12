@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/challenge_service.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
@@ -21,13 +22,16 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
   DailyChallengeNotifier(this._ref) : super(null);
 
   final Ref _ref;
+  int _renewalGeneration = 0;
 
   /// Called at app launch and on resume — loads or generates today's objectives.
   Future<void> checkRenewal() async {
+    final generation = ++_renewalGeneration;
     final service = _ref.read(challengeServiceProvider);
     final storage = await _ref.read(localStorageProvider.future);
     final user = _ref.read(authStateProvider).valueOrNull;
     final player = user != null ? await _ref.read(playerProvider.future) : null;
+    if (generation != _renewalGeneration) return; // superseded by newer call
     final playerLevel = player?.level ?? storage.playerLevel;
 
     DailyChallengeState loaded;
@@ -42,7 +46,13 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
       loaded = await service.loadOrGenerateGuest(storage, playerLevel: playerLevel);
     }
 
-    if (mounted) state = loaded;
+    if (mounted && generation == _renewalGeneration) state = loaded;
+  }
+
+  /// Reset state for account switch (clear stale data immediately).
+  void reset() {
+    _renewalGeneration++;
+    if (mounted) state = null;
   }
 
   /// Called at end of each game to update progress.
@@ -78,7 +88,8 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     final challenge = current.challenges[idx];
     if (!challenge.canCollect) return;
 
-    // Deliver reward (joker or XP)
+    // Deliver reward (joker or XP) + play sound in sync
+    AudioService.instance.playReward();
     switch (challenge.reward) {
       case JokerReward(:final joker):
         _ref.read(gameStateProvider.notifier).addJokers(joker, 1);
@@ -99,6 +110,7 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     final current = state;
     if (current == null || !current.canCollectBonus) return;
 
+    AudioService.instance.playReward();
     final notifier = _ref.read(gameStateProvider.notifier);
     final bonusRewards = [JokerType.bomb, JokerType.wildcard, JokerType.reducer];
     for (final j in bonusRewards) {

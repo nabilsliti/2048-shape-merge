@@ -528,4 +528,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get maxShapesWarning => 'Max 30 shapes';
+
+  @override
+  String get storeNotAvailable => 'Store not available';
+
+  @override
+  String signInError(String error) {
+    return 'Sign-in error: $error';
+  }
 }
