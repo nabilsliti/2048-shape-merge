@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
 
@@ -36,7 +36,7 @@ final iapInitProvider = FutureProvider<void>((ref) async {
       if (premium.$2 > 0) notifier.addJokers(JokerType.evolution, premium.$2);
       if (premium.$3 > 0) notifier.addJokers(JokerType.megaBomb, premium.$3);
     }
-    debugPrint('💰 Delivered $productId: free×$freeAmount, radar×${premium?.$1}, evo×${premium?.$2}, mega×${premium?.$3}');
+    const AppLogger('IAP').info('Delivered $productId: free×$freeAmount, radar×${premium?.$1}, evo×${premium?.$2}, mega×${premium?.$3}');
   };
 
   await iap.initialize(storage);

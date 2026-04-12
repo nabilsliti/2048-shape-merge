@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shape_merge/core/constants/ad_units.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
 
 /// Persistent shell that keeps a single [AdBannerWidget] alive across routes.
@@ -60,7 +61,7 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget> {
           if (mounted) setState(() => _isLoaded = true);
         },
         onAdFailedToLoad: (ad, error) {
-          debugPrint('Banner ad failed to load: $error');
+          const AppLogger('Ads').warning('Banner ad failed to load: $error');
           ad.dispose();
           _bannerAd = null;
         },

@@ -1,7 +1,9 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/firestore_service.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
+
+const _log = AppLogger('XP');
 
 /// XP and level management.
 /// Formula: xpRequired(level) = floor(100 * level^1.4)
@@ -59,7 +61,7 @@ class ProgressionService {
     await storage.setCurrentXP(currentXP);
     await storage.setTotalXP(totalXP);
 
-    debugPrint('✅ XP guest: +$xpToAdd → level $level ($currentXP XP)');
+    _log.info('XP guest: +$xpToAdd → level $level ($currentXP XP)');
     return (level: level, currentXP: currentXP, leveledUp: levelsGained);
   }
 
@@ -89,7 +91,7 @@ class ProgressionService {
     try {
       await firestore.updateXP(uid, level: level, currentXP: xp, totalXP: total);
     } catch (e) {
-      debugPrint('❌ XP Firestore update failed: $e');
+      _log.error('Firestore update failed', error: e);
     }
 
     return (level: level, currentXP: xp, leveledUp: levelsGained);

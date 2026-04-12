@@ -1,8 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
+
+const _log = AppLogger('IAP');
 
 // ──────────────────────────────────────────────────────────────
 // Product catalogue
@@ -88,7 +90,7 @@ class IapService {
   Future<void> initialize(LocalStorageService storage) async {
     storeAvailable = await _iap.isAvailable();
     if (!storeAvailable) {
-      debugPrint('💰 IAP: store not available');
+      _log.warning('Store not available');
       return;
     }
 
@@ -97,7 +99,7 @@ class IapService {
     _sub = _iap.purchaseStream.listen(
       (updates) => _onPurchaseUpdates(updates, storage),
       onError: (e) {
-        debugPrint('💰 IAP stream error: $e');
+        _log.error('Purchase stream error', error: e);
         onStatusChanged?.call(const IapResult(
           status: IapStatus.error,
           errorMessage: 'Purchase stream error',
@@ -106,16 +108,16 @@ class IapService {
     );
 
     final response = await _iap.queryProductDetails(IapProducts.allIds);
-    debugPrint('💰 IAP: queried ${IapProducts.allIds}, found ${response.productDetails.length}, notFound ${response.notFoundIDs}');
+    _log.debug('Queried ${IapProducts.allIds}, found ${response.productDetails.length}, notFound ${response.notFoundIDs}');
     if (response.notFoundIDs.isNotEmpty) {
-      debugPrint('💰 IAP: products not found → ${response.notFoundIDs}');
+      _log.warning('Products not found: ${response.notFoundIDs}');
     }
     for (final p in response.productDetails) {
       products[p.id] = p;
-      debugPrint('💰 IAP: loaded ${p.id} → ${p.price}');
+      _log.debug('Loaded ${p.id} → ${p.price}');
     }
     if (products.isEmpty) {
-      debugPrint('💰 IAP: ⚠️ NO products loaded! Check Play Console product IDs and app signing.');
+      _log.error('NO products loaded! Check Play Console product IDs and app signing.');
     }
   }
 
@@ -146,7 +148,7 @@ class IapService {
         return await _iap.buyConsumable(purchaseParam: param);
       }
     } catch (e) {
-      debugPrint('💰 IAP buy error: $e');
+      _log.error('Buy failed for $productId', error: e);
       onStatusChanged?.call(IapResult(
         status: IapStatus.error,
         productId: productId,
@@ -161,7 +163,7 @@ class IapService {
     try {
       await _iap.restorePurchases();
     } catch (e) {
-      debugPrint('💰 Restore error: $e');
+      _log.error('Restore failed', error: e);
       onStatusChanged?.call(IapResult(
         status: IapStatus.error,
         errorMessage: 'Restore failed',
@@ -182,7 +184,7 @@ class IapService {
     LocalStorageService storage,
   ) {
     for (final p in updates) {
-      debugPrint('💰 IAP update: ${p.productID} → ${p.status} error=${p.error?.message} code=${p.error?.code} details=${p.error?.details}');
+      _log.debug('Update: ${p.productID} → ${p.status} error=${p.error?.message}');
 
       switch (p.status) {
         case PurchaseStatus.pending:

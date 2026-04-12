@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
 import 'package:shape_merge/game/models/game_state.dart';
@@ -110,7 +111,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final bestForLeaderboard = gameState.score > gameState.bestScore
         ? gameState.score
         : gameState.bestScore;
-    debugPrint('🎯 _submitScore called: score=$bestForLeaderboard (game=${gameState.score}, best=${gameState.bestScore}), uid=${user.uid}');
+    const AppLogger('Leaderboard').debug('submitScore: score=$bestForLeaderboard (game=${gameState.score}, best=${gameState.bestScore}), uid=${user.uid}');
     final now = DateTime.now();
     final weekNum = ((now.difference(DateTime(now.year, 1, 1)).inDays + DateTime(now.year, 1, 1).weekday - 1) ~/ 7) + 1;
     final weekKey = '${now.year}-W${weekNum.toString().padLeft(2, '0')}';

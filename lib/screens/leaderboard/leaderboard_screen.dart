@@ -1,13 +1,13 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 
@@ -17,15 +17,17 @@ import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 import 'package:shape_merge/screens/settings/profile_dialog.dart';
 
+const _log = AppLogger('Leaderboard');
+
 void _debugFirestore() async {
   try {
     final snap = await FirebaseFirestore.instance.collection('leaderboard').get();
-    debugPrint('🔥 Direct Firestore read: ${snap.docs.length} docs');
+    _log.debug('Direct Firestore read: ${snap.docs.length} docs');
     for (final doc in snap.docs) {
-      debugPrint('  📄 ${doc.id}: ${doc.data()}');
+      _log.debug('  ${doc.id}: ${doc.data()}');
     }
   } catch (e) {
-    debugPrint('🔥❌ Direct Firestore read FAILED: $e');
+    _log.error('Direct Firestore read FAILED', error: e);
   }
 }
 
@@ -186,7 +188,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
           Expanded(
             child: leaderboard.when(
               data: (entries) {
-                debugPrint('📊 Leaderboard data: ${entries.length} entries');
+                _log.debug('Leaderboard data: ${entries.length} entries');
 
                 if (entries.isEmpty) {
                   _debugFirestore();

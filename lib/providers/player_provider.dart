@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/models/player.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
@@ -30,7 +30,8 @@ final playerProvider = FutureProvider<Player?>((ref) async {
       totalXP: storage.totalXP,
     );
     await firestoreService.savePlayer(player);
-    debugPrint('✅ New player created from local data: bestScore=${player.bestScore}, level=${player.level}');
+    const _log = AppLogger('Game');
+    _log.info('New player created from local data: bestScore=${player.bestScore}, level=${player.level}');
     return player;
   }
 
@@ -65,7 +66,7 @@ final playerProvider = FutureProvider<Player?>((ref) async {
 
     if (needsUpdate) {
       await firestoreService.savePlayer(updated);
-      debugPrint('✅ Migration v2: jokers/noAds/rewardClaimed migrated to Firestore');
+      const AppLogger('Game').info('Migration v2: jokers/noAds/rewardClaimed migrated to Firestore');
       player = updated;
     }
     await storage.setMigrationV2Done();

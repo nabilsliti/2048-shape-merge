@@ -1,6 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
+
+const _log = AppLogger('Auth');
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -19,17 +21,17 @@ class AuthService {
   Future<UserCredential?> signInWithGoogle() async {
     lastError = null;
     try {
-      debugPrint('🔐 Google Sign-In: starting (explicit serverClientId)...');
+      _log.info('Google Sign-In: starting...');
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         lastError = 'Sign-In cancelled (googleUser==null)';
-        debugPrint('🔐 Google Sign-In: $lastError');
+        _log.warning('Google Sign-In: $lastError');
         return null;
       }
-      debugPrint('🔐 Google Sign-In: got user ${googleUser.email}');
+      _log.info('Google Sign-In: got user ${googleUser.email}');
 
       final googleAuth = await googleUser.authentication;
-      debugPrint('🔐 Google Sign-In: got auth, idToken=${googleAuth.idToken != null}, accessToken=${googleAuth.accessToken != null}');
+      _log.debug('Google Sign-In: got auth, idToken=${googleAuth.idToken != null}, accessToken=${googleAuth.accessToken != null}');
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -37,12 +39,11 @@ class AuthService {
       );
 
       final result = await _auth.signInWithCredential(credential);
-      debugPrint('🔐 Google Sign-In: success! uid=${result.user?.uid}');
+      _log.info('Google Sign-In: success! uid=${result.user?.uid}');
       return result;
     } catch (e, st) {
       lastError = e.toString();
-      debugPrint('🔐 Google Sign-In ERROR: $e');
-      debugPrint('🔐 Stack: $st');
+      _log.error('Google Sign-In failed', error: e, stack: st);
       return null;
     }
   }

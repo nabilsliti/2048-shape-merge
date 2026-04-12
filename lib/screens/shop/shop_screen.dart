@@ -9,6 +9,7 @@ import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 
@@ -18,6 +19,8 @@ import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
+
+const _log = AppLogger('Shop');
 
 /// Standalone screen (used by router for /shop fallback).
 class ShopScreen extends StatelessWidget {
@@ -389,7 +392,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     // Small pause then add joker → triggers the animation in view
     await Future.delayed(const Duration(milliseconds: 150));
     if (mounted) {
-      debugPrint('🎯 Adding joker: $chosenType');
+      _log.debug('Adding joker: $chosenType');
       ref.read(gameStateProvider.notifier).addJokers(chosenType);
     }
   }
@@ -444,7 +447,7 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
   @override
   void didUpdateWidget(covariant _JokerStock oldWidget) {
     super.didUpdateWidget(oldWidget);
-    debugPrint('🔄 didUpdateWidget: old=${oldWidget.count} new=${widget.count}');
+    _log.debug('didUpdateWidget: old=${oldWidget.count} new=${widget.count}');
     if (widget.count > oldWidget.count) {
       _prevCount = oldWidget.count;
       _generateSparkles();

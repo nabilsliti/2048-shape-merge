@@ -1,8 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:shape_merge/core/models/player.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/firestore_service.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
+
+const _log = AppLogger('Streak');
 
 /// Dual-mode streak logic.
 /// Guest  → reads/writes SharedPreferences via LocalStorageService.
@@ -111,7 +113,7 @@ class StreakService {
     );
 
     await _saveToFirestore(player.uid, merged, firestore);
-    debugPrint('✅ Streak migrated: local=$localStreak, firestore=${player.currentStreak} → merged=${merged.currentStreak}');
+    _log.info('Migrated: local=$localStreak, firestore=${player.currentStreak} → merged=${merged.currentStreak}');
   }
 
   // ─────────────────────────────────────────────
@@ -196,7 +198,7 @@ class StreakService {
     try {
       await firestore.updateStreak(uid, streak);
     } catch (e) {
-      debugPrint('❌ StreakService: Firestore save failed: $e');
+      _log.error('Firestore save failed', error: e);
     }
   }
 }

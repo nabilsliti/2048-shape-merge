@@ -1,6 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
+
+const _log = AppLogger('Audio');
 
 /// Centralised audio service using flutter_soloud.
 ///
@@ -58,7 +60,7 @@ class AudioService {
         await _soloud.init();
       }
     } catch (e) {
-      debugPrint('⚠️ SoLoud init failed: $e');
+      _log.warning('SoLoud init failed', error: e);
       return false;
     }
 
@@ -70,11 +72,11 @@ class AudioService {
           _sources[entry.key] = await _soloud.loadAsset(entry.value);
           loaded++;
         } catch (e) {
-          debugPrint('⚠️ Failed to load ${entry.key}: $e');
+          _log.warning('Failed to load ${entry.key}', error: e);
         }
       }
       _preloaded = true;
-      debugPrint('🔊 Audio ready: $loaded/${_sfxFiles.length} sounds loaded');
+      _log.info('Ready: $loaded/${_sfxFiles.length} sounds loaded');
     }
 
     return _soloud.isInitialized;

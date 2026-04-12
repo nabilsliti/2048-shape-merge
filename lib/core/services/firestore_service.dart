@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/models/player.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
+
+const _log = AppLogger('Firestore');
 
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
@@ -22,12 +24,12 @@ class FirestoreService {
 
       if (!doc.exists || ((doc.data()?['score'] as num?)?.toInt() ?? 0) < entry.score) {
         await docRef.set(entry.toFirestore());
-        debugPrint('✅ Score submitted: ${entry.score} for ${entry.uid}');
+        _log.info('Score submitted: ${entry.score} for ${entry.uid}');
       } else {
-        debugPrint('⏭️ Score ${entry.score} not higher than existing');
+        _log.debug('Score ${entry.score} not higher than existing');
       }
     } catch (e) {
-      debugPrint('❌ Score submission failed: $e');
+      _log.error('Score submission failed', error: e);
     }
   }
 
@@ -71,7 +73,7 @@ class FirestoreService {
         'totalMerges': FieldValue.increment(mergesThisGame),
       }, SetOptions(merge: true));
     } catch (e) {
-      debugPrint('❌ incrementPlayerStats failed: $e');
+      _log.error('incrementPlayerStats failed', error: e);
     }
   }
 
@@ -89,7 +91,7 @@ class FirestoreService {
         'bestScore': bestScore,
       }, SetOptions(merge: true));
     } catch (e) {
-      debugPrint('❌ updateBestScore failed: $e');
+      _log.error('updateBestScore failed', error: e);
     }
   }
 
@@ -100,7 +102,7 @@ class FirestoreService {
         return (doc.data()?['score'] as num?)?.toInt() ?? 0;
       }
     } catch (e) {
-      debugPrint('⚠️ getLeaderboardScore failed: $e');
+      _log.warning('getLeaderboardScore failed', error: e);
     }
     return 0;
   }
@@ -122,7 +124,7 @@ class FirestoreService {
       final doc = await _dailyChallengesRef(uid).get();
       return doc.exists ? doc.data() : null;
     } catch (e) {
-      debugPrint('❌ getDailyChallenges failed: $e');
+      _log.error('getDailyChallenges failed', error: e);
       return null;
     }
   }
@@ -131,7 +133,7 @@ class FirestoreService {
     try {
       await _dailyChallengesRef(uid).set(state.toMap().cast<String, Object?>());
     } catch (e) {
-      debugPrint('❌ saveDailyChallenges failed: $e');
+      _log.error('saveDailyChallenges failed', error: e);
     }
   }
 
@@ -142,19 +144,19 @@ class FirestoreService {
       // 1. Delete sub-document dailyChallenges
       await _dailyChallengesRef(uid).delete();
     } catch (e) {
-      debugPrint('⚠️ deleteAccount: dailyChallenges removal failed: $e');
+      _log.warning('deleteAccount: dailyChallenges removal failed', error: e);
     }
     try {
       // 2. Delete player document
       await _playerRef(uid).delete();
     } catch (e) {
-      debugPrint('⚠️ deleteAccount: player doc removal failed: $e');
+      _log.warning('deleteAccount: player doc removal failed', error: e);
     }
     try {
       // 3. Delete leaderboard entry
       await _leaderboardRef.doc(uid).delete();
     } catch (e) {
-      debugPrint('⚠️ deleteAccount: leaderboard entry removal failed: $e');
+      _log.warning('deleteAccount: leaderboard entry removal failed', error: e);
     }
   }
 
