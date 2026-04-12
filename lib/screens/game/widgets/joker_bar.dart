@@ -8,6 +8,7 @@ import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 
 class JokerBar extends ConsumerWidget {
@@ -203,6 +204,10 @@ class _JokerOrbState extends State<_JokerOrb>
               AudioService.instance.playButtonTap();
               widget.onTap();
             },
+      onLongPress: () {
+        HapticFeedback.mediumImpact();
+        _showJokerInfo(context, widget.jokerType);
+      },
       child: AnimatedBuilder(
         animation: Listenable.merge([_pulseCtrl, _scaleCtrl]),
         builder: (context, child) {
@@ -359,6 +364,106 @@ class _CountBadge extends StatelessWidget {
           style: AppTheme.titleStyle(AppTheme.fontMini).copyWith(
             color: count > 0 ? Colors.white : AppTheme.muted,
             height: 1.0,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Joker info popup (long-press) ──────────────────────────────
+
+void _showJokerInfo(BuildContext context, JokerType type) {
+  final l10n = AppLocalizations.of(context)!;
+  final color = JokerUI.color(type);
+
+  showDialog(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (_) => _JokerInfoPopup(
+      type: type,
+      color: color,
+      name: JokerUI.localizedLabel(type, l10n),
+      description: JokerUI.description(type, l10n),
+    ),
+  );
+}
+
+class _JokerInfoPopup extends StatelessWidget {
+  final JokerType type;
+  final Color color;
+  final String name;
+  final String description;
+
+  const _JokerInfoPopup({
+    required this.type,
+    required this.color,
+    required this.name,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pop(context),
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: Container(
+          width: 260,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTheme.panelBg,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            border: Border.all(color: color.withValues(alpha: 0.6), width: 2),
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 24),
+              const BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 4), blurRadius: 12),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color.withValues(alpha: 0.15),
+                  border: Border.all(color: color.withValues(alpha: 0.5), width: 2),
+                ),
+                child: Center(child: JokerUI.icon(type, size: 28)),
+              ),
+              const SizedBox(height: 12),
+              // Name
+              Text(
+                name,
+                style: AppTheme.titleStyle(AppTheme.fontBody).copyWith(color: color),
+              ),
+              if (type.isPremium) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.gold.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                    border: Border.all(color: AppTheme.gold.withValues(alpha: 0.4)),
+                  ),
+                  child: Text('★ PREMIUM', style: TextStyle(fontSize: AppTheme.fontMicro, color: AppTheme.gold, fontWeight: FontWeight.bold)),
+                ),
+              ],
+              const SizedBox(height: 12),
+              // Description
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: AppTheme.fontSmall,
+                  color: Colors.white.withValues(alpha: 0.85),
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
         ),
       ),

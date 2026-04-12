@@ -34,16 +34,18 @@ class AdBannerWidget extends ConsumerStatefulWidget {
 class _AdBannerWidgetState extends ConsumerState<AdBannerWidget> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
+  bool _isLoading = false;
 
   static String get _adUnitId => AdUnits.banner;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_bannerAd == null) _loadAd();
+    if (_bannerAd == null && !_isLoading) _loadAd();
   }
 
   void _loadAd() async {
+    _isLoading = true;
     final width = MediaQuery.of(context).size.width.truncate();
     final adSize = await AdSize.getAnchoredAdaptiveBannerAdSize(
       Orientation.portrait,
@@ -64,6 +66,7 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget> {
           const AppLogger('Ads').warning('Banner ad failed to load: $error');
           ad.dispose();
           _bannerAd = null;
+          _isLoading = false;
         },
       ),
     )..load();

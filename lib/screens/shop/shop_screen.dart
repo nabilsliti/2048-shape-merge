@@ -1865,18 +1865,24 @@ class _JokerChoicePanelState extends State<_JokerChoicePanel> {
               _JokerChoiceButton(
                 icon: JokerUI.icon(JokerType.bomb, size: 36),
                 color: JokerUI.color(JokerType.bomb),
+                label: JokerUI.localizedLabel(JokerType.bomb, l10n),
+                description: JokerUI.description(JokerType.bomb, l10n),
                 selected: _selected == JokerType.bomb,
                 onTap: () => setState(() => _selected = JokerType.bomb),
               ),
               _JokerChoiceButton(
                 icon: JokerUI.icon(JokerType.wildcard, size: 36),
                 color: JokerUI.color(JokerType.wildcard),
+                label: JokerUI.localizedLabel(JokerType.wildcard, l10n),
+                description: JokerUI.description(JokerType.wildcard, l10n),
                 selected: _selected == JokerType.wildcard,
                 onTap: () => setState(() => _selected = JokerType.wildcard),
               ),
               _JokerChoiceButton(
                 icon: JokerUI.icon(JokerType.reducer, size: 30),
                 color: JokerUI.color(JokerType.reducer),
+                label: JokerUI.localizedLabel(JokerType.reducer, l10n),
+                description: JokerUI.description(JokerType.reducer, l10n),
                 selected: _selected == JokerType.reducer,
                 onTap: () => setState(() => _selected = JokerType.reducer),
               ),
@@ -1912,54 +1918,88 @@ class _JokerChoicePanelState extends State<_JokerChoicePanel> {
 class _JokerChoiceButton extends StatelessWidget {
   final Widget icon;
   final Color color;
+  final String label;
+  final String description;
   final bool selected;
   final VoidCallback onTap;
-  const _JokerChoiceButton({required this.icon, required this.color, required this.selected, required this.onTap});
+  const _JokerChoiceButton({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
-        scale: selected ? 1.2 : 1.0,
+        scale: selected ? 1.05 : 1.0,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutBack,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: selected ? color.withValues(alpha: 0.2) : AppTheme.panelBg,
-                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                border: Border.all(color: color, width: selected ? 3 : 1.5),
-                boxShadow: [
-                  BoxShadow(color: color.withValues(alpha: selected ? 0.6 : 0.3), blurRadius: selected ? 20 : 10),
-                  const BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 3)),
+        child: SizedBox(
+          width: 100,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: selected ? color.withValues(alpha: 0.2) : AppTheme.panelBg,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                      border: Border.all(color: color, width: selected ? 3 : 1.5),
+                      boxShadow: [
+                        BoxShadow(color: color.withValues(alpha: selected ? 0.6 : 0.3), blurRadius: selected ? 20 : 10),
+                        const BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 3)),
+                      ],
+                    ),
+                    child: icon,
+                  ),
+                  if (selected)
+                    Positioned(
+                      top: -8,
+                      right: -8,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: color,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8),
+                          ],
+                        ),
+                        child: const Icon(Icons.check, color: Colors.white, size: 14),
+                      ),
+                    ),
                 ],
               ),
-              child: icon,
-            ),
-            if (selected)
-              Positioned(
-                top: -8,
-                right: -8,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: color,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8),
-                    ],
-                  ),
-                  child: const Icon(Icons.check, color: Colors.white, size: 14),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: AppTheme.titleStyle(AppTheme.fontSmall).copyWith(color: color),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: AppTheme.fontMicro,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  height: 1.3,
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

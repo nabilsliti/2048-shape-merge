@@ -40,6 +40,15 @@ class AppLogger {
   void error(String message, {Object? error, StackTrace? stack}) =>
       _dispatch(LogLevel.error, message, error: error, stack: stack);
 
+  // ── ANSI colors ──────────────────────────────────────────────────────────
+
+  static const _reset = '\x1B[0m';
+  static const _yellow = '\x1B[33m';
+  static const _red = '\x1B[31m';
+  static const _dim = '\x1B[2m';
+
+  static const _tagWidth = 10;
+
   // ── Internals ───────────────────────────────────────────────────────────
 
   void _dispatch(
@@ -50,19 +59,44 @@ class AppLogger {
   }) {
     if (kDebugMode) {
       if (level.index >= debugMinLevel.index) {
+        final now = DateTime.now();
+        final ts = '${_two(now.hour)}:${_two(now.minute)}'
+            ':${_two(now.second)}.${_three(now.millisecond)}';
+
+        final paddedTag = tag.padRight(_tagWidth);
+
         final prefix = switch (level) {
           LogLevel.debug => '🔍',
           LogLevel.info => 'ℹ️',
           LogLevel.warning => '⚠️',
           LogLevel.error => '❌',
         };
-        dev.log(
-          '$prefix [$tag] $message',
-          name: tag,
-          level: level.index * 300, // debug=0, info=300, warn=600, err=900
-          error: error,
-          stackTrace: stack,
-        );
+
+        final errorSuffix =
+            error != null ? ' $_dim── $error$_reset' : '';
+
+        final line = switch (level) {
+          LogLevel.warning =>
+            '$_dim$ts$_reset │ $_yellow$prefix $paddedTag$_reset │ $_yellow$message$errorSuffix$_reset',
+          LogLevel.error =>
+            '$_dim$ts$_reset │ $_red$prefix $paddedTag$_reset │ $_red$message$errorSuffix$_reset',
+          _ =>
+            '$_dim$ts$_reset │ $prefix $paddedTag │ $message$errorSuffix',
+        };
+
+        // debugPrint supports ANSI codes in flutter run terminal
+        debugPrint(line);
+
+        // Forward stack traces via dev.log for clickable links in IDE
+        if (stack != null) {
+          dev.log(
+            '[$tag] $message',
+            name: tag,
+            level: level.index * 300,
+            error: level == LogLevel.error ? error : null,
+            stackTrace: stack,
+          );
+        }
       }
     } else {
       // Release: forward warnings and errors to Crashlytics
@@ -80,4 +114,7 @@ class AppLogger {
       }
     }
   }
+
+  static String _two(int n) => n.toString().padLeft(2, '0');
+  static String _three(int n) => n.toString().padLeft(3, '0');
 }

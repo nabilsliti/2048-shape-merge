@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
 /// Centralized joker icon + color config.
 /// All colors come from AppTheme — no Color literals here.
@@ -62,6 +63,28 @@ class JokerUI {
     JokerType.evolution => 'Évolution',
     JokerType.megaBomb  => 'MégaBombe',
   };
+
+  /// Localized joker name.
+  static String localizedLabel(JokerType type, AppLocalizations l10n) =>
+      switch (type) {
+        JokerType.bomb      => l10n.jokerBomb,
+        JokerType.wildcard  => l10n.jokerWildcard,
+        JokerType.reducer   => l10n.jokerReducer,
+        JokerType.radar     => l10n.jokerRadar,
+        JokerType.evolution => l10n.jokerEvolution,
+        JokerType.megaBomb  => l10n.jokerMegaBomb,
+      };
+
+  /// Localized joker description.
+  static String description(JokerType type, AppLocalizations l10n) =>
+      switch (type) {
+        JokerType.bomb      => l10n.jokerBombDesc,
+        JokerType.wildcard  => l10n.jokerWildcardDesc,
+        JokerType.reducer   => l10n.jokerReducerDesc,
+        JokerType.radar     => l10n.jokerRadarDesc,
+        JokerType.evolution => l10n.jokerEvolutionDesc,
+        JokerType.megaBomb  => l10n.jokerMegaBombDesc,
+      };
 
   static Color glowColor(JokerType type) {
     switch (type) {
