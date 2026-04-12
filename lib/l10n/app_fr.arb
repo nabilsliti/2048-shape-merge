@@ -230,5 +230,14 @@
     "placeholders": {
       "error": {"type": "String"}
     }
-  }
+  },
+  "jokerSuggestCriticalBomb": "Plateau presque plein ! Utilise une Bombe !",
+  "jokerSuggestCriticalReducer": "Plateau critique ! Réduis une forme !",
+  "jokerSuggestHighBomb": "Ça se remplit… Bombe pour libérer de la place ?",
+  "jokerSuggestMegaBomb": "Plein de formes du même niveau — Méga Bombe !",
+  "jokerSuggestRadar": "Bloqué ? Le Radar révèle les fusions !",
+  "jokerSuggestWildcard": "Bloqué ? Un Wildcard peut débloquer !",
+  "jokerSuggestEvolution": "Forme isolée — Évolution pour la booster !",
+  "jokerSuggestReducer": "Forme isolée — le Réducteur peut aider !",
+  "jokerSuggestUse": "Utiliser"
 }

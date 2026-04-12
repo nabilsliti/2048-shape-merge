@@ -542,4 +542,36 @@ class AppLocalizationsFr extends AppLocalizations {
   String signInError(String error) {
     return 'Erreur de connexion : $error';
   }
+
+  @override
+  String get jokerSuggestCriticalBomb =>
+      'Plateau presque plein ! Utilise une Bombe !';
+
+  @override
+  String get jokerSuggestCriticalReducer =>
+      'Plateau critique ! Réduis une forme !';
+
+  @override
+  String get jokerSuggestHighBomb =>
+      'Ça se remplit… Bombe pour libérer de la place ?';
+
+  @override
+  String get jokerSuggestMegaBomb =>
+      'Plein de formes du même niveau — Méga Bombe !';
+
+  @override
+  String get jokerSuggestRadar => 'Bloqué ? Le Radar révèle les fusions !';
+
+  @override
+  String get jokerSuggestWildcard => 'Bloqué ? Un Wildcard peut débloquer !';
+
+  @override
+  String get jokerSuggestEvolution =>
+      'Forme isolée — Évolution pour la booster !';
+
+  @override
+  String get jokerSuggestReducer => 'Forme isolée — le Réducteur peut aider !';
+
+  @override
+  String get jokerSuggestUse => 'Utiliser';
 }

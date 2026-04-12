@@ -22,6 +22,8 @@ import 'package:shape_merge/screens/game/widgets/game_board.dart';
 import 'package:shape_merge/screens/game/widgets/hud_bar.dart';
 import 'package:shape_merge/screens/game/widgets/joker_bar.dart';
 import 'package:shape_merge/screens/game/widgets/joker_effect.dart';
+import 'package:shape_merge/screens/game/widgets/joker_hint_banner.dart';
+import 'package:shape_merge/screens/game/widgets/joker_suggestion_tooltip.dart';
 import 'package:shape_merge/screens/game/widgets/merge_effect.dart';
 import 'package:shape_merge/screens/game/widgets/score_popup.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
@@ -30,6 +32,14 @@ import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
 
+  /// Pre-loaded in main() before runApp — synchronously available.
+  static bool tutorialSeen = false;
+
+  static Future<void> preload() async {
+    final prefs = await SharedPreferences.getInstance();
+    tutorialSeen = prefs.getBool('tutorial_seen') ?? false;
+  }
+
   @override
   ConsumerState<GameScreen> createState() => _GameScreenState();
 }
@@ -37,7 +47,7 @@ class GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<GameScreen> {
   final List<Widget> _effects = [];
   bool _initialized = false;
-  bool _showTutorial = false;
+  late bool _showTutorial = !GameScreen.tutorialSeen;
   bool _scoreSubmitted = false;
   static const _tutorialSeenKey = 'tutorial_seen';
 
@@ -48,10 +58,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final prefs = await SharedPreferences.getInstance();
-        final seen = prefs.getBool(_tutorialSeenKey) ?? false;
 
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         // Load persisted best score for comparison — use gameState (loaded
         // from Firestore for signed-in users) as single source of truth.
         _lastPersistedBest = ref.read(gameStateProvider).bestScore;
@@ -79,9 +87,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           },
         );
 
-        if (!seen && mounted) {
-          setState(() => _showTutorial = true);
-        } else {
+        if (!mounted) return;
+        if (!_showTutorial) {
           ref.read(gameStateProvider.notifier).startNewGame();
         }
       });
@@ -91,6 +98,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _dismissTutorial() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_tutorialSeenKey, true);
+    GameScreen.tutorialSeen = true;
     if (!mounted) return;
     setState(() => _showTutorial = false);
     _lastPersistedBest = ref.read(gameStateProvider).bestScore;
@@ -283,6 +291,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
           ),
           // Overlays
+          const JokerHintBanner(),
+          const JokerSuggestionTooltip(),
           if (_showTutorial)
             TutorialOverlay(onDismiss: _dismissTutorial),
           if (!_showTutorial && gameState.isPaused)

@@ -18,6 +18,7 @@ class JokerBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMode = ref.watch(jokerModeProvider);
+    final suggestedType = ref.watch(jokerSuggestionProvider);
     final inv = inventory;
 
     return Padding(
@@ -26,25 +27,31 @@ class JokerBar extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _JokerOrb(
+            jokerType: JokerType.bomb,
             icon: JokerUI.icon(JokerType.bomb, size: 18),
             count: inv.bomb,
             isActive: currentMode == JokerMode.bomb,
+            isSuggested: suggestedType == JokerType.bomb,
             glowColor: JokerUI.glowColor(JokerType.bomb),
             ringColors: JokerUI.ringColors(JokerType.bomb),
             onTap: () => _toggle(ref, JokerMode.bomb),
           ),
           _JokerOrb(
+            jokerType: JokerType.wildcard,
             icon: JokerUI.icon(JokerType.wildcard, size: 18),
             count: inv.wildcard,
             isActive: currentMode == JokerMode.wildcard,
+            isSuggested: suggestedType == JokerType.wildcard,
             glowColor: JokerUI.glowColor(JokerType.wildcard),
             ringColors: JokerUI.ringColors(JokerType.wildcard),
             onTap: () => _toggle(ref, JokerMode.wildcard),
           ),
           _JokerOrb(
+            jokerType: JokerType.reducer,
             icon: JokerUI.icon(JokerType.reducer, size: 16),
             count: inv.reducer,
             isActive: currentMode == JokerMode.reducer,
+            isSuggested: suggestedType == JokerType.reducer,
             glowColor: JokerUI.glowColor(JokerType.reducer),
             ringColors: JokerUI.ringColors(JokerType.reducer),
             onTap: () => _toggle(ref, JokerMode.reducer),
@@ -61,27 +68,33 @@ class JokerBar extends ConsumerWidget {
             ],
           ),
           _JokerOrb(
+            jokerType: JokerType.radar,
             icon: JokerUI.icon(JokerType.radar, size: 16),
             count: inv.radar,
             isActive: currentMode == JokerMode.radar,
+            isSuggested: suggestedType == JokerType.radar,
             glowColor: JokerUI.glowColor(JokerType.radar),
             ringColors: JokerUI.ringColors(JokerType.radar),
             onTap: () => _activateRadar(ref),
             isPremium: true,
           ),
           _JokerOrb(
+            jokerType: JokerType.evolution,
             icon: JokerUI.icon(JokerType.evolution, size: 16),
             count: inv.evolution,
             isActive: currentMode == JokerMode.evolution,
+            isSuggested: suggestedType == JokerType.evolution,
             glowColor: JokerUI.glowColor(JokerType.evolution),
             ringColors: JokerUI.ringColors(JokerType.evolution),
             onTap: () => _toggle(ref, JokerMode.evolution),
             isPremium: true,
           ),
           _JokerOrb(
+            jokerType: JokerType.megaBomb,
             icon: JokerUI.icon(JokerType.megaBomb, size: 16),
             count: inv.megaBomb,
             isActive: currentMode == JokerMode.megaBomb,
+            isSuggested: suggestedType == JokerType.megaBomb,
             glowColor: JokerUI.glowColor(JokerType.megaBomb),
             ringColors: JokerUI.ringColors(JokerType.megaBomb),
             onTap: () => _toggle(ref, JokerMode.megaBomb),
@@ -109,18 +122,22 @@ class JokerBar extends ConsumerWidget {
 }
 
 class _JokerOrb extends StatefulWidget {
+  final JokerType jokerType;
   final Widget icon;
   final int count;
   final bool isActive;
+  final bool isSuggested;
   final Color glowColor;
   final List<Color> ringColors;
   final VoidCallback onTap;
   final bool isPremium;
 
   const _JokerOrb({
+    required this.jokerType,
     required this.icon,
     required this.count,
     required this.isActive,
+    required this.isSuggested,
     required this.glowColor,
     required this.ringColors,
     required this.onTap,
@@ -176,7 +193,7 @@ class _JokerOrbState extends State<_JokerOrb>
   @override
   Widget build(BuildContext context) {
     final disabled = widget.count <= 0;
-    final orbSize = 34.0;
+    const orbSize = 34.0;
 
     return GestureDetector(
       onTap: disabled
@@ -214,12 +231,12 @@ class _JokerOrbState extends State<_JokerOrb>
                           boxShadow: [
                             BoxShadow(
                               color: widget.glowColor.withValues(
-                                alpha: widget.isActive
+                                alpha: (widget.isActive || widget.isSuggested)
                                     ? 0.5 + pulse * 0.2
                                     : 0.15,
                               ),
-                              blurRadius: widget.isActive ? 16 + pulse * 6 : 8,
-                              spreadRadius: widget.isActive ? 2 : 0,
+                              blurRadius: (widget.isActive || widget.isSuggested) ? 16 + pulse * 6 : 8,
+                              spreadRadius: (widget.isActive || widget.isSuggested) ? 2 : 0,
                             ),
                           ],
                         ),
@@ -252,10 +269,10 @@ class _JokerOrbState extends State<_JokerOrb>
                         border: Border.all(
                           color: disabled
                               ? Colors.white.withValues(alpha: 0.06)
-                              : widget.isActive
+                              : (widget.isActive || widget.isSuggested)
                                   ? widget.ringColors[0].withValues(alpha: 0.9)
                                   : widget.ringColors[1].withValues(alpha: 0.4),
-                          width: widget.isActive ? 2.5 : 1.5,
+                          width: (widget.isActive || widget.isSuggested) ? 2.5 : 1.5,
                         ),
                       ),
                       child: Opacity(

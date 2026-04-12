@@ -28,6 +28,9 @@ final jokerModeProvider = StateProvider<JokerMode>((_) => JokerMode.none);
 // Map of shape ID → group index highlighted by radar
 final radarHighlightProvider = StateProvider<Map<String, int>>((_) => {});
 
+/// Which joker type the suggestion engine recommends right now (null = none).
+final jokerSuggestionProvider = StateProvider<JokerType?>((_) => null);
+
 class GameStateNotifier extends StateNotifier<GameState> {
   GameStateNotifier() : super(const GameState());
 

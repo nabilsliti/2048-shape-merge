@@ -230,5 +230,14 @@
     "placeholders": {
       "error": {"type": "String"}
     }
-  }
+  },
+  "jokerSuggestCriticalBomb": "Board almost full! Use a Bomb!",
+  "jokerSuggestCriticalReducer": "Critical! Reduce a shape!",
+  "jokerSuggestHighBomb": "Getting crowded… Bomb to clear space?",
+  "jokerSuggestMegaBomb": "Many same-level shapes — Mega Bomb!",
+  "jokerSuggestRadar": "Stuck? Radar reveals merges!",
+  "jokerSuggestWildcard": "Stuck? A Wildcard can help!",
+  "jokerSuggestEvolution": "Lonely shape — Evolution to boost it!",
+  "jokerSuggestReducer": "Lonely shape — Reducer can help!",
+  "jokerSuggestUse": "Use"
 }

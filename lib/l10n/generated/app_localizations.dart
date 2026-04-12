@@ -1039,6 +1039,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign-in error: {error}'**
   String signInError(String error);
+
+  /// No description provided for @jokerSuggestCriticalBomb.
+  ///
+  /// In en, this message translates to:
+  /// **'Board almost full! Use a Bomb!'**
+  String get jokerSuggestCriticalBomb;
+
+  /// No description provided for @jokerSuggestCriticalReducer.
+  ///
+  /// In en, this message translates to:
+  /// **'Critical! Reduce a shape!'**
+  String get jokerSuggestCriticalReducer;
+
+  /// No description provided for @jokerSuggestHighBomb.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting crowded… Bomb to clear space?'**
+  String get jokerSuggestHighBomb;
+
+  /// No description provided for @jokerSuggestMegaBomb.
+  ///
+  /// In en, this message translates to:
+  /// **'Many same-level shapes — Mega Bomb!'**
+  String get jokerSuggestMegaBomb;
+
+  /// No description provided for @jokerSuggestRadar.
+  ///
+  /// In en, this message translates to:
+  /// **'Stuck? Radar reveals merges!'**
+  String get jokerSuggestRadar;
+
+  /// No description provided for @jokerSuggestWildcard.
+  ///
+  /// In en, this message translates to:
+  /// **'Stuck? A Wildcard can help!'**
+  String get jokerSuggestWildcard;
+
+  /// No description provided for @jokerSuggestEvolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Lonely shape — Evolution to boost it!'**
+  String get jokerSuggestEvolution;
+
+  /// No description provided for @jokerSuggestReducer.
+  ///
+  /// In en, this message translates to:
+  /// **'Lonely shape — Reducer can help!'**
+  String get jokerSuggestReducer;
+
+  /// No description provided for @jokerSuggestUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get jokerSuggestUse;
 }
 
 class _AppLocalizationsDelegate

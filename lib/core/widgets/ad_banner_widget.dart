@@ -1,10 +1,8 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:shape_merge/core/constants/ad_units.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
 
 /// Persistent shell that keeps a single [AdBannerWidget] alive across routes.
@@ -36,17 +34,7 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
 
-  static String get _adUnitId {
-    if (kDebugMode) {
-      // Test ad unit IDs
-      return Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/6300978111'
-          : 'ca-app-pub-3940256099942544/2934735716';
-    }
-    return Platform.isAndroid
-        ? 'ca-app-pub-8640672469603981/7971837478'
-        : 'ca-app-pub-3940256099942544/2934735716'; // TODO: replace with real iOS ID
-  }
+  static String get _adUnitId => AdUnits.banner;
 
   @override
   void didChangeDependencies() {

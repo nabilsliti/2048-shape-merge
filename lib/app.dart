@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -93,9 +92,8 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
-        AudioService.instance.pauseMusic();
+        break;
       case AppLifecycleState.resumed:
-        AudioService.instance.resumeMusic();
         // Re-check streak when user brings the app to foreground (next day scenario)
         ref.read(streakProvider.notifier).checkAndUpdate();
         ref.read(dailyChallengeProvider.notifier).checkRenewal();

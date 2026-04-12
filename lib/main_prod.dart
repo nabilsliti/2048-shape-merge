@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'core/config/flavor_config.dart';
 import 'core/services/audio_service.dart';
+import 'screens/game/game_screen.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -22,6 +23,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await AudioService.instance.init();
+  await GameScreen.preload();
 
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 

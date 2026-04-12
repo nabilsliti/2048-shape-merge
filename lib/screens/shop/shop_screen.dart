@@ -112,7 +112,9 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
 
                   // ── ZÉRO PUB section ──
                   if (!noAds) ...[
-                    const _NoAdsSectionHeader(
+                    _SectionHeader(
+                      title: l10n.noAdsTitle,
+                      leading: const _NoAdsIcon(size: 22),
                       gradStart: AppTheme.gold,
                       gradEnd: AppTheme.victoryBadgeBot,
                     ),
@@ -352,7 +354,6 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
   }
 
   Future<void> _showJokerChoiceDialog(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context)!;
     final chosenType = await showDialog<JokerType>(
       context: context,
       barrierColor: Colors.transparent,
@@ -414,6 +415,7 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
   late final AnimationController _sparkles;
   late final AnimationController _plusOne;
   late final AnimationController _counterRoll;
+  late final Listenable _allAnimations;
 
   int _displayCount = 0;
   int _prevCount = 0;
@@ -426,21 +428,17 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
     super.initState();
     _displayCount = widget.count;
     _prevCount = widget.count;
-    _bounce = AnimationController(vsync: this, duration: const Duration(milliseconds: 600))
-      ..addListener(() => setState(() {}));
-    _ring = AnimationController(vsync: this, duration: const Duration(milliseconds: 700))
-      ..addListener(() => setState(() {}));
-    _sparkles = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
-      ..addListener(() => setState(() {}));
-    _plusOne = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
-      ..addListener(() => setState(() {}));
+    _bounce = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _ring = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    _sparkles = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _plusOne = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
     _counterRoll = AnimationController(vsync: this, duration: const Duration(milliseconds: 500))
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           _displayCount = widget.count;
         }
-      })
-      ..addListener(() => setState(() {}));
+      });
+    _allAnimations = Listenable.merge([_bounce, _ring, _sparkles, _plusOne, _counterRoll]);
   }
 
   @override
@@ -486,6 +484,9 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
 
   @override
   Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _allAnimations,
+      builder: (context, _) {
     // Bounce: elastic feel — scale 1→1.5→0.9→1
     final double bounceScale;
     if (_bounce.value < 0.3) {
@@ -639,6 +640,8 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
         ],
       ),
     );
+      },
+    );
   }
 }
 
@@ -783,100 +786,11 @@ class _NoAdsIconPainter extends CustomPainter {
 // ═══════════════════════════════════════════════════════════════
 // No-Ads section header
 // ═══════════════════════════════════════════════════════════════
-class _NoAdsSectionHeader extends StatefulWidget {
-  final Color gradStart, gradEnd;
-  const _NoAdsSectionHeader({required this.gradStart, required this.gradEnd});
-
-  @override
-  State<_NoAdsSectionHeader> createState() => _NoAdsSectionHeaderState();
-}
-
-class _NoAdsSectionHeaderState extends State<_NoAdsSectionHeader> with SingleTickerProviderStateMixin {
-  late final AnimationController _shimmer;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmer = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
-  }
-
-  @override
-  void dispose() { _shimmer.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return AnimatedBuilder(
-      animation: _shimmer,
-      builder: (context, _) {
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                widget.gradStart.withValues(alpha: 0.15),
-                AppTheme.sectionBg,
-                widget.gradEnd.withValues(alpha: 0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const _NoAdsIcon(size: 22),
-                  const SizedBox(width: 8),
-                  ShaderMask(
-                    shaderCallback: (bounds) {
-                      final offset = _shimmer.value * bounds.width * 2 - bounds.width * 0.5;
-                      return LinearGradient(
-                        colors: [Colors.white, widget.gradStart, Colors.white.withValues(alpha: 0.95), widget.gradEnd, Colors.white],
-                        stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
-                        transform: GradientRotation(offset * 0.01),
-                      ).createShader(bounds);
-                    },
-                    child: Text(
-                      l10n.noAdsTitle,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 2,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    widget.gradStart.withValues(alpha: 0),
-                    widget.gradStart.withValues(alpha: 0.8),
-                    widget.gradEnd.withValues(alpha: 0.8),
-                    widget.gradEnd.withValues(alpha: 0),
-                  ]),
-                  borderRadius: BorderRadius.circular(2),
-                  boxShadow: [BoxShadow(color: widget.gradStart.withValues(alpha: 0.5), blurRadius: 6)],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Generic section header with neon glow
-// ═══════════════════════════════════════════════════════════════
 class _SectionHeader extends StatefulWidget {
   final String title;
+  final Widget? leading;
   final Color gradStart, gradEnd;
-  const _SectionHeader({required this.title, required this.gradStart, required this.gradEnd});
+  const _SectionHeader({required this.title, this.leading, required this.gradStart, required this.gradEnd});
 
   @override
   State<_SectionHeader> createState() => _SectionHeaderState();
@@ -918,20 +832,29 @@ class _SectionHeaderState extends State<_SectionHeader> with SingleTickerProvide
           ),
           child: Column(
             children: [
-              ShaderMask(
-                shaderCallback: (bounds) {
-                  final offset = _shimmer.value * bounds.width * 2 - bounds.width * 0.5;
-                  return LinearGradient(
-                    colors: [Colors.white, widget.gradStart, Colors.white.withValues(alpha: 0.95), widget.gradEnd, Colors.white],
-                    stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
-                    transform: GradientRotation(offset * 0.01),
-                  ).createShader(bounds);
-                },
-                child: Text(
-                  widget.title,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (widget.leading != null) ...[
+                    widget.leading!,
+                    const SizedBox(width: 8),
+                  ],
+                  ShaderMask(
+                    shaderCallback: (bounds) {
+                      final offset = _shimmer.value * bounds.width * 2 - bounds.width * 0.5;
+                      return LinearGradient(
+                        colors: [Colors.white, widget.gradStart, Colors.white.withValues(alpha: 0.95), widget.gradEnd, Colors.white],
+                        stops: const [0.0, 0.3, 0.5, 0.7, 1.0],
+                        transform: GradientRotation(offset * 0.01),
+                      ).createShader(bounds);
+                    },
+                    child: Text(
+                      widget.title,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.fredoka(fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1.5),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Container(

@@ -1,34 +1,15 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:shape_merge/core/constants/ad_units.dart';
 
 class AdsService {
   BannerAd? bannerAd;
   RewardedAd? _rewardedAd;
 
-  String get _bannerAdUnitId {
-    if (kDebugMode) {
-      return Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/6300978111'
-          : 'ca-app-pub-3940256099942544/2934735716';
-    }
-    return Platform.isAndroid
-        ? 'ca-app-pub-8640672469603981/7971837478'
-        : 'ca-app-pub-3940256099942544/2934735716'; // TODO: replace with real iOS ID
-  }
+  String get _bannerAdUnitId => AdUnits.banner;
 
-  String get _rewardedAdUnitId {
-    if (kDebugMode) {
-      return Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/5224354917'
-          : 'ca-app-pub-3940256099942544/1712485313';
-    }
-    return Platform.isAndroid
-        ? 'ca-app-pub-8640672469603981/2858766113'
-        : 'ca-app-pub-3940256099942544/1712485313'; // TODO: replace with real iOS ID
-  }
+  String get _rewardedAdUnitId => AdUnits.rewarded;
 
   Future<void> init() async {
     await MobileAds.instance.initialize();

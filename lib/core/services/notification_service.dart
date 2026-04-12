@@ -152,4 +152,9 @@ class NotificationService {
     if (kIsWeb) return;
     await _plugin.cancelAll();
   }
+
+  /// Releases resources. Call from app lifecycle handler if needed.
+  void dispose() {
+    _payloadController.close();
+  }
 }

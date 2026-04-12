@@ -10,6 +10,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'app.dart';
 import 'core/services/audio_service.dart';
+import 'screens/game/game_screen.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -23,6 +24,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await AudioService.instance.init();
+  await GameScreen.preload();
   await MobileAds.instance.initialize();
 
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;

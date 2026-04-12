@@ -536,4 +536,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String signInError(String error) {
     return 'Sign-in error: $error';
   }
+
+  @override
+  String get jokerSuggestCriticalBomb => 'Board almost full! Use a Bomb!';
+
+  @override
+  String get jokerSuggestCriticalReducer => 'Critical! Reduce a shape!';
+
+  @override
+  String get jokerSuggestHighBomb => 'Getting crowded… Bomb to clear space?';
+
+  @override
+  String get jokerSuggestMegaBomb => 'Many same-level shapes — Mega Bomb!';
+
+  @override
+  String get jokerSuggestRadar => 'Stuck? Radar reveals merges!';
+
+  @override
+  String get jokerSuggestWildcard => 'Stuck? A Wildcard can help!';
+
+  @override
+  String get jokerSuggestEvolution => 'Lonely shape — Evolution to boost it!';
+
+  @override
+  String get jokerSuggestReducer => 'Lonely shape — Reducer can help!';
+
+  @override
+  String get jokerSuggestUse => 'Use';
 }
