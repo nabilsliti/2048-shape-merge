@@ -126,7 +126,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const PremiumIcon.rocket(size: 44),
+                            const _AnimatedRocket(size: 44),
                             const SizedBox(width: 14),
                             Text(l10n.play.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH2)),
                           ],
@@ -1093,4 +1093,50 @@ class _IconShapePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_IconShapePainter old) => old.shape != shape;
+}
+
+// ── Animated rocket with subtle hover + tilt ────────────────────
+class _AnimatedRocket extends StatefulWidget {
+  const _AnimatedRocket({required this.size});
+  final double size;
+
+  @override
+  State<_AnimatedRocket> createState() => _AnimatedRocketState();
+}
+
+class _AnimatedRocketState extends State<_AnimatedRocket>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_ctrl.value);
+        // Hover: bottom (+5) to top (-5)
+        final dy = 5.0 - t * 10.0;
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: child,
+        );
+      },
+      child: PremiumIcon.rocket(size: widget.size),
+    );
+  }
 }

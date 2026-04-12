@@ -182,10 +182,13 @@ class _TopHud extends ConsumerWidget {
                   builder: (ctx) => const SettingsModal(),
                 );
               },
-              child: const SizedBox(
+              child: SizedBox(
                 width: 42,
                 height: 42,
-                child: Icon(Icons.settings, color: Colors.white, size: 20),
+                child: Transform.scale(
+                  scale: 1.10,
+                  child: Image.asset('assets/images/removed_bg/gear.png', fit: BoxFit.contain),
+                ),
               ),
             ),
           ),
@@ -283,7 +286,7 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Settings icon — circular gradient like profile avatar
+                // Settings icon — gear image
                 Container(
                   width: 80,
                   height: 80,
@@ -299,7 +302,10 @@ class _SettingsModalState extends ConsumerState<SettingsModal> {
                       BoxShadow(color: AppTheme.gold.withValues(alpha: 0.3), blurRadius: 12),
                     ],
                   ),
-                  child: const Icon(Icons.settings_rounded, color: Colors.white, size: 44),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Image.asset('assets/images/removed_bg/gear.png', fit: BoxFit.contain),
+                  ),
                 ),
                 const SizedBox(height: 12),
 
