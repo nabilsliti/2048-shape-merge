@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/constants/shape_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
@@ -21,22 +22,22 @@ class SpawnManager {
     int level;
 
     // Adaptive smart chance: high merge rate → harder (less smart); low → easier (more smart)
-    // Board pressure: ≥25 shapes always reduces smart chance to cap at 0.50
+    // Board pressure: ≥pressureThreshold shapes always reduces smart chance
     final double adaptiveChance = mergeRate > 0.7
-        ? 0.50
+        ? SpawnTuning.chanceWhenHighMergeRate
         : mergeRate > 0.5
-            ? 0.60
+            ? SpawnTuning.chanceWhenMedHighMergeRate
             : mergeRate > 0.3
-                ? 0.70
-                : 0.80;
-    final smartChance = existing.length >= 25
-        ? adaptiveChance.clamp(0.0, 0.50)
+                ? SpawnTuning.chanceWhenMedLowMergeRate
+                : SpawnTuning.chanceWhenLowMergeRate;
+    final smartChance = existing.length >= SpawnTuning.pressureThreshold
+        ? adaptiveChance.clamp(0.0, SpawnTuning.pressureCap)
         : adaptiveChance;
 
     if (existing.isNotEmpty && _random.nextDouble() < smartChance) {
       // For beginners (< 20 total merges), prefer spawning a shape that already
       // has a matching partner on the board (same type+color) so they can merge.
-      final bool isBeginner = totalMerges < 20;
+      final bool isBeginner = totalMerges < SpawnTuning.beginnerMergeLimit;
       GameShape template;
 
       if (isBeginner) {
@@ -136,8 +137,9 @@ class SpawnManager {
     Size boardSize,
     double size,
   ) {
-    final margin = size / 2 + 8;
-    final minGap = 8.0;
+    final halfSize = size / 2;
+    final margin = halfSize + 8; // S'assurer qu'aucune forme ne déborde
+    const minGap = 8.0;
 
     // Phase 1: try random positions with comfortable gap
     for (var attempt = 0; attempt < maxSpawnAttempts; attempt++) {
@@ -147,7 +149,7 @@ class SpawnManager {
       var hasOverlap = false;
       for (final shape in existing) {
         final otherSize = shapeSize(shape.level);
-        final minDist = (size + otherSize) / 2 + 12;
+        final minDist = (size + otherSize) / 2 + SpawnTuning.minSpawnGap;
         final dx = x - shape.x;
         final dy = y - shape.y;
         if (dx * dx + dy * dy < minDist * minDist) {
@@ -159,7 +161,7 @@ class SpawnManager {
     }
 
     // Phase 2: grid scan to find the least overlapping spot
-    const gridSteps = 16;
+    const gridSteps = SpawnTuning.gridSteps;
     final stepX = (boardSize.width - 2 * margin) / gridSteps;
     final stepY = (boardSize.height - 2 * margin) / gridSteps;
     Offset bestPos = Offset(boardSize.width / 2, boardSize.height / 2);

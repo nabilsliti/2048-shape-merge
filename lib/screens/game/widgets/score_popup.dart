@@ -137,7 +137,7 @@ class _ScorePopupState extends State<ScorePopup>
                       shadows: [
                         Shadow(
                           blurRadius: 12,
-                          color: AppTheme.orange.withOpacity(0.8),
+                          color: AppTheme.orange.withValues(alpha: 0.8),
                         ),
                         const Shadow(blurRadius: 3, color: Colors.black),
                       ],

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
 import 'package:shape_merge/game/models/game_state.dart';
@@ -18,7 +19,7 @@ import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/screens/game/overlays/game_over_overlay.dart';
 import 'package:shape_merge/screens/game/overlays/pause_overlay.dart';
-import 'package:shape_merge/screens/game/overlays/tutorial_overlay.dart';
+import 'package:shape_merge/screens/game/widgets/coach_overlay.dart';
 import 'package:shape_merge/screens/game/widgets/game_board.dart';
 import 'package:shape_merge/screens/game/widgets/hud_bar.dart';
 import 'package:shape_merge/screens/game/widgets/joker_bar.dart';
@@ -28,7 +29,7 @@ import 'package:shape_merge/screens/game/widgets/joker_suggestion_tooltip.dart';
 import 'package:shape_merge/screens/game/widgets/merge_effect.dart';
 import 'package:shape_merge/screens/game/widgets/score_popup.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
-import 'package:shape_merge/screens/home/widgets/animated_background.dart';
+import 'package:shape_merge/core/widgets/game_panel.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -89,11 +90,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
 
         if (!mounted) return;
-        if (!_showTutorial) {
+        // Start the game once board is laid out (setBoardSize called in GameBoard.build)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
           ref.read(gameStateProvider.notifier).startNewGame();
+        });
+        // Start music
+        if (AudioService.instance.musicEnabled) {
+          AudioService.instance.playGameMusic();
         }
       });
     }
+  }
+
+  @override
+  void dispose() {
+    AudioService.instance.stopGameMusic();
+    super.dispose();
   }
 
   void _dismissTutorial() async {
@@ -103,7 +116,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (!mounted) return;
     setState(() => _showTutorial = false);
     _lastPersistedBest = ref.read(gameStateProvider).bestScore;
-    ref.read(gameStateProvider.notifier).startNewGame();
   }
 
   void _submitScore(User user, GameState gameState) {
@@ -183,107 +195,63 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             bottom: false,
             child: Column(
               children: [
-                // HUD bar (same card design)
+                // HUD bar
                 Padding(
                   padding: const EdgeInsets.only(left: 3, right: 3, top: 3),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
-                    child: Stack(
-                      children: [
-                        const Positioned.fill(child: SpaceBackground(lite: true)),
-                        HudBar(
-                          score: gameState.score,
-                          bestScore: gameState.bestScore,
-                          shapeCount: gameState.shapes.length,
-                          mergeCount: gameState.mergeCount,
-                          onPause: () => ref.read(gameStateProvider.notifier).togglePause(),
-                        ),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
-                                border: Border.all(
-                                  color: AppTheme.panelBorder.withValues(alpha: 0.6),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: GamePanel(
+                    lite: true,
+                    child: HudBar(
+                      score: gameState.score,
+                      bestScore: gameState.bestScore,
+                      shapeCount: gameState.shapes.length,
+                      mergeCount: gameState.mergeCount,
+                      onPause: () {
+                        ref.read(gameStateProvider.notifier).togglePause();
+                        AudioService.instance.pauseGameMusic();
+                      },
                     ),
                   ),
                 ),
                 const SizedBox(height: 3),
-                // Game board with pause button inside
+                // Game board
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 3, right: 3),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
-                          child: Stack(
-                            children: [
-                              const Positioned.fill(child: SpaceBackground()),
-                              Positioned.fill(
-                                child: GameBoard(
-                                  onMerge: (pos, color, points, comboCount) {
-                                    _addMergeEffect(pos, color, points, comboCount);
-                                  },
-                                  onJokerUsed: (pos, jokerType) {
-                                    _addJokerEffect(pos, jokerType);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Border overlay
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
-                                border: Border.all(
-                                  color: AppTheme.panelBorder.withValues(alpha: 0.6),
-                                  width: 2,
-                                ),
+                    child: KeyedSubtree(
+                      key: CoachKeys.board,
+                      child: Stack(
+                        clipBehavior: Clip.hardEdge,
+                        children: [
+                          GamePanel(
+                            child: Positioned.fill(
+                              child: GameBoard(
+                                onMerge: (pos, color, points, comboCount) {
+                                  _addMergeEffect(pos, color, points, comboCount);
+                                  if (_showTutorial) {
+                                    CoachOverlay.notifyMerge();
+                                  }
+                                },
+                                onJokerUsed: (pos, jokerType) {
+                                  _addJokerEffect(pos, jokerType);
+                                },
                               ),
                             ),
                           ),
-                        ),
-                        ..._effects,
-                      ],
+                          ..._effects,
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 3),
-                // Joker bar (same card design)
+                // Joker bar
                 Padding(
                   padding: const EdgeInsets.only(left: 3, right: 3),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
-                    child: Stack(
-                      children: [
-                        const Positioned.fill(child: SpaceBackground(lite: true)),
-                        JokerBar(inventory: gameState.jokerInventory),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
-                                border: Border.all(
-                                  color: AppTheme.panelBorder.withValues(alpha: 0.6),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: KeyedSubtree(
+                    key: CoachKeys.jokerBar,
+                    child: GamePanel(
+                      lite: true,
+                      child: JokerBar(inventory: gameState.jokerInventory),
                     ),
                   ),
                 ),
@@ -292,13 +260,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             ),
           ),
           // Overlays
-          const JokerHintBanner(),
-          const JokerSuggestionTooltip(),
+          if (!_showTutorial) const JokerHintBanner(),
+          if (!_showTutorial) const JokerSuggestionTooltip(),
           if (_showTutorial)
-            TutorialOverlay(onDismiss: _dismissTutorial),
+            CoachOverlay(onComplete: _dismissTutorial),
           if (!_showTutorial && gameState.isPaused)
             PauseOverlay(
-              onResume: () => ref.read(gameStateProvider.notifier).togglePause(),
+              onResume: () {
+                ref.read(gameStateProvider.notifier).togglePause();
+                AudioService.instance.resumeGameMusic();
+              },
               onQuit: () {
                 final gs = ref.read(gameStateProvider);
                 ref.read(dailyChallengeProvider.notifier).syncGameResult(
@@ -312,7 +283,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   mergeCount: gs.mergeCount,
                   maxLevelReached: gs.maxLevelReached,
                 );
-                context.go('/home');
+                context.pop();
               },
             ),
           if (!gameState.gameActive)

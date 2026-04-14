@@ -1,15 +1,14 @@
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shape_merge/core/config/audio_catalog.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 
 const _log = AppLogger('Audio');
 
-/// Centralised audio service using flutter_soloud.
-///
-/// All SFX are pre-loaded at startup. Missing asset files are skipped
-/// gracefully. A lazy-retry mechanism ensures that if SoLoud fails to
-/// initialise on the first attempt (common on some Android devices),
-/// subsequent [play] calls will re-attempt init once.
+/// Service audio simple et direct.
+/// 
+/// Audio contrôlé uniquement par les boutons dans le jeu.
+/// Aucun démarrage automatique, aucun workaround.
 class AudioService {
   AudioService._();
   static final instance = AudioService._();
@@ -18,9 +17,8 @@ class AudioService {
 
   bool _soundEnabled = true;
   bool _musicEnabled = true;
-  bool _initAttempted = false;
   bool _preloaded = false;
-
+  
   bool get soundEnabled => _soundEnabled;
   bool get musicEnabled => _musicEnabled;
   bool get isReady => _soloud.isInitialized && _preloaded;
@@ -29,13 +27,7 @@ class AudioService {
   final Map<String, AudioSource> _sources = {};
 
   /// Only declare files that actually exist in assets/sounds/.
-  static const _sfxFiles = {
-    'merge': 'assets/sounds/merge.mp3',
-    'level_up': 'assets/sounds/level_up.wav',
-    'reward': 'assets/sounds/reward_pub.wav',
-    'merge_abort': 'assets/sounds/merge-abort.wav',
-    'new_record': 'assets/sounds/new-record.wav',
-  };
+  static const _sfxFiles = AudioCatalog.sfxFiles;
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -45,14 +37,15 @@ class AudioService {
     _musicEnabled = prefs.getBool('musicEnabled') ?? true;
 
     await _ensureEngine();
+    
+    // Audio géré uniquement par les boutons de jeu - pas de démarrage automatique
+    _log.info('AudioService initialisé - musique gérée manuellement');
   }
 
   /// Initialises the SoLoud engine + preloads assets.
   /// Safe to call multiple times — skips if already ready.
   Future<bool> _ensureEngine() async {
     if (_soloud.isInitialized && _preloaded) return true;
-
-    _initAttempted = true;
 
     // 1. Boot engine
     try {
@@ -64,7 +57,7 @@ class AudioService {
       return false;
     }
 
-    // 2. Pre-load all SFX
+    // 2. Pre-load all SFX + music
     if (!_preloaded) {
       var loaded = 0;
       for (final entry in _sfxFiles.entries) {
@@ -75,8 +68,14 @@ class AudioService {
           _log.warning('Failed to load ${entry.key}', error: e);
         }
       }
+      // Pre-load music alongside SFX so playGameMusic can be synchronous
+      try {
+        _musicSource = await _soloud.loadAsset(_musicFile);
+      } catch (e) {
+        _log.warning('Failed to load game music', error: e);
+      }
       _preloaded = true;
-      _log.info('Ready: $loaded/${_sfxFiles.length} sounds loaded');
+      _log.info('Ready: $loaded/${_sfxFiles.length} sounds + music loaded');
     }
 
     return _soloud.isInitialized;
@@ -98,74 +97,109 @@ class AudioService {
 
   // ── Background music ───────────────────────────────────────────────────────
 
+  static const _musicFile = AudioCatalog.musicFile;
+  AudioSource? _musicSource;
+  SoundHandle? _musicHandle;
+
+  /// Lance la musique en boucle à 30% de volume.
+  void playGameMusic() {
+    if (!_musicEnabled) return;
+    final source = _musicSource;
+    if (source == null || !_soloud.isInitialized) return;
+    stopGameMusic();
+    _musicHandle = _soloud.play(source, volume: AudioCatalog.musicVolume, looping: true);
+    _log.info('🎵 Music started');
+  }
+
+  void pauseGameMusic() {
+    final handle = _musicHandle;
+    if (handle == null || !_soloud.isInitialized) return;
+    _soloud.setPause(handle, true);
+  }
+
+  void resumeGameMusic() {
+    if (!_musicEnabled) return;
+    if (_musicHandle != null && _soloud.isInitialized) {
+      _soloud.setPause(_musicHandle!, false);
+    } else {
+      playGameMusic();
+    }
+  }
+
+  void stopGameMusic() {
+    final handle = _musicHandle;
+    if (handle != null && _soloud.isInitialized) {
+      _soloud.stop(handle);
+    }
+    _musicHandle = null;
+  }
+
   Future<void> toggleMusic() async {
     _musicEnabled = !_musicEnabled;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('musicEnabled', _musicEnabled);
+    _log.info('Music: ${_musicEnabled ? "ENABLED" : "DISABLED"}');
+    
+    if (_musicEnabled) {
+      // Musique activée → la lancer directement
+      playGameMusic();
+    } else {
+      // Musique désactivée → l'arrêter
+      stopGameMusic();
+    }
   }
 
   Future<void> setMusicEnabled(bool enabled) async {
     _musicEnabled = enabled;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('musicEnabled', _musicEnabled);
+    _log.info('Music: ${_musicEnabled ? "ENABLED" : "DISABLED"}');
+    
+    if (enabled) {
+      // Musique activée → la lancer directement
+      playGameMusic();
+    } else {
+      // Musique désactivée → l'arrêter
+      stopGameMusic();
+    }
   }
 
-  // ── Core play ─────────────────────────────────────────────────────────────
+  // ── Play simple et direct ─────────────────────────────────────────────────
 
   void play(String key) {
-    if (!_soundEnabled) return;
-
-    final source = _sources[key];
-    if (source != null && _soloud.isInitialized) {
-      _soloud.play(source);
-      return;
-    }
-
-    // Lazy retry: engine may not have been ready at startup
-    if (!_soloud.isInitialized && _initAttempted) {
-      _retryAndPlay(key);
-    }
-  }
-
-  Future<void> _retryAndPlay(String key) async {
-    final ok = await _ensureEngine();
-    if (!ok || !_soundEnabled) return;
+    if (!_soundEnabled || !_soloud.isInitialized) return;
+    
     final source = _sources[key];
     if (source != null) {
       _soloud.play(source);
     }
   }
 
-  // ── Convenience methods ───────────────────────────────────────────────────
+  // ── Sons existants ────────────────────────────────────────────────────────
 
-  void playMerge() => play('merge');
-  void playLevelUp() => play('level_up');
-  void playMergeAbort() => play('merge_abort');
-  void playNewRecord() => play('new_record');
-  void playReward() => play('reward');
+  void playMerge() => play(AudioCatalog.mergeSound);
+  void playLevelUp() => play(AudioCatalog.levelUpSound);
+  void playMergeAbort() => play(AudioCatalog.mergeAbortSound);
+  void playNewRecord() => play(AudioCatalog.newRecordSound);
+  void playReward() => play(AudioCatalog.rewardSound);
+  void playButtonTap() => play(AudioCatalog.buttonTapSound);
 
-  // Fallbacks: sons manquants mappés sur des sons existants.
-  // Quand les vrais fichiers seront ajoutés, il suffira de les déclarer
-  // dans _sfxFiles et créer une clé dédiée.
-  void playBomb() => play('level_up');
-  void playWildcard() => play('merge');
-  void playReducer() => play('merge');
-  void playGameOver() => play('merge_abort');
-  void playButtonTap() => play('merge');
-  void playHighScore() => play('new_record');
-
-  /// Son progressif selon le niveau de combo.
-  void playCombo(int comboCount) {
-    if (comboCount >= 5) {
-      playLevelUp();
-    } else {
-      playMerge();
-    }
-  }
+  // ── Méthodes pour compatibilité ───────────────────────────────────────────
+  void playGameOver() => play(AudioCatalog.gameOverSound);
+  void playJoker(String jokerName) => play(AudioCatalog.jokerSounds[jokerName] ?? AudioCatalog.mergeSound);
+  void playBomb() => playJoker('bomb');
+  void playReducer() => playJoker('reducer');
+  void playWildcard() => playJoker('wildcard');
+  void playCombo(int level) => level > AudioCatalog.comboThreshold ? playLevelUp() : playMerge();
 
   // ── Cleanup ───────────────────────────────────────────────────────────────
 
   void dispose() {
+    stopGameMusic();
+    if (_musicSource != null && _soloud.isInitialized) {
+      _soloud.disposeSource(_musicSource!);
+      _musicSource = null;
+    }
     for (final source in _sources.values) {
       _soloud.disposeSource(source);
     }

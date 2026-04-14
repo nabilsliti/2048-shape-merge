@@ -221,7 +221,7 @@ class _ShapePainter extends CustomPainter {
     if (shape.isWildcard) {
       // Rainbow sweep for wildcards
       final rainbowPaint = Paint()
-        ..shader = SweepGradient(
+        ..shader = const SweepGradient(
           colors: [
             AppTheme.blueTop,
             AppTheme.greenTop,

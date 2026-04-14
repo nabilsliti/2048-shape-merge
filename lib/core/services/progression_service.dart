@@ -1,25 +1,19 @@
 import 'dart:math';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/firestore_service.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 
 const _log = AppLogger('XP');
 
-/// XP and level management.
-/// Formula: xpRequired(level) = floor(100 * level^1.4)
-/// Max level: 50
+/// XP and level management — delegates formulas to [Progression] config.
 class ProgressionService {
   const ProgressionService();
 
-  static const int maxLevel = 50;
+  static int get maxLevel => Progression.maxLevel;
 
-  // ── XP formula ─────────────────────────────────────────────────────────────
+  static int xpForLevel(int level) => Progression.xpForLevel(level);
 
-  /// XP required to go FROM level to level+1.
-  static int xpForLevel(int level) =>
-      (100 * pow(level, 1.4)).floor().clamp(100, 999999);
-
-  /// Compute XP gained for a game result.
   static int computeXP({
     required int score,
     required int mergeCount,
@@ -27,13 +21,14 @@ class ProgressionService {
     required int currentStreak,
     required int completedObjectives,
   }) {
-    var xp = (score / 500).floor()          // score base
-        + mergeCount                         // +1 per fusion
-        + maxLevelReached * 3                // shape rank bonus
-        + completedObjectives * 5;           // objective bonus
+    var xp = score ~/ Progression.scoreDivisor
+        + mergeCount * Progression.xpPerMerge
+        + maxLevelReached * Progression.xpPerShapeLevel
+        + completedObjectives * Progression.xpPerObjective;
 
-    // Streak bonus: +10% if streak >= 7
-    if (currentStreak >= 7) xp = (xp * 1.1).floor();
+    if (currentStreak >= Progression.streakBonusThreshold) {
+      xp = (xp * Progression.streakMultiplier).toInt();
+    }
 
     return max(xp, 1);
   }
@@ -46,7 +41,7 @@ class ProgressionService {
   }) async {
     var level = storage.playerLevel;
     var currentXP = storage.currentXP + xpToAdd;
-    var totalXP = storage.totalXP + xpToAdd;
+    final totalXP = storage.totalXP + xpToAdd;
     var levelsGained = 0;
 
     while (level < maxLevel) {
@@ -77,7 +72,7 @@ class ProgressionService {
   }) async {
     var level = currentLevel;
     var xp = currentXP + xpToAdd;
-    var total = totalXP + xpToAdd;
+    final total = totalXP + xpToAdd;
     var levelsGained = 0;
 
     while (level < maxLevel) {

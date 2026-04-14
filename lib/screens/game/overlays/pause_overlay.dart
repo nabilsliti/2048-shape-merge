@@ -99,7 +99,7 @@ class PauseOverlay extends StatelessWidget {
                         if (onQuit != null) {
                           onQuit!();
                         } else {
-                          context.go('/home');
+                          context.pop();
                         }
                       },
                       child: Row(

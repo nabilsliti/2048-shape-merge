@@ -62,10 +62,17 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
 
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onTap: () {
+          // Tap on empty space while joker is active → trigger radiation
+          if (jokerMode != JokerMode.none) {
+            HapticFeedback.lightImpact();
+            ref.read(jokerEmptyTapProvider.notifier).state++;
+          }
+        },
         child: CustomPaint(
           painter: _BoardBackgroundPainter(),
           child: Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: Clip.hardEdge, // Force les formes à rester dans la zone
             children: [
               for (final shape in gameState.shapes)
                 _buildDraggableShape(shape, gameState, jokerMode, boardSize, radarHighlights),
@@ -141,7 +148,13 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       child: GestureDetector(
         onTap: () => _handleShapeTap(shape, jokerMode),
         onPanStart: (details) {
-          if (jokerMode != JokerMode.none) return;
+          if (jokerMode != JokerMode.none && jokerMode != JokerMode.radar) {
+            // Joker actif (sauf radar) → radiation pour rappeler de taper une forme
+            HapticFeedback.lightImpact();
+            ref.read(jokerEmptyTapProvider.notifier).state++;
+            return;
+          }
+          if (jokerMode == JokerMode.radar) return;
           if (_flyToShapeId != null) return; // Block during fly-to
           // Cancel any running snap-back
           _snapBackCtrl?.stop();
@@ -155,10 +168,12 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         },
         onPanUpdate: (details) {
           if (_draggingId != shape.id) return;
+          final shapeSize = size;
+          final halfSize = shapeSize / 2;
           setState(() {
             _dragOffset = Offset(
-              (_dragOffset!.dx + details.delta.dx).clamp(0, boardSize.width),
-              (_dragOffset!.dy + details.delta.dy).clamp(0, boardSize.height),
+              (_dragOffset!.dx + details.delta.dx).clamp(halfSize, boardSize.width - halfSize),
+              (_dragOffset!.dy + details.delta.dy).clamp(halfSize, boardSize.height - halfSize),
             );
           });
         },
@@ -204,6 +219,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.megaBomb:
         notifier.useMegaBomb(shape);
+        AudioService.instance.playBomb();
         widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.megaBomb);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.radar:

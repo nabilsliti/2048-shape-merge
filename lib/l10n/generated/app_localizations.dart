@@ -122,12 +122,6 @@ abstract class AppLocalizations {
   /// **'Shop'**
   String get shop;
 
-  /// No description provided for @settings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settings;
-
   /// No description provided for @bestScore.
   ///
   /// In en, this message translates to:
@@ -1043,49 +1037,49 @@ abstract class AppLocalizations {
   /// No description provided for @jokerSuggestCriticalBomb.
   ///
   /// In en, this message translates to:
-  /// **'Board almost full! Use a Bomb!'**
+  /// **'Bomb to free space!'**
   String get jokerSuggestCriticalBomb;
 
   /// No description provided for @jokerSuggestCriticalReducer.
   ///
   /// In en, this message translates to:
-  /// **'Critical! Reduce a shape!'**
+  /// **'Reducer to shrink a shape!'**
   String get jokerSuggestCriticalReducer;
 
   /// No description provided for @jokerSuggestHighBomb.
   ///
   /// In en, this message translates to:
-  /// **'Getting crowded… Bomb to clear space?'**
+  /// **'Bomb to make room'**
   String get jokerSuggestHighBomb;
 
   /// No description provided for @jokerSuggestMegaBomb.
   ///
   /// In en, this message translates to:
-  /// **'Many same-level shapes — Mega Bomb!'**
+  /// **'Mega Bomb to clear all'**
   String get jokerSuggestMegaBomb;
 
   /// No description provided for @jokerSuggestRadar.
   ///
   /// In en, this message translates to:
-  /// **'Stuck? Radar reveals merges!'**
+  /// **'Radar to find merges'**
   String get jokerSuggestRadar;
 
   /// No description provided for @jokerSuggestWildcard.
   ///
   /// In en, this message translates to:
-  /// **'Stuck? A Wildcard can help!'**
+  /// **'Wildcard to unblock'**
   String get jokerSuggestWildcard;
 
   /// No description provided for @jokerSuggestEvolution.
   ///
   /// In en, this message translates to:
-  /// **'Lonely shape — Evolution to boost it!'**
+  /// **'Evolution to boost a shape'**
   String get jokerSuggestEvolution;
 
   /// No description provided for @jokerSuggestReducer.
   ///
   /// In en, this message translates to:
-  /// **'Lonely shape — Reducer can help!'**
+  /// **'Reducer to create a pair'**
   String get jokerSuggestReducer;
 
   /// No description provided for @jokerSuggestUse.
@@ -1093,6 +1087,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use'**
   String get jokerSuggestUse;
+
+  /// No description provided for @coachWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome! 🎮'**
+  String get coachWelcome;
+
+  /// No description provided for @coachWelcomeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s learn the basics together!'**
+  String get coachWelcomeDesc;
+
+  /// No description provided for @coachWaitMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Your turn! 🧩'**
+  String get coachWaitMerge;
+
+  /// No description provided for @coachWaitMergeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag a shape onto an identical one (same shape, same color, same level) to merge!'**
+  String get coachWaitMergeDesc;
+
+  /// No description provided for @coachMergeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Well done! 🎉'**
+  String get coachMergeDone;
+
+  /// No description provided for @coachMergeDoneDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve mastered merging! Each merge increases your score.'**
+  String get coachMergeDoneDesc;
+
+  /// No description provided for @coachJokers.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Jokers 🃏'**
+  String get coachJokers;
+
+  /// No description provided for @coachJokersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Here are your jokers! Each has a unique power.'**
+  String get coachJokersDesc;
+
+  /// No description provided for @coachWaitJokerLongPress.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it! 👇'**
+  String get coachWaitJokerLongPress;
+
+  /// No description provided for @coachWaitJokerLongPressDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press a joker to see its description.'**
+  String get coachWaitJokerLongPressDesc;
+
+  /// No description provided for @coachJokerDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect! 👏'**
+  String get coachJokerDone;
+
+  /// No description provided for @coachJokerDoneDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'You can check any joker\'s description anytime.'**
+  String get coachJokerDoneDesc;
+
+  /// No description provided for @coachJokerUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Using a Joker 🎯'**
+  String get coachJokerUse;
+
+  /// No description provided for @coachJokerUseDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a joker to activate it, then tap a shape on the grid to apply its power.'**
+  String get coachJokerUseDesc;
+
+  /// No description provided for @coachScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Score ⭐'**
+  String get coachScore;
+
+  /// No description provided for @coachScoreDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current score. Each merge earns points.'**
+  String get coachScoreDesc;
+
+  /// No description provided for @coachCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Capacity ⭕'**
+  String get coachCapacity;
+
+  /// No description provided for @coachCapacityDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Shapes on the grid. When it\'s full and no merge is possible, the game is over!'**
+  String get coachCapacityDesc;
+
+  /// No description provided for @coachMerges.
+  ///
+  /// In en, this message translates to:
+  /// **'Merges ⚡'**
+  String get coachMerges;
+
+  /// No description provided for @coachMergesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Total merges performed in this game.'**
+  String get coachMergesDesc;
+
+  /// No description provided for @coachComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s go! 🚀'**
+  String get coachComplete;
+
+  /// No description provided for @coachCompleteDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re ready! Merge, use jokers, and beat your record!'**
+  String get coachCompleteDesc;
+
+  /// No description provided for @coachTapContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to continue'**
+  String get coachTapContinue;
+
+  /// No description provided for @coachSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get coachSkip;
 }
 
 class _AppLocalizationsDelegate

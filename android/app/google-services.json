@@ -22,11 +22,11 @@
           }
         },
         {
-          "client_id": "282452142394-85h1ldpushjn4ojj5f13j7qm5dlrrd6l.apps.googleusercontent.com",
+          "client_id": "282452142394-b6p36inlc8q8fvfhvkmtcnkkkca2ql10.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.crestbit.shapemerge2048",
-            "certificate_hash": "56e6b43f4e3f7d6814b807b8fde49f2529074a8a"
+            "certificate_hash": "56e6043f4e3f7d68148b078bfce49f2529074a8a"
           }
         },
         {

@@ -10,6 +10,7 @@ import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/screens/game/widgets/coach_overlay.dart';
 
 class JokerBar extends ConsumerWidget {
   final JokerInventory inventory;
@@ -20,6 +21,7 @@ class JokerBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMode = ref.watch(jokerModeProvider);
     final suggestedType = ref.watch(jokerSuggestionProvider);
+    final emptyTap = ref.watch(jokerEmptyTapProvider);
     final inv = inventory;
 
     return Padding(
@@ -36,6 +38,7 @@ class JokerBar extends ConsumerWidget {
             glowColor: JokerUI.glowColor(JokerType.bomb),
             ringColors: JokerUI.ringColors(JokerType.bomb),
             onTap: () => _toggle(ref, JokerMode.bomb),
+            emptyTapTrigger: currentMode == JokerMode.bomb ? emptyTap : 0,
           ),
           _JokerOrb(
             jokerType: JokerType.wildcard,
@@ -46,6 +49,7 @@ class JokerBar extends ConsumerWidget {
             glowColor: JokerUI.glowColor(JokerType.wildcard),
             ringColors: JokerUI.ringColors(JokerType.wildcard),
             onTap: () => _toggle(ref, JokerMode.wildcard),
+            emptyTapTrigger: currentMode == JokerMode.wildcard ? emptyTap : 0,
           ),
           _JokerOrb(
             jokerType: JokerType.reducer,
@@ -56,6 +60,7 @@ class JokerBar extends ConsumerWidget {
             glowColor: JokerUI.glowColor(JokerType.reducer),
             ringColors: JokerUI.ringColors(JokerType.reducer),
             onTap: () => _toggle(ref, JokerMode.reducer),
+            emptyTapTrigger: currentMode == JokerMode.reducer ? emptyTap : 0,
           ),
           // ── séparateur premium ──
           Column(
@@ -78,6 +83,7 @@ class JokerBar extends ConsumerWidget {
             ringColors: JokerUI.ringColors(JokerType.radar),
             onTap: () => _activateRadar(ref),
             isPremium: true,
+            emptyTapTrigger: currentMode == JokerMode.radar ? emptyTap : 0,
           ),
           _JokerOrb(
             jokerType: JokerType.evolution,
@@ -89,6 +95,7 @@ class JokerBar extends ConsumerWidget {
             ringColors: JokerUI.ringColors(JokerType.evolution),
             onTap: () => _toggle(ref, JokerMode.evolution),
             isPremium: true,
+            emptyTapTrigger: currentMode == JokerMode.evolution ? emptyTap : 0,
           ),
           _JokerOrb(
             jokerType: JokerType.megaBomb,
@@ -100,6 +107,7 @@ class JokerBar extends ConsumerWidget {
             ringColors: JokerUI.ringColors(JokerType.megaBomb),
             onTap: () => _toggle(ref, JokerMode.megaBomb),
             isPremium: true,
+            emptyTapTrigger: currentMode == JokerMode.megaBomb ? emptyTap : 0,
           ),
         ],
       ),
@@ -114,9 +122,9 @@ class JokerBar extends ConsumerWidget {
 
   void _activateRadar(WidgetRef ref) {
     final current = ref.read(jokerModeProvider);
-    if (current == JokerMode.radar) {
+    // Désélectionner tout joker actif avant d'activer le radar
+    if (current != JokerMode.none) {
       ref.read(jokerModeProvider.notifier).state = JokerMode.none;
-      return;
     }
     ref.read(gameStateProvider.notifier).activateRadar(ref);
   }
@@ -132,6 +140,7 @@ class _JokerOrb extends StatefulWidget {
   final List<Color> ringColors;
   final VoidCallback onTap;
   final bool isPremium;
+  final int emptyTapTrigger;
 
   const _JokerOrb({
     required this.jokerType,
@@ -143,6 +152,7 @@ class _JokerOrb extends StatefulWidget {
     required this.ringColors,
     required this.onTap,
     this.isPremium = false,
+    this.emptyTapTrigger = 0,
   });
 
   @override
@@ -154,6 +164,7 @@ class _JokerOrbState extends State<_JokerOrb>
   late final AnimationController _pulseCtrl;
   late final AnimationController _scaleCtrl;
   late final Animation<double> _scaleAnim;
+  AnimationController? _radiateCtrl;
 
   @override
   void initState() {
@@ -171,7 +182,9 @@ class _JokerOrbState extends State<_JokerOrb>
       CurvedAnimation(parent: _scaleCtrl, curve: Curves.easeOutBack),
     );
 
-    if (widget.isActive) _scaleCtrl.forward();
+    if (widget.isActive) {
+      _scaleCtrl.forward();
+    }
   }
 
   @override
@@ -182,12 +195,31 @@ class _JokerOrbState extends State<_JokerOrb>
     } else if (!widget.isActive && old.isActive) {
       _scaleCtrl.reverse();
     }
+
+    // Trigger radiate animation on empty tap
+    if (widget.isActive && widget.emptyTapTrigger != old.emptyTapTrigger && widget.emptyTapTrigger > 0) {
+      _triggerRadiate();
+    }
+  }
+
+  void _triggerRadiate() {
+    _radiateCtrl?.dispose();
+    _radiateCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward().then((_) {
+        _radiateCtrl?.dispose();
+        _radiateCtrl = null;
+        if (mounted) setState(() {});
+      });
+    setState(() {});
   }
 
   @override
   void dispose() {
     _pulseCtrl.dispose();
     _scaleCtrl.dispose();
+    _radiateCtrl?.dispose();
     super.dispose();
   }
 
@@ -204,12 +236,13 @@ class _JokerOrbState extends State<_JokerOrb>
               AudioService.instance.playButtonTap();
               widget.onTap();
             },
-      onLongPress: () {
+      onLongPress: () async {
         HapticFeedback.mediumImpact();
-        _showJokerInfo(context, widget.jokerType);
+        await _showJokerInfo(context, widget.jokerType);
+        CoachOverlay.notifyJokerLongPress();
       },
       child: AnimatedBuilder(
-        animation: Listenable.merge([_pulseCtrl, _scaleCtrl]),
+        animation: Listenable.merge([_pulseCtrl, _scaleCtrl, if (_radiateCtrl != null) _radiateCtrl!]),
         builder: (context, child) {
           final pulse = sin(_pulseCtrl.value * pi);
           final totalScale = _scaleAnim.value;
@@ -223,6 +256,20 @@ class _JokerOrbState extends State<_JokerOrb>
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
+                  // Radiation rings (only when empty tap on board)
+                  if (_radiateCtrl != null)
+                    Positioned(
+                      left: 8 - 16,
+                      top: 5 - 16,
+                      child: CustomPaint(
+                        size: const Size(orbSize + 32, orbSize + 32),
+                        painter: _RadiationPainter(
+                          progress: _radiateCtrl!.value,
+                          color: widget.glowColor,
+                        ),
+                      ),
+                    ),
+
                   // Glow behind the orb
                   if (!disabled)
                     Positioned(
@@ -373,11 +420,11 @@ class _CountBadge extends StatelessWidget {
 
 // ── Joker info popup (long-press) ──────────────────────────────
 
-void _showJokerInfo(BuildContext context, JokerType type) {
+Future<void> _showJokerInfo(BuildContext context, JokerType type) {
   final l10n = AppLocalizations.of(context)!;
   final color = JokerUI.color(type);
 
-  showDialog(
+  return showDialog(
     context: context,
     barrierColor: Colors.black54,
     builder: (_) => _JokerInfoPopup(
@@ -449,7 +496,7 @@ class _JokerInfoPopup extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                     border: Border.all(color: AppTheme.gold.withValues(alpha: 0.4)),
                   ),
-                  child: Text('★ PREMIUM', style: TextStyle(fontSize: AppTheme.fontMicro, color: AppTheme.gold, fontWeight: FontWeight.bold)),
+                  child: Text('★ PREMIUM', style: AppTheme.titleStyle(AppTheme.fontMicro).copyWith(color: AppTheme.gold)),
                 ),
               ],
               const SizedBox(height: 12),
@@ -457,7 +504,7 @@ class _JokerInfoPopup extends StatelessWidget {
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: AppTheme.hudStyle.copyWith(
                   fontSize: AppTheme.fontSmall,
                   color: Colors.white.withValues(alpha: 0.85),
                   height: 1.4,
@@ -469,4 +516,42 @@ class _JokerInfoPopup extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Radiation painter (expanding rings on empty tap) ──────────────────────
+
+class _RadiationPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _RadiationPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final maxRadius = size.width / 2;
+
+    // 3 rings expanding outward with staggered timing
+    for (var i = 0; i < 3; i++) {
+      final delay = i * 0.15;
+      final t = ((progress - delay) / (1.0 - delay)).clamp(0.0, 1.0);
+      if (t <= 0) continue;
+
+      final eased = Curves.easeOut.transform(t);
+      final radius = maxRadius * 0.4 + maxRadius * 0.6 * eased;
+      final opacity = (1.0 - eased) * 0.7;
+
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..color = color.withValues(alpha: opacity)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5 * (1.0 - eased * 0.5),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RadiationPainter old) => progress != old.progress;
 }

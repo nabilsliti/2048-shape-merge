@@ -21,9 +21,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shop => 'Boutique';
 
   @override
-  String get settings => 'Paramètres';
-
-  @override
   String get bestScore => 'Meilleur Score';
 
   @override
@@ -39,7 +36,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get capacity => 'Capacité du plateau';
 
   @override
-  String get gameOver => 'Game Over';
+  String get gameOver => 'Fin de partie';
 
   @override
   String get victory => 'Victoire';
@@ -402,7 +399,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tutorialGoButton => 'GO !';
 
   @override
-  String get hudNewBest => '★ NOUVEAU RECORD';
+  String get hudNewBest => '★ RECORD !';
 
   @override
   String hudBest(String n) {
@@ -544,34 +541,112 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get jokerSuggestCriticalBomb =>
-      'Plateau presque plein ! Utilise une Bombe !';
+  String get jokerSuggestCriticalBomb => 'Bombe pour libérer la grille !';
 
   @override
   String get jokerSuggestCriticalReducer =>
-      'Plateau critique ! Réduis une forme !';
+      'Réducteur pour réduire une forme !';
 
   @override
-  String get jokerSuggestHighBomb =>
-      'Ça se remplit… Bombe pour libérer de la place ?';
+  String get jokerSuggestHighBomb => 'Bombe pour faire de la place';
 
   @override
-  String get jokerSuggestMegaBomb =>
-      'Plein de formes du même niveau — Méga Bombe !';
+  String get jokerSuggestMegaBomb => 'Méga Bombe pour tout nettoyer';
 
   @override
-  String get jokerSuggestRadar => 'Bloqué ? Le Radar révèle les fusions !';
+  String get jokerSuggestRadar => 'Radar pour trouver les fusions';
 
   @override
-  String get jokerSuggestWildcard => 'Bloqué ? Un Wildcard peut débloquer !';
+  String get jokerSuggestWildcard => 'Wildcard pour débloquer';
 
   @override
-  String get jokerSuggestEvolution =>
-      'Forme isolée — Évolution pour la booster !';
+  String get jokerSuggestEvolution => 'Évolution pour booster une forme';
 
   @override
-  String get jokerSuggestReducer => 'Forme isolée — le Réducteur peut aider !';
+  String get jokerSuggestReducer => 'Réducteur pour créer une paire';
 
   @override
   String get jokerSuggestUse => 'Utiliser';
+
+  @override
+  String get coachWelcome => 'Bienvenue ! 🎮';
+
+  @override
+  String get coachWelcomeDesc => 'On va apprendre les bases ensemble !';
+
+  @override
+  String get coachWaitMerge => 'À toi ! 🧩';
+
+  @override
+  String get coachWaitMergeDesc =>
+      'Glisse une forme sur une forme identique (même forme, même couleur, même niveau) pour fusionner !';
+
+  @override
+  String get coachMergeDone => 'Bravo ! 🎉';
+
+  @override
+  String get coachMergeDoneDesc =>
+      'Tu maîtrises la fusion ! Chaque fusion augmente ton score.';
+
+  @override
+  String get coachJokers => 'Tes Jokers 🃏';
+
+  @override
+  String get coachJokersDesc =>
+      'Voici tes jokers ! Chacun a un pouvoir unique.';
+
+  @override
+  String get coachWaitJokerLongPress => 'Essaie ! 👇';
+
+  @override
+  String get coachWaitJokerLongPressDesc =>
+      'Fais un appui long sur un joker pour voir sa description.';
+
+  @override
+  String get coachJokerDone => 'Parfait ! 👏';
+
+  @override
+  String get coachJokerDoneDesc =>
+      'Tu peux consulter la description de chaque joker à tout moment.';
+
+  @override
+  String get coachJokerUse => 'Utiliser un Joker 🎯';
+
+  @override
+  String get coachJokerUseDesc =>
+      'Touche un joker pour l\'activer, puis touche une forme sur la grille pour appliquer son pouvoir.';
+
+  @override
+  String get coachScore => 'Score ⭐';
+
+  @override
+  String get coachScoreDesc =>
+      'Ton score actuel. Chaque fusion rapporte des points.';
+
+  @override
+  String get coachCapacity => 'Capacité ⭕';
+
+  @override
+  String get coachCapacityDesc =>
+      'Nombre de formes sur la grille. Quand c\'est plein et qu\'il n\'y a plus de fusion possible, la partie est finie !';
+
+  @override
+  String get coachMerges => 'Fusions ⚡';
+
+  @override
+  String get coachMergesDesc =>
+      'Nombre total de fusions réalisées dans cette partie.';
+
+  @override
+  String get coachComplete => 'C\'est parti ! 🚀';
+
+  @override
+  String get coachCompleteDesc =>
+      'Tu es prêt ! Fusionne, utilise tes jokers et bats ton record !';
+
+  @override
+  String get coachTapContinue => 'Touche pour continuer';
+
+  @override
+  String get coachSkip => 'Passer';
 }

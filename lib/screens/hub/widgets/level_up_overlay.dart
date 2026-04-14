@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 
@@ -31,7 +30,7 @@ class _LevelUpOverlayState extends ConsumerState<LevelUpOverlay> {
     // Only schedule dismiss once per level-up (guard against rebuild re-triggers)
     if (_shownLevel != result.newLevel) {
       _shownLevel = result.newLevel;
-      AudioService.instance.playLevelUp();
+      // Audio joué SEULEMENT dans game_screen
       Future.delayed(const Duration(milliseconds: 2500), () {
         if (mounted) ref.read(progressionProvider.notifier).clearResult();
       });

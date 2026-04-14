@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shape_merge/core/config/firestore_keys.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
@@ -12,10 +13,10 @@ class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, Object?>> get _leaderboardRef =>
-      _firestore.collection('leaderboard');
+      _firestore.collection(FirestoreKeys.leaderboard);
 
   DocumentReference<Map<String, Object?>> _playerRef(String uid) =>
-      _firestore.collection('players').doc(uid);
+      _firestore.collection(FirestoreKeys.players).doc(uid);
 
   Future<void> submitScore(LeaderboardEntry entry) async {
     try {
@@ -117,7 +118,7 @@ class FirestoreService {
   }
 
   DocumentReference<Map<String, Object?>> _dailyChallengesRef(String uid) =>
-      _playerRef(uid).collection('data').doc('dailyChallenges');
+      _playerRef(uid).collection(FirestoreKeys.playerData).doc(FirestoreKeys.dailyChallenges);
 
   Future<Map<String, Object?>?> getDailyChallenges(String uid) async {
     try {
@@ -189,7 +190,9 @@ class FirestoreService {
         if (doc.exists) {
           await _leaderboardRef.doc(uid).update(data);
         }
-      } catch (_) {}
+      } catch (e) {
+        _log.warning('Leaderboard profile sync failed', error: e);
+      }
     }
   }
 }

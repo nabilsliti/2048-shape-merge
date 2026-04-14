@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
@@ -41,6 +42,7 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
   late AnimationController _entranceCtrl;
   late AnimationController _pulseCtrl;
   late AnimationController _confettiCtrl;
+  late final List<_ConfettiPiece> _confettiPieces;
 
   @override
   void initState() {
@@ -58,6 +60,7 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
       vsync: this,
       duration: const Duration(seconds: 4),
     )..repeat();
+    _confettiPieces = _generateConfetti();
   }
 
   @override
@@ -72,8 +75,8 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final title = widget.isVictory ? l10n.victory : l10n.gameOver;
-    final badgeEmoji = widget.isVictory ? '🏆' : '💀';
-    final badgeColors = widget.isVictory
+    final badgeEmoji = widget.isNewRecord ? '🏆' : '💀';
+    final badgeColors = widget.isNewRecord
         ? const [AppTheme.victoryBadgeTop, AppTheme.victoryBadgeBot]
         : const [AppTheme.deathBadgeTop, AppTheme.deathBadgeBot];
 
@@ -88,7 +91,20 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
             fit: StackFit.expand,
             children: [
               const SpaceBackground(darken: 0.65),
-              if (widget.isVictory) ..._buildParticles(),
+              if (widget.isNewRecord)
+                AnimatedBuilder(
+                  animation: _confettiCtrl,
+                  builder: (ctx, _) {
+                    return Positioned.fill(
+                      child: CustomPaint(
+                        painter: _ConfettiRainPainter(
+                          pieces: _confettiPieces,
+                          progress: _confettiCtrl.value,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -134,30 +150,32 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                                   ),
                                 ),
                                 if (widget.isNewRecord) ...[
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 10),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(colors: [AppTheme.victoryBadgeTop, AppTheme.victoryBadgeBot]),
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
-                                      boxShadow: [BoxShadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.267), blurRadius: 10, spreadRadius: 1)],
+                                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                                      boxShadow: [
+                                        BoxShadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.5), blurRadius: 16, spreadRadius: 2),
+                                        BoxShadow(color: AppTheme.victoryBadgeBot.withValues(alpha: 0.3), blurRadius: 24, spreadRadius: 4),
+                                      ],
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.star, color: Colors.white, size: 16),
-                                        const SizedBox(width: 4),
-                                        Text(l10n.newRecord.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1)),
-                                        const SizedBox(width: 4),
-                                        const Icon(Icons.star, color: Colors.white, size: 16),
+                                        const Text('🏆', style: TextStyle(fontSize: 20)),
+                                        const SizedBox(width: 8),
+                                        Text(l10n.newRecord.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
+                                        const SizedBox(width: 8),
+                                        const Text('🏆', style: TextStyle(fontSize: 20)),
                                       ],
                                     ),
                                   ),
                                 ],
-                                const SizedBox(height: 12),
-                                _StatChip(label: l10n.merges, value: '${widget.mergeCount}', color: AppTheme.purpleBorder),
                                 // ── XP + Objectifs — résumé rétention ──
-                                _XpAndObjectivesSummary(),
+                                const _XpAndObjectivesSummary(),
                               ],
                             ),
                           ),
@@ -168,25 +186,20 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                             SizedBox(
                               width: double.infinity,
                               child: Button3D.blue(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                borderRadius: 18,
+                                expand: true,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                                 onPressed: widget.onSignIn,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
-                                      width: 28,
-                                      height: 28,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)),
-                                      ),
-                                    ),
+                                      width: 24,
+                                      height: 24,
+                                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                                      child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontGBtn, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)))),
                                     const SizedBox(width: 10),
-                                    Text(l10n.signInGoogle.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: Colors.white)),
+                                    Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                                   ],
                                 ),
                               ),
@@ -200,38 +213,40 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                           Row(
                             children: [
                               Expanded(
-                                child: Button3D.red(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  borderRadius: 18,
-                                  onPressed: () {
-                                    AudioService.instance.playButtonTap();
-                                    context.go('/home');
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.home, color: Colors.white, size: 24),
-                                      const SizedBox(width: 8),
-                                      Text(l10n.menu.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: Colors.white)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
                                 child: Button3D.green(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  borderRadius: 18,
+                                  expand: true,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                   onPressed: () {
                                     AudioService.instance.playButtonTap();
                                     widget.onReplay();
                                   },
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.refresh, color: Colors.white, size: 24),
-                                      const SizedBox(width: 8),
-                                      Text(l10n.replay.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w900, color: Colors.white)),
+                                      const PremiumIcon.replay(size: 28),
+                                      const SizedBox(width: 10),
+                                      Text(l10n.replay.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Button3D.red(
+                                  expand: true,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  onPressed: () {
+                                    AudioService.instance.playButtonTap();
+                                    context.pop();
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const PremiumIcon.home(size: 28),
+                                      const SizedBox(width: 10),
+                                      Text(l10n.menu.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                                     ],
                                   ),
                                 ),
@@ -251,41 +266,71 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
     );
   }
 
-  List<Widget> _buildParticles() {
-    final rng = Random(99);
-    const colors = [AppTheme.confetti1, AppTheme.confetti2, AppTheme.confetti3, AppTheme.confetti4];
-
-    return List.generate(12, (i) {
-      final color = colors[rng.nextInt(colors.length)];
-      final startX = rng.nextDouble();
-      final speed = 0.3 + rng.nextDouble() * 0.5;
-      final size = 3.0 + rng.nextDouble() * 4;
-
-      return AnimatedBuilder(
-        animation: _confettiCtrl,
-        builder: (ctx, _) {
-          final t = (_confettiCtrl.value * speed + i * 0.08) % 1.0;
-          final screenH = MediaQuery.of(ctx).size.height;
-          final screenW = MediaQuery.of(ctx).size.width;
-          final y = -10.0 + t * (screenH + 20);
-          final x = startX * screenW + sin(t * 3 * pi) * 20;
-
-          return Positioned(
-            left: x,
-            top: y,
-            child: Opacity(
-              opacity: (1.0 - t).clamp(0.0, 0.4),
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
-            ),
-          );
-        },
-      );
-    });
+  static List<_ConfettiPiece> _generateConfetti() {
+    final rng = Random();
+    const colors = [
+      Color(0xFFFF4444), Color(0xFF44AAFF), Color(0xFFFFD700),
+      Color(0xFF44FF88), Color(0xFFFF44FF), Color(0xFFFF8800), Color(0xFF8844FF),
+    ];
+    return List.generate(32, (i) => _ConfettiPiece(
+      x: rng.nextDouble(),
+      speed: 0.5 + rng.nextDouble() * 0.8,
+      drift: (rng.nextDouble() - 0.5) * 0.4,
+      rotation: rng.nextDouble() * pi * 2,
+      rotSpeed: (rng.nextDouble() - 0.5) * 8,
+      width: 3 + rng.nextDouble() * 5,
+      height: 5 + rng.nextDouble() * 7,
+      color: colors[i % colors.length],
+      phase: rng.nextDouble(),
+    ));
   }
+}
+
+class _ConfettiPiece {
+  final double x, speed, drift, rotation, rotSpeed, width, height, phase;
+  final Color color;
+  const _ConfettiPiece({
+    required this.x, required this.speed, required this.drift,
+    required this.rotation, required this.rotSpeed,
+    required this.width, required this.height, required this.color,
+    required this.phase,
+  });
+}
+
+class _ConfettiRainPainter extends CustomPainter {
+  final List<_ConfettiPiece> pieces;
+  final double progress;
+  _ConfettiRainPainter({required this.pieces, required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final c in pieces) {
+      // Each piece has its own phase offset → continuous loop, no cut
+      final t = (progress * (0.3 + c.speed * 0.7) + c.phase) % 1.0;
+
+      final px = c.x * size.width + sin(t * pi * 2) * c.drift * size.width;
+      final py = -10 + t * (size.height + 20);
+      final rot = c.rotation + t * c.rotSpeed;
+
+      canvas.save();
+      canvas.translate(px, py);
+      canvas.rotate(rot);
+
+      final rect = Rect.fromCenter(
+        center: Offset.zero,
+        width: c.width,
+        height: c.height * (0.5 + 0.5 * cos(t * pi * 3).abs()),
+      );
+      canvas.drawRect(rect, Paint()
+        ..color = c.color.withValues(alpha: 0.85)
+        ..style = PaintingStyle.fill);
+
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConfettiRainPainter old) => old.progress != progress;
 }
 
 class _PulsingBadge extends StatelessWidget {
@@ -319,33 +364,6 @@ class _PulsingBadge extends StatelessWidget {
   }
 }
 
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatChip({required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        children: [
-          Text(label.toUpperCase(), style: GoogleFonts.nunito(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w900, color: AppTheme.blueLabel, letterSpacing: 1)),
-          const SizedBox(height: 2),
-          Text(value, style: GoogleFonts.fredoka(fontSize: AppTheme.fontH3, fontWeight: FontWeight.w900, color: color, shadows: const [Shadow(color: Colors.black38, offset: Offset(0, 2))])),
-        ],
-      ),
-    );
-  }
-}
-
 /// XP gain + daily objectives summary shown in GameOverOverlay.
 class _XpAndObjectivesSummary extends ConsumerWidget {
   const _XpAndObjectivesSummary();
@@ -365,7 +383,7 @@ class _XpAndObjectivesSummary extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(RetentionUI.xpIcon, color: RetentionUI.levelColor, size: 14),
+                const Icon(RetentionUI.xpIcon, color: RetentionUI.levelColor, size: 14),
                 const SizedBox(width: 4),
                 Text(
                   '+${progression.xpGained} XP',
@@ -382,7 +400,7 @@ class _XpAndObjectivesSummary extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(RetentionUI.goalIcon, color: RetentionUI.goalColor, size: 12),
+                const Icon(RetentionUI.goalIcon, color: RetentionUI.goalColor, size: 12),
                 const SizedBox(width: 4),
                 Text(
                   l10n.objectivesSummary(challenges.completedCount, challenges.challenges.length),

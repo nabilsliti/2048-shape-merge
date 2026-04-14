@@ -44,7 +44,7 @@ class GameEngine {
     );
 
     // Helper: append a drag result to the rolling window of 20 attempts
-    List<bool> _updatedAttempts(bool merged) {
+    List<bool> updatedAttempts(bool merged) {
       final list = List<bool>.from(state.recentAttempts)..add(merged);
       if (list.length > 20) list.removeAt(0);
       return list;
@@ -53,7 +53,7 @@ class GameEngine {
     if (target == null) {
       // No merge — shape position stays unchanged (snap back handled by UI),
       // spawn only if below max capacity
-      final attempts = _updatedAttempts(false);
+      final attempts = updatedAttempts(false);
       final mergeRate = attempts.isEmpty ? 0.5 : attempts.where((b) => b).length / attempts.length;
       final updatedShapes = List<GameShape>.from(state.shapes);
       if (updatedShapes.length < maxShapes) {
@@ -95,7 +95,7 @@ class GameEngine {
       level: newLevel,
     );
 
-    final attempts = _updatedAttempts(true);
+    final attempts = updatedAttempts(true);
     final mergeRate = attempts.isEmpty ? 0.5 : attempts.where((b) => b).length / attempts.length;
     final updatedShapes = state.shapes
         .where((s) => s.id != dragged.id && s.id != target.id)

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shape_merge/core/config/app_routes.dart';
+import 'package:shape_merge/core/config/notification_config.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -24,10 +26,10 @@ import 'package:shape_merge/screens/leaderboard/leaderboard_screen.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 
 final _router = GoRouter(
-  initialLocation: '/',
+  initialLocation: AppRoutes.splash,
   routes: [
     GoRoute(
-      path: '/',
+      path: AppRoutes.splash,
       pageBuilder: (_, state) => NoTransitionPage(
         key: state.pageKey,
         child: const SplashScreen(),
@@ -40,16 +42,19 @@ final _router = GoRouter(
       ),
       branches: [
         StatefulShellBranch(routes: [
-          GoRoute(path: '/home', builder: (_, __) => const MainHubScreen()),
+          GoRoute(
+            path: AppRoutes.home,
+            builder: (_, __) => const MainHubScreen(),
+            routes: [
+              GoRoute(path: 'game', builder: (_, __) => const GameScreen()),
+            ],
+          ),
         ]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/game', builder: (_, __) => const GameScreen()),
+          GoRoute(path: AppRoutes.shop, builder: (_, __) => const ShopScreen()),
         ]),
         StatefulShellBranch(routes: [
-          GoRoute(path: '/shop', builder: (_, __) => const ShopScreen()),
-        ]),
-        StatefulShellBranch(routes: [
-          GoRoute(path: '/leaderboard', builder: (_, __) => const LeaderboardScreen()),
+          GoRoute(path: AppRoutes.leaderboard, builder: (_, __) => const LeaderboardScreen()),
         ]),
       ],
     ),
@@ -73,8 +78,8 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
     WidgetsBinding.instance.addObserver(this);
     // Listen for notification taps and navigate to the hub.
     _notifSub = NotificationService.instance.onNotificationTap.listen((payload) {
-      if (payload == 'streak_reminder') {
-        _router.go('/home');
+      if (payload == NotificationConfig.streakPayload) {
+        _router.go(AppRoutes.home);
       }
     });
   }
@@ -173,6 +178,10 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
 
       // Also fetch leaderboard score (may be higher than Player.bestScore)
       ref.read(firestoreServiceProvider).getLeaderboardScore(player.uid).then((lbScore) {
+        // Guard: user may have signed out while the network call was in-flight
+        final stillSignedIn = ref.read(authStateProvider).valueOrNull;
+        if (stillSignedIn == null) return;
+
         final best = [player.bestScore, lbScore].reduce((a, b) => a > b ? a : b);
         if (best > ref.read(gameStateProvider).bestScore) {
           notifier.loadSavedState(

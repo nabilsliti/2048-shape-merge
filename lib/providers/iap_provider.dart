@@ -32,11 +32,11 @@ final iapInitProvider = FutureProvider<void>((ref) async {
       }
     }
     if (premium != null) {
-      if (premium.$1 > 0) notifier.addJokers(JokerType.radar, premium.$1);
-      if (premium.$2 > 0) notifier.addJokers(JokerType.evolution, premium.$2);
-      if (premium.$3 > 0) notifier.addJokers(JokerType.megaBomb, premium.$3);
+      if (premium.radar > 0) notifier.addJokers(JokerType.radar, premium.radar);
+      if (premium.evolution > 0) notifier.addJokers(JokerType.evolution, premium.evolution);
+      if (premium.megaBomb > 0) notifier.addJokers(JokerType.megaBomb, premium.megaBomb);
     }
-    const AppLogger('IAP').info('Delivered $productId: free×$freeAmount, radar×${premium?.$1}, evo×${premium?.$2}, mega×${premium?.$3}');
+    const AppLogger('IAP').info('Delivered $productId: free×$freeAmount, radar×${premium?.radar}, evo×${premium?.evolution}, mega×${premium?.megaBomb}');
   };
 
   await iap.initialize(storage);

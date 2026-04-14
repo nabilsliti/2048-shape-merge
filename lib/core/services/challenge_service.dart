@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:shape_merge/core/config/challenge_config.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/firestore_service.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
+
+const _log = AppLogger('Challenge');
 
 /// Generates and manages daily challenges.
 /// All logic is client-side — no Cloud Function needed.
@@ -28,7 +32,9 @@ class ChallengeService {
         final state = DailyChallengeState.fromMap(
             Map<String, Object?>.from(jsonDecode(json) as Map));
         if (state.date == PlayerStreak.todayKey()) return state;
-      } catch (_) {}
+      } catch (e) {
+        _log.warning('Failed to parse guest challenges', error: e);
+      }
     }
     // Generate new ones
     final state = _generate(
@@ -56,7 +62,9 @@ class ChallengeService {
     if (doc != null && doc['date'] == PlayerStreak.todayKey()) {
       try {
         return DailyChallengeState.fromMap(doc);
-      } catch (_) {}
+      } catch (e) {
+        _log.warning('Failed to parse signed challenges', error: e);
+      }
     }
     final state = _generate(
       date: PlayerStreak.todayKey(),
@@ -121,9 +129,9 @@ class ChallengeService {
 
     // Difficulty band based on level
     final ChallengeDifficulty band;
-    if (playerLevel < 5) {
+    if (playerLevel < ChallengeBands.easyMaxLevel) {
       band = ChallengeDifficulty.easy;
-    } else if (playerLevel < 20) {
+    } else if (playerLevel < ChallengeBands.mediumMaxLevel) {
       band = ChallengeDifficulty.medium;
     } else {
       band = ChallengeDifficulty.hard;
@@ -168,46 +176,18 @@ class ChallengeService {
     final isXP = rng.nextBool();
 
     final int target = switch (type) {
-      ChallengeType.fusions    => switch (diff) {
-        ChallengeDifficulty.easy   => 10,
-        ChallengeDifficulty.medium => 25,
-        ChallengeDifficulty.hard   => 50,
-      },
-      ChallengeType.score      => switch (diff) {
-        ChallengeDifficulty.easy   => 500,
-        ChallengeDifficulty.medium => 2000,
-        ChallengeDifficulty.hard   => 6000,
-      },
-      ChallengeType.parties    => switch (diff) {
-        ChallengeDifficulty.easy   => 1,
-        ChallengeDifficulty.medium => 2,
-        ChallengeDifficulty.hard   => 3,
-      },
-      ChallengeType.formeMax   => switch (diff) {
-        ChallengeDifficulty.easy   => 5,
-        ChallengeDifficulty.medium => 8,
-        ChallengeDifficulty.hard   => 12,
-      },
-      ChallengeType.jokersUses => switch (diff) {
-        ChallengeDifficulty.easy   => 2,
-        ChallengeDifficulty.medium => 5,
-        ChallengeDifficulty.hard   => 8,
-      },
+      ChallengeType.fusions    => ChallengeTargets.target('fusions', diff.name),
+      ChallengeType.score      => ChallengeTargets.target('score', diff.name),
+      ChallengeType.parties    => ChallengeTargets.target('parties', diff.name),
+      ChallengeType.formeMax   => ChallengeTargets.target('formeMax', diff.name),
+      ChallengeType.jokersUses => ChallengeTargets.target('jokersUses', diff.name),
     };
 
     final ChallengeReward reward;
     if (isXP) {
-      reward = XpReward(switch (diff) {
-        ChallengeDifficulty.easy   => 15,
-        ChallengeDifficulty.medium => 30,
-        ChallengeDifficulty.hard   => 50,
-      });
+      reward = XpReward(ChallengeRewards.xp[diff.name] ?? 15);
     } else {
-      reward = JokerReward(switch (diff) {
-        ChallengeDifficulty.easy   => JokerType.bomb,
-        ChallengeDifficulty.medium => JokerType.wildcard,
-        ChallengeDifficulty.hard   => JokerType.reducer,
-      });
+      reward = JokerReward(ChallengeRewards.joker[diff.name] ?? JokerType.bomb);
     }
 
     return (target, reward);

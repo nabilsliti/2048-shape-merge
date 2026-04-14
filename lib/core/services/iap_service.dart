@@ -1,52 +1,35 @@
 import 'dart:async';
 
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:shape_merge/core/config/shop_catalog.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 
 const _log = AppLogger('IAP');
 
 // ──────────────────────────────────────────────────────────────
-// Product catalogue
+// Product catalogue — delegates to ShopCatalog config
 // ──────────────────────────────────────────────────────────────
 
 /// Product IDs — must match Google Play Console / App Store Connect.
 class IapProducts {
   IapProducts._();
 
-  static const packStar = 'pack_star';       // free jokers ×5 + radar ×1
-  static const packComet = 'pack_comet';     // free jokers ×15 + radar ×3 + evolution ×2 + megabomb ×2
-  static const packDiamond = 'pack_diamond'; // free jokers ×40 + radar ×8 + evolution ×5 + megabomb ×5
-  static const noAds = 'no_ads';            // remove ads + free jokers ×10 + radar ×3 + evolution ×2 + megabomb ×2
+  static const packStar = 'pack_star';
+  static const packComet = 'pack_comet';
+  static const packDiamond = 'pack_diamond';
+  static const noAds = 'no_ads';
 
-  static const allIds = {packStar, packComet, packDiamond, noAds};
+  static Set<String> get allIds => ShopCatalog.allIds;
 
-  /// Number of FREE jokers (bomb/wildcard/reducer) per product.
-  static const packContents = <String, int>{
-    packStar: 5,
-    packComet: 15,
-    packDiamond: 40,
-    noAds: 10,
-  };
+  static Map<String, int> get packContents => ShopCatalog.packContents;
 
-  /// Premium joker counts per product: [radar, evolution, megaBomb]
-  static const premiumContents = <String, (int radar, int evolution, int megaBomb)>{
-    packStar:    (1, 0, 0),
-    packComet:   (3, 2, 2),
-    packDiamond: (8, 5, 5),
-    noAds:       (3, 2, 2),
-  };
+  static Map<String, ({int radar, int evolution, int megaBomb})> get premiumContents =>
+      ShopCatalog.premiumContents;
 
-  /// Non-consumable products (bought once, can be restored).
-  static const nonConsumable = {noAds};
+  static Set<String> get nonConsumable => ShopCatalog.nonConsumableIds;
 
-  /// Default display prices (used when store isn't reachable).
-  static const fallbackPrices = <String, String>{
-    packStar: '1,99 €',
-    packComet: '4,99 €',
-    packDiamond: '9,99 €',
-    noAds: '5,49 €',
-  };
+  static Map<String, String> get fallbackPrices => ShopCatalog.fallbackPrices;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -164,7 +147,7 @@ class IapService {
       await _iap.restorePurchases();
     } catch (e) {
       _log.error('Restore failed', error: e);
-      onStatusChanged?.call(IapResult(
+      onStatusChanged?.call(const IapResult(
         status: IapStatus.error,
         errorMessage: 'Restore failed',
       ));

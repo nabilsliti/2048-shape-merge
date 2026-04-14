@@ -24,7 +24,7 @@ class RulesPage extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           // Shape types preview
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _ShapePreview(color: AppTheme.blueTop, label: '⬤'),

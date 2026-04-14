@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shape_merge/core/config/app_routes.dart';
+import 'package:shape_merge/core/config/firestore_keys.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
@@ -14,14 +16,17 @@ import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
-import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 import 'package:shape_merge/screens/settings/profile_dialog.dart';
+import 'package:shape_merge/screens/home/widgets/animated_background.dart';
+
 
 const _log = AppLogger('Leaderboard');
 
+
+
 void _debugFirestore() async {
   try {
-    final snap = await FirebaseFirestore.instance.collection('leaderboard').get();
+    final snap = await FirebaseFirestore.instance.collection(FirestoreKeys.leaderboard).get();
     _log.debug('Direct Firestore read: ${snap.docs.length} docs');
     for (final doc in snap.docs) {
       _log.debug('  ${doc.id}: ${doc.data()}');
@@ -37,11 +42,11 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Stack(
         children: [
-          const Positioned.fill(child: SpaceBackground()),
-          const LeaderboardScreenContent(),
+          Positioned.fill(child: SpaceBackground()),
+          LeaderboardScreenContent(),
         ],
       ),
     );
@@ -73,7 +78,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                       child: Button3D.gold(
                         padding: EdgeInsets.zero,
                         borderRadius: 22,
-                        onPressed: () => context.go('/home'),
+                        onPressed: () => context.go(AppRoutes.home),
                         child: const SizedBox(
                           width: 44,
                           height: 44,
@@ -170,7 +175,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                     child: Button3D.gold(
                       padding: EdgeInsets.zero,
                       borderRadius: 22,
-                      onPressed: () => context.go('/home'),
+                      onPressed: () => context.go(AppRoutes.home),
                       child: const SizedBox(
                         width: 44,
                         height: 44,
@@ -364,7 +369,10 @@ class LeaderboardScreenContent extends ConsumerWidget {
                       final rank = index + 1;
                       final isTop3 = index < 3;
                       final isMe = entry.uid == myUid;
-                      return buildCard(entry, rank, isMe, isTop3, index);
+                      return KeyedSubtree(
+                        key: ValueKey(entry.uid),
+                        child: buildCard(entry, rank, isMe, isTop3, index),
+                      );
                     }
                     // Separator "..."
                     if (index == top10.length) {
@@ -433,7 +441,11 @@ class _MedalPainter extends CustomPainter {
         final a = (i * pi / 3) - pi / 2;
         final px = cx + radius * cos(a);
         final py = cy + offsetY + radius * sin(a);
-        if (i == 0) p.moveTo(px, py); else p.lineTo(px, py);
+        if (i == 0) {
+          p.moveTo(px, py);
+        } else {
+          p.lineTo(px, py);
+        }
       }
       p.close();
       return p;

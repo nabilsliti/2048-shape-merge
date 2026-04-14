@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/config/avatar_catalog.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -10,36 +11,8 @@ import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
 
-/// Predefined avatar list — emoji-based for simplicity
-const avatarList = [
-  {'id': 'robot', 'emoji': '🤖'},
-  {'id': 'alien', 'emoji': '👾'},
-  {'id': 'rocket', 'emoji': '🚀'},
-  {'id': 'fire', 'emoji': '🔥'},
-  {'id': 'star', 'emoji': '⭐'},
-  {'id': 'diamond', 'emoji': '💎'},
-  {'id': 'crown', 'emoji': '👑'},
-  {'id': 'lightning', 'emoji': '⚡'},
-  {'id': 'skull', 'emoji': '💀'},
-  {'id': 'ghost', 'emoji': '👻'},
-  {'id': 'ninja', 'emoji': '🥷'},
-  {'id': 'wizard', 'emoji': '🧙'},
-  {'id': 'dragon', 'emoji': '🐉'},
-  {'id': 'unicorn', 'emoji': '🦄'},
-  {'id': 'phoenix', 'emoji': '🐦‍🔥'},
-  {'id': 'cat', 'emoji': '🐱'},
-  {'id': 'wolf', 'emoji': '🐺'},
-  {'id': 'eagle', 'emoji': '🦅'},
-  {'id': 'trophy', 'emoji': '🏆'},
-  {'id': 'heart', 'emoji': '❤️'},
-];
-
-/// Returns emoji string for a given avatar ID (or first avatar as default)
-String avatarEmoji(String? avatarId) {
-  if (avatarId == null) return avatarList.first['emoji']!;
-  final match = avatarList.where((a) => a['id'] == avatarId);
-  return match.isNotEmpty ? match.first['emoji']! : avatarList.first['emoji']!;
-}
+/// Returns emoji string for a given avatar ID (or first avatar as default).
+String avatarEmoji(String? avatarId) => AvatarCatalog.emoji(avatarId);
 
 /// Shows the profile editing dialog — works for both signed-in and guest users
 Future<void> showProfileDialog(BuildContext context, WidgetRef ref) async {
@@ -74,7 +47,6 @@ Future<void> showProfileDialog(BuildContext context, WidgetRef ref) async {
   // Handle sign out
   if (result.signOut) {
     await ref.read(authServiceProvider).signOut();
-    ref.invalidate(playerProvider);
     return;
   }
 
@@ -148,7 +120,9 @@ class _SignInOverlayContentState extends State<_SignInOverlayContent> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 2200), widget.onDone);
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (mounted) widget.onDone();
+    });
   }
 
   @override
@@ -332,11 +306,11 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                 fillColor: Colors.white.withValues(alpha: 0.08),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                  borderSide: BorderSide(color: AppTheme.panelBorder),
+                  borderSide: const BorderSide(color: AppTheme.panelBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                  borderSide: BorderSide(color: AppTheme.panelBorder),
+                  borderSide: const BorderSide(color: AppTheme.panelBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -362,14 +336,15 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                   mainAxisSpacing: 8,
                   crossAxisSpacing: 8,
                 ),
-                itemCount: avatarList.length,
+                itemCount: AvatarCatalog.all.length,
                 itemBuilder: (ctx, index) {
-                  final avatar = avatarList[index];
-                  final isSelected = avatar['id'] == _selectedAvatarId;
+                  final avatar = AvatarCatalog.all[index];
+                  final isSelected = avatar.id == _selectedAvatarId;
                   return GestureDetector(
+                    key: ValueKey(avatar.id),
                     onTap: () {
                       FocusScope.of(context).unfocus();
-                      setState(() => _selectedAvatarId = avatar['id']!);
+                      setState(() => _selectedAvatarId = avatar.id);
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
@@ -384,7 +359,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                         ),
                       ),
                       child: Center(
-                        child: Text(avatar['emoji']!, style: TextStyle(fontSize: isSelected ? AppTheme.fontH1 : AppTheme.fontH2)),
+                        child: Text(avatar.emoji, style: TextStyle(fontSize: isSelected ? AppTheme.fontH1 : AppTheme.fontH2)),
                       ),
                     ),
                   );

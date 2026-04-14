@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/config/level_colors.dart';
+
+export 'button_3d.dart';
 
 /// Single source of truth for ALL colors, font sizes, spacing and border radii.
 /// No Color literal (0xFF…) should ever appear outside this file.
@@ -172,15 +174,7 @@ class AppTheme {
   static const Color medalBronzeText  = Color(0xFF3E2723);
   static const Color medalBronzeShine = Color(0xFFFFF3E0);
 
-  // ── Settings dialog (white-mode) ─────────────────────────────
-  static const Color settingsBg          = Color(0xFFf8f9fa);
-  static const Color settingsBorder      = Color(0xFFe9ecef);
-  static const Color settingsCardBorder  = Color(0xFFf0f0f0);
-  static const Color settingsCardShadow  = Color(0xFFcccccc);
-  static const Color settingsToggleOff   = Color(0xFFcccccc);
-  static const Color settingsToggleOffBot = Color(0xFF999999);
-  static const Color settingsDarkText    = Color(0xFF333333);
-  static const Color settingsSubText     = Color(0xFFcbd5e1);
+
 
   // ── Shop cards ────────────────────────────────────────────────
   static const Color shopDarkCard1    = Color(0xFF100030);
@@ -296,21 +290,16 @@ class AppTheme {
   static const Color homePainterFill2 = gold;
   static const Color homePainterFill3 = Color(0xFFCCB800);
   static const Color homePainterRing  = Color(0xFFFFFDE7);
+  // Replay painter (cyan-blue circle)
+  static const Color replayFill1 = Color(0xFF80D8FF);
+  static const Color replayFill2 = Color(0xFF40C4FF);
+  static const Color replayFill3 = Color(0xFF0091EA);
+  static const Color replayDark  = Color(0xFF01579B);
 
-  // ── Level colors (shape fill by level) ───────────────────────
-  static const List<Color> levelColors = [
-    Color(0xFFFF0000), // 1 — rouge pur
-    Color(0xFF0000FF), // 2 — bleu pur
-    Color(0xFFFFFF00), // 3 — jaune pur
-    Color(0xFF00FF00), // 4 — vert pur
-    Color(0xFFFF00FF), // 5 — magenta pur
-    Color(0xFFFF8000), // 6 — orange pur
-    Color(0xFF00FFFF), // 7 — cyan pur
-    Color(0xFFFF1493), // 8 — hot pink
-  ];
+  // ── Level colors (shape fill by level) ── delegated to LevelColors catalog
+  static List<Color> get levelColors => LevelColors.palette;
 
-  static Color colorForLevel(int level) =>
-      levelColors[(level - 1).clamp(0, levelColors.length - 1)];
+  static Color colorForLevel(int level) => LevelColors.forLevel(level);
 
   // ════════════════════════════════════════════════════════════════
   // FONT SIZES
@@ -333,7 +322,7 @@ class AppTheme {
   static const double fontGBtn    = 15.0; // Google G button
   static const double fontSmall   = 14.0; // secondary text
   static const double fontXSmall  = 13.0; // sub-labels, captions
-  static const double fontTiny    = 12.0; // chips, settings labels
+  static const double fontTiny    = 12.0; // chips, labels
   static const double fontMini    = 11.0; // tiny chips
   static const double fontNano    = 10.0; // badge sub-labels
   static const double fontPico    =  9.0; // very small labels
@@ -460,156 +449,6 @@ class AppTheme {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color.withValues(alpha: 0.3),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Button3D — 3D juicy button with physical press effect
-// ═══════════════════════════════════════════════════════════════
-class Button3D extends StatefulWidget {
-  final Widget child;
-  final Color topColor;
-  final Color bottomColor;
-  final Color borderColor;
-  final VoidCallback? onPressed;
-  final double borderRadius;
-  final EdgeInsetsGeometry padding;
-  final bool expand;
-  final double depth;
-
-  const Button3D({
-    super.key,
-    required this.child,
-    required this.topColor,
-    required this.bottomColor,
-    required this.borderColor,
-    this.onPressed,
-    this.borderRadius = 14,
-    this.padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    this.expand = false,
-    this.depth = 6,
-  });
-
-  factory Button3D.green({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: AppTheme.greenTop, bottomColor: AppTheme.greenBot, borderColor: AppTheme.greenBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  factory Button3D.blue({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: AppTheme.blueTop, bottomColor: AppTheme.blueBot, borderColor: AppTheme.blueBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  factory Button3D.orange({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: AppTheme.orangeTop, bottomColor: AppTheme.orangeBot, borderColor: AppTheme.orangeBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  factory Button3D.red({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: AppTheme.redTop, bottomColor: AppTheme.redBot, borderColor: AppTheme.redBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  factory Button3D.purple({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: AppTheme.purpleTop, bottomColor: AppTheme.purpleBot, borderColor: AppTheme.purpleBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  factory Button3D.yellow({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: AppTheme.yellowTop, bottomColor: AppTheme.yellowBot, borderColor: AppTheme.yellowBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  factory Button3D.gold({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: const Color(0xFFD4A017), bottomColor: const Color(0xFF9B7A0F), borderColor: AppTheme.goldDeep, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  factory Button3D.gray({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: AppTheme.grayTop, bottomColor: AppTheme.grayBot, borderColor: AppTheme.grayBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
-
-  @override
-  State<Button3D> createState() => _Button3DState();
-}
-
-class _Button3DState extends State<Button3D> with SingleTickerProviderStateMixin {
-  bool _isPressed = false;
-  late AnimationController _squashController;
-  late Animation<double> _scaleXAnim;
-  late Animation<double> _scaleYAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _squashController = AnimationController(vsync: this, duration: const Duration(milliseconds: 80));
-    _scaleXAnim = Tween(begin: 1.0, end: 1.04).animate(CurvedAnimation(parent: _squashController, curve: Curves.easeOut));
-    _scaleYAnim = Tween(begin: 1.0, end: 0.96).animate(CurvedAnimation(parent: _squashController, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _squashController.dispose();
-    super.dispose();
-  }
-
-  Widget _wrapWidth(Widget child) =>
-      widget.expand ? child : IntrinsicWidth(child: child);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) {
-        if (widget.onPressed != null) {
-          HapticFeedback.lightImpact();
-          _squashController.forward();
-          setState(() => _isPressed = true);
-        }
-      },
-      onTapUp: (_) {
-        if (widget.onPressed != null) {
-          _squashController.reverse();
-          setState(() => _isPressed = false);
-          widget.onPressed!();
-        }
-      },
-      onTapCancel: () {
-        if (widget.onPressed != null) {
-          _squashController.reverse();
-          setState(() => _isPressed = false);
-        }
-      },
-      child: AnimatedBuilder(
-        animation: _squashController,
-        builder: (context, child) {
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()..scale(_scaleXAnim.value, _scaleYAnim.value),
-            child: child,
-          );
-        },
-        child: IntrinsicHeight(
-          child: _wrapWidth(
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  top: widget.depth, left: 0, right: 0, bottom: 0,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    decoration: BoxDecoration(
-                      color: widget.bottomColor,
-                      borderRadius: BorderRadius.circular(widget.borderRadius),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.3), offset: Offset(0, _isPressed ? widget.depth * 0.33 : widget.depth * 0.83), blurRadius: _isPressed ? widget.depth * 0.5 : widget.depth * 1.33)
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: widget.expand ? double.infinity : null,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    margin: EdgeInsets.only(top: _isPressed ? widget.depth : 0, bottom: _isPressed ? 0 : widget.depth),
-                    decoration: BoxDecoration(
-                      color: widget.topColor,
-                      borderRadius: BorderRadius.circular(widget.borderRadius),
-                      border: Border.all(color: widget.borderColor, width: 2),
-                    ),
-                    child: Padding(padding: widget.padding, child: widget.child),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -30,8 +30,8 @@ final playerProvider = FutureProvider<Player?>((ref) async {
       totalXP: storage.totalXP,
     );
     await firestoreService.savePlayer(player);
-    const _log = AppLogger('Game');
-    _log.info('New player created from local data: bestScore=${player.bestScore}, level=${player.level}');
+    const log = AppLogger('Game');
+    log.info('New player created from local data: bestScore=${player.bestScore}, level=${player.level}');
     return player;
   }
 

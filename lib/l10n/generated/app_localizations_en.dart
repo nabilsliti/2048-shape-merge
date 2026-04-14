@@ -21,9 +21,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shop => 'Shop';
 
   @override
-  String get settings => 'Settings';
-
-  @override
   String get bestScore => 'Best Score';
 
   @override
@@ -538,29 +535,109 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get jokerSuggestCriticalBomb => 'Board almost full! Use a Bomb!';
+  String get jokerSuggestCriticalBomb => 'Bomb to free space!';
 
   @override
-  String get jokerSuggestCriticalReducer => 'Critical! Reduce a shape!';
+  String get jokerSuggestCriticalReducer => 'Reducer to shrink a shape!';
 
   @override
-  String get jokerSuggestHighBomb => 'Getting crowded… Bomb to clear space?';
+  String get jokerSuggestHighBomb => 'Bomb to make room';
 
   @override
-  String get jokerSuggestMegaBomb => 'Many same-level shapes — Mega Bomb!';
+  String get jokerSuggestMegaBomb => 'Mega Bomb to clear all';
 
   @override
-  String get jokerSuggestRadar => 'Stuck? Radar reveals merges!';
+  String get jokerSuggestRadar => 'Radar to find merges';
 
   @override
-  String get jokerSuggestWildcard => 'Stuck? A Wildcard can help!';
+  String get jokerSuggestWildcard => 'Wildcard to unblock';
 
   @override
-  String get jokerSuggestEvolution => 'Lonely shape — Evolution to boost it!';
+  String get jokerSuggestEvolution => 'Evolution to boost a shape';
 
   @override
-  String get jokerSuggestReducer => 'Lonely shape — Reducer can help!';
+  String get jokerSuggestReducer => 'Reducer to create a pair';
 
   @override
   String get jokerSuggestUse => 'Use';
+
+  @override
+  String get coachWelcome => 'Welcome! 🎮';
+
+  @override
+  String get coachWelcomeDesc => 'Let\'s learn the basics together!';
+
+  @override
+  String get coachWaitMerge => 'Your turn! 🧩';
+
+  @override
+  String get coachWaitMergeDesc =>
+      'Drag a shape onto an identical one (same shape, same color, same level) to merge!';
+
+  @override
+  String get coachMergeDone => 'Well done! 🎉';
+
+  @override
+  String get coachMergeDoneDesc =>
+      'You\'ve mastered merging! Each merge increases your score.';
+
+  @override
+  String get coachJokers => 'Your Jokers 🃏';
+
+  @override
+  String get coachJokersDesc =>
+      'Here are your jokers! Each has a unique power.';
+
+  @override
+  String get coachWaitJokerLongPress => 'Try it! 👇';
+
+  @override
+  String get coachWaitJokerLongPressDesc =>
+      'Long-press a joker to see its description.';
+
+  @override
+  String get coachJokerDone => 'Perfect! 👏';
+
+  @override
+  String get coachJokerDoneDesc =>
+      'You can check any joker\'s description anytime.';
+
+  @override
+  String get coachJokerUse => 'Using a Joker 🎯';
+
+  @override
+  String get coachJokerUseDesc =>
+      'Tap a joker to activate it, then tap a shape on the grid to apply its power.';
+
+  @override
+  String get coachScore => 'Score ⭐';
+
+  @override
+  String get coachScoreDesc => 'Your current score. Each merge earns points.';
+
+  @override
+  String get coachCapacity => 'Capacity ⭕';
+
+  @override
+  String get coachCapacityDesc =>
+      'Shapes on the grid. When it\'s full and no merge is possible, the game is over!';
+
+  @override
+  String get coachMerges => 'Merges ⚡';
+
+  @override
+  String get coachMergesDesc => 'Total merges performed in this game.';
+
+  @override
+  String get coachComplete => 'Let\'s go! 🚀';
+
+  @override
+  String get coachCompleteDesc =>
+      'You\'re ready! Merge, use jokers, and beat your record!';
+
+  @override
+  String get coachTapContinue => 'Tap to continue';
+
+  @override
+  String get coachSkip => 'Skip';
 }

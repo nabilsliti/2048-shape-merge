@@ -1,3 +1,4 @@
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
@@ -43,17 +44,17 @@ class JokerSuggestionEngine {
     required double recentMergeRate,
     required int movesSinceLastSuggestion,
   }) {
-    // Don't spam — at least 5 moves between suggestions
-    if (movesSinceLastSuggestion < 5) return null;
+    // Don't spam — at least cooldownMoves between suggestions
+    if (movesSinceLastSuggestion < SuggestionTuning.cooldownMoves) return null;
 
     // Don't suggest if board is mostly empty
-    if (shapes.length < maxShapes * 0.5) return null;
+    if (shapes.length < maxShapes * SuggestionTuning.minFillToSuggest) return null;
 
     final fillRatio = shapes.length / maxShapes;
     final pairCount = MergeDetector.countPairs(shapes);
 
     // ── 1. CRITICAL — about to game over ──
-    if (fillRatio >= 0.9 && pairCount <= 2) {
+    if (fillRatio >= SuggestionTuning.criticalFillRatio && pairCount <= SuggestionTuning.criticalMaxPairs) {
       final megaBombSuggestion = _suggestMegaBombIfWorthIt(shapes, inventory);
       if (megaBombSuggestion != null) return megaBombSuggestion;
 
@@ -75,7 +76,7 @@ class JokerSuggestionEngine {
     }
 
     // ── 2. HIGH — board getting full ──
-    if (fillRatio >= 0.75) {
+    if (fillRatio >= SuggestionTuning.highFillRatio) {
       final megaBombSuggestion = _suggestMegaBombIfWorthIt(shapes, inventory);
       if (megaBombSuggestion != null) return megaBombSuggestion;
 
@@ -86,10 +87,26 @@ class JokerSuggestionEngine {
           reasonKey: 'jokerSuggestHighBomb',
         );
       }
+
+      // Board full but has merges — suggest wildcard or reducer to help
+      if (inventory.wildcard > 0) {
+        return const JokerSuggestion(
+          type: JokerType.wildcard,
+          urgency: SuggestionUrgency.high,
+          reasonKey: 'jokerSuggestWildcard',
+        );
+      }
+      if (inventory.reducer > 0) {
+        return const JokerSuggestion(
+          type: JokerType.reducer,
+          urgency: SuggestionUrgency.high,
+          reasonKey: 'jokerSuggestReducer',
+        );
+      }
     }
 
     // ── 3. MEDIUM — struggling (low merge rate) ──
-    if (recentMergeRate < 0.30 && fillRatio >= 0.5) {
+    if (recentMergeRate < SuggestionTuning.lowMergeRate && fillRatio >= SuggestionTuning.strugglingFillRatio) {
       if (inventory.radar > 0) {
         return const JokerSuggestion(
           type: JokerType.radar,
@@ -108,12 +125,12 @@ class JokerSuggestionEngine {
 
     // ── 4. MEDIUM — dominant level cluster ──
     final clusterSuggestion = _suggestMegaBombIfWorthIt(shapes, inventory);
-    if (clusterSuggestion != null && fillRatio >= 0.6) {
+    if (clusterSuggestion != null && fillRatio >= SuggestionTuning.clusterFillRatio) {
       return clusterSuggestion;
     }
 
     // ── 5. LOW — lonely high-level shape ──
-    if (fillRatio >= 0.5) {
+    if (fillRatio >= SuggestionTuning.minFillToSuggest) {
       final lonely = _findLonelyHighLevel(shapes);
       if (lonely != null) {
         if (inventory.evolution > 0) {
@@ -154,7 +171,7 @@ class JokerSuggestionEngine {
       if (count > maxCount) maxCount = count;
     }
 
-    if (maxCount >= 4) {
+    if (maxCount >= SuggestionTuning.megaBombClusterSize) {
       return const JokerSuggestion(
         type: JokerType.megaBomb,
         urgency: SuggestionUrgency.high,
@@ -168,7 +185,7 @@ class JokerSuggestionEngine {
   /// Finds a high-level shape (≥3) that has no merge partner.
   static GameShape? _findLonelyHighLevel(List<GameShape> shapes) {
     for (final s in shapes) {
-      if (s.level < 3) continue;
+      if (s.level < SuggestionTuning.highLevelThreshold) continue;
       final hasPair = shapes.any((o) => o.id != s.id && MergeDetector.canMerge(s, o));
       if (!hasPair) return s;
     }

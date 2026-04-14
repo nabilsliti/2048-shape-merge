@@ -1,18 +1,15 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
-import 'package:shape_merge/core/widgets/joker_icons.dart';
-import 'package:shape_merge/providers/audio_provider.dart';
+import 'package:shape_merge/screens/settings/profile_dialog.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
@@ -22,7 +19,6 @@ import 'package:shape_merge/screens/home/home_screen.dart';
 
 import 'package:shape_merge/screens/hub/widgets/level_up_overlay.dart';
 import 'package:shape_merge/screens/hub/widgets/streak_popup.dart';
-import 'package:shape_merge/screens/settings/profile_dialog.dart';
 
 class MainHubScreen extends ConsumerStatefulWidget {
   const MainHubScreen({super.key});
@@ -107,7 +103,7 @@ class _MainHubScreenState extends ConsumerState<MainHubScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.orbPink.withOpacity(0.3),
+                color: AppTheme.orbPink.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -119,7 +115,7 @@ class _MainHubScreenState extends ConsumerState<MainHubScreen> {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.orbCyan.withOpacity(0.3),
+                color: AppTheme.orbCyan.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -170,29 +166,6 @@ class _TopHud extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Settings button
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Button3D.gold(
-              padding: EdgeInsets.zero,
-              borderRadius: 100,
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => const SettingsModal(),
-                );
-              },
-              child: SizedBox(
-                width: 42,
-                height: 42,
-                child: Transform.scale(
-                  scale: 1.10,
-                  child: Image.asset('assets/images/removed_bg/gear.png', fit: BoxFit.contain),
-                ),
-              ),
-            ),
-          ),
-
           // ── 3 chips centrés, même taille ──
           Expanded(
             child: Row(
@@ -239,202 +212,7 @@ class _TopHud extends ConsumerWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Settings Modal — shape-rush style white dialog with toggles
-// ═══════════════════════════════════════════════════════════════
-class SettingsModal extends ConsumerStatefulWidget {
-  const SettingsModal({super.key});
 
-  @override
-  ConsumerState<SettingsModal> createState() => _SettingsModalState();
-}
-
-class _SettingsModalState extends ConsumerState<SettingsModal> {
-  String _version = '';
-
-  @override
-  void initState() {
-    super.initState();
-    PackageInfo.fromPlatform().then((info) {
-      if (mounted) setState(() => _version = 'v${info.version}+${info.buildNumber}');
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final soundOn = ref.watch(audioProvider);
-    final musicOn = ref.watch(musicProvider);
-    final l10n = AppLocalizations.of(context)!;
-
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.panelBg,
-              borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-              border: Border.all(color: AppTheme.goldDeep, width: 3),
-              boxShadow: [
-                BoxShadow(color: AppTheme.goldDeep.withValues(alpha: 0.4), offset: const Offset(0, 8)),
-                const BoxShadow(color: Colors.black54, offset: Offset(0, 12), blurRadius: 20),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Settings icon — gear image
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppTheme.profileGradTop, AppTheme.profileGradBot],
-                    ),
-                    border: Border.all(color: AppTheme.gold, width: 3),
-                    boxShadow: [
-                      BoxShadow(color: AppTheme.gold.withValues(alpha: 0.3), blurRadius: 12),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Image.asset('assets/images/removed_bg/gear.png', fit: BoxFit.contain),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Title
-                Text(l10n.settings.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH4)),
-                const SizedBox(height: 20),
-
-                // Sound toggle
-                _settingToggle(
-                  soundOn ? l10n.soundOn : l10n.soundOff,
-                  soundOn ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-                  soundOn,
-                  (v) => ref.read(audioProvider.notifier).toggle(),
-                ),
-                const SizedBox(height: 12),
-
-                // Music toggle
-                _settingToggle(
-                  musicOn ? l10n.musicOn : l10n.musicOff,
-                  musicOn ? Icons.music_note_rounded : Icons.music_off_rounded,
-                  musicOn,
-                  (v) => ref.read(musicProvider.notifier).toggle(),
-                ),
-                const SizedBox(height: 16),
-
-                // Language button
-                SizedBox(
-                  width: double.infinity,
-                  child: Button3D.blue(
-                    expand: true,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.language, color: Colors.white, size: 22),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(l10n.languageLabel('FRANÇAIS'),
-                                style: AppTheme.titleStyle(AppTheme.fontBody)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(_version, style: GoogleFonts.nunito(
-                  fontSize: 12, color: Colors.white38)),
-              ],
-            ),
-          ),
-          Positioned(
-            top: -12,
-            right: -12,
-            child: Button3D.red(
-              padding: const EdgeInsets.all(8),
-              borderRadius: 20,
-              onPressed: () => Navigator.of(context).pop(),
-              child: const PremiumIcon.close(size: 22),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _settingToggle(String title, IconData icon, bool isOn,
-      ValueChanged<bool> onChanged) {
-    return GestureDetector(
-      onTap: () => onChanged(!isOn),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          border: Border.all(color: AppTheme.panelBorder, width: 2),
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppTheme.gold),
-                const SizedBox(width: 10),
-                Text(title,
-                    style: GoogleFonts.nunito(
-                        fontSize: AppTheme.fontRegular,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white)),
-              ],
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 60,
-              height: 32,
-              decoration: BoxDecoration(
-                color: isOn ? AppTheme.greenTop : Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                boxShadow: [
-                  BoxShadow(
-                    color: isOn ? AppTheme.greenBot : Colors.black26,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              alignment: isOn ? Alignment.centerRight : Alignment.centerLeft,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 28,
-                height: 28,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 4)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════
 // Animated XP Badge — bounce + rolling counter + floating +N XP

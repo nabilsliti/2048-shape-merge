@@ -7,11 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
 
@@ -64,6 +64,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
     if (_collected || _showCollectAnim) return;
     setState(() => _showCollectAnim = true);
     HapticFeedback.heavyImpact();
+    AudioService.instance.playReward(); // Son de récompense pour le streak
     _bounceCtrl.forward(from: 0);
     _plusOneCtrl.forward(from: 0);
     _sparkleCtrl.forward(from: 0);
@@ -72,7 +73,6 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
       if (!mounted) return;
       setState(() => _collected = true);
       ref.read(streakProvider.notifier).claimStreakReward();
-      AudioService.instance.playReward();
     });
   }
 
@@ -149,7 +149,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(RetentionUI.streakIcon, color: RetentionUI.streakColor, size: 28),
+            const Icon(RetentionUI.streakIcon, color: RetentionUI.streakColor, size: 28),
             const SizedBox(width: 8),
             Text(
               l10n.streakDay(streak.currentStreak),
@@ -186,7 +186,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
       ),
       child: Column(
         children: [
-          Icon(Icons.warning_amber_rounded, color: RetentionUI.dangerColor, size: 36),
+          const Icon(Icons.warning_amber_rounded, color: RetentionUI.dangerColor, size: 36),
           const SizedBox(height: 10),
           Text(
             l10n.streakLost,
@@ -488,9 +488,9 @@ class _DaySlot extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           if (isPast)
-            Icon(Icons.check_circle_rounded, color: RetentionUI.goalColor, size: 16)
+            const Icon(Icons.check_circle_rounded, color: RetentionUI.goalColor, size: 16)
           else if (!isToday)
-            Icon(Icons.lock_outline_rounded, color: Colors.white24, size: 14)
+            const Icon(Icons.lock_outline_rounded, color: Colors.white24, size: 14)
           else
             SizedBox(
               width: 20,

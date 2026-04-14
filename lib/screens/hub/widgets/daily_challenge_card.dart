@@ -166,7 +166,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
     // Delay actual collect so the animation plays first;
     // sound is played by collectReward() in sync with the actual delivery.
     Future.delayed(const Duration(milliseconds: 900), () {
-      widget.onCollect();
+      if (mounted) widget.onCollect();
     });
   }
 

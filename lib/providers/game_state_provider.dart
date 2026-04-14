@@ -25,6 +25,10 @@ enum JokerMode { none, bomb, wildcard, reducer, radar, evolution, megaBomb }
 
 final jokerModeProvider = StateProvider<JokerMode>((_) => JokerMode.none);
 
+/// Incremented each time the user taps empty space while a joker is active.
+/// Used to trigger radiation animation on the active joker orb.
+final jokerEmptyTapProvider = StateProvider<int>((_) => 0);
+
 // Map of shape ID → group index highlighted by radar
 final radarHighlightProvider = StateProvider<Map<String, int>>((_) => {});
 
@@ -50,9 +54,12 @@ class GameStateNotifier extends StateNotifier<GameState> {
   }
 
   /// Clear signed-in context (sign-out). Jokers go back to localStorage.
+  /// Immediately resets bestScore so the UI updates without waiting for
+  /// the async localStorage reload.
   void clearSignedIn() {
     _uid = null;
     _firestoreService = null;
+    state = state.copyWith(bestScore: 0);
   }
 
   void _saveJokers() {
