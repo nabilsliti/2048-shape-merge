@@ -5,6 +5,6 @@ import 'package:shape_merge/core/services/firestore_service.dart';
 final firestoreServiceProvider =
     Provider<FirestoreService>((_) => FirestoreService());
 
-final leaderboardProvider = StreamProvider<List<LeaderboardEntry>>((ref) {
+final leaderboardProvider = StreamProvider.autoDispose<List<LeaderboardEntry>>((ref) {
   return ref.watch(firestoreServiceProvider).leaderboardStream();
 });

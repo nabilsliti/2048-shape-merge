@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/config/avatar_catalog.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/core/widgets/avatar_picker_grid.dart';
+import 'package:shape_merge/core/widgets/google_sign_in_button.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
@@ -330,40 +332,14 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
             // Avatar grid
             SizedBox(
               height: 180,
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
+              child: SingleChildScrollView(
+                child: AvatarPickerGrid(
+                  selectedAvatarId: _selectedAvatarId,
+                  onAvatarSelected: (id) {
+                    FocusScope.of(context).unfocus();
+                    setState(() => _selectedAvatarId = id);
+                  },
                 ),
-                itemCount: AvatarCatalog.all.length,
-                itemBuilder: (ctx, index) {
-                  final avatar = AvatarCatalog.all[index];
-                  final isSelected = avatar.id == _selectedAvatarId;
-                  return GestureDetector(
-                    key: ValueKey(avatar.id),
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
-                      setState(() => _selectedAvatarId = avatar.id);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.gold.withValues(alpha: 0.2)
-                            : Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
-                        border: Border.all(
-                          color: isSelected ? AppTheme.gold : Colors.white.withValues(alpha: 0.1),
-                          width: isSelected ? 2.5 : 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(avatar.emoji, style: TextStyle(fontSize: isSelected ? AppTheme.fontH1 : AppTheme.fontH2)),
-                      ),
-                    ),
-                  );
-                },
               ),
             ),
 
@@ -384,7 +360,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const PremiumIcon.save(size: 28),
+                    PremiumIcon.save(size: 28),
                     const SizedBox(width: 10),
                     Text(l10n.save.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                   ],
@@ -405,7 +381,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const PremiumIcon.logout(size: 28),
+                      PremiumIcon.logout(size: 28),
                       const SizedBox(width: 10),
                       Text(l10n.signOut.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                     ],
@@ -417,26 +393,8 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
             // Sign in with Google (guest only)
             if (!widget.isSignedIn) ...[
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: Button3D.blue(
-                  expand: true,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  onPressed: () => _dismiss(const _ProfileResult('', '', signIn: true)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                        child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontGBtn, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)))),
-                      const SizedBox(width: 10),
-                      Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
-                    ],
-                  ),
-                ),
+              GoogleSignInButton(
+                onPressed: () => _dismiss(const _ProfileResult('', '', signIn: true)),
               ),
             ],
           ], // children
@@ -451,7 +409,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
           padding: const EdgeInsets.all(8),
           borderRadius: 20,
           onPressed: () => Navigator.of(context).pop(),
-          child: const PremiumIcon.close(size: 22),
+          child: PremiumIcon.close(size: 22),
         ),
       ),
         ], // Stack children

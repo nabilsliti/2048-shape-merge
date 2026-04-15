@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/core/widgets/google_sign_in_button.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
@@ -183,26 +184,8 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
 
                           // Sign in
                           if (!widget.isSignedIn) ...[
-                            SizedBox(
-                              width: double.infinity,
-                              child: Button3D.blue(
-                                expand: true,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                onPressed: widget.onSignIn,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                                      child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontGBtn, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)))),
-                                    const SizedBox(width: 10),
-                                    Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
-                                  ],
-                                ),
-                              ),
+                            GoogleSignInButton(
+                              onPressed: widget.onSignIn,
                             ),
                             const SizedBox(height: 4),
                             Text(l10n.signInToSave, style: GoogleFonts.nunito(fontSize: AppTheme.fontMini, fontWeight: FontWeight.w600, color: AppTheme.blueLabel), textAlign: TextAlign.center),
@@ -217,14 +200,13 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                                   expand: true,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   onPressed: () {
-                                    AudioService.instance.playButtonTap();
                                     widget.onReplay();
                                   },
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const PremiumIcon.replay(size: 28),
+                                      PremiumIcon.replay(size: 28),
                                       const SizedBox(width: 10),
                                       Text(l10n.replay.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                                     ],
@@ -237,14 +219,13 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                                   expand: true,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   onPressed: () {
-                                    AudioService.instance.playButtonTap();
                                     context.pop();
                                   },
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const PremiumIcon.home(size: 28),
+                                      PremiumIcon.home(size: 28),
                                       const SizedBox(width: 10),
                                       Text(l10n.menu.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                                     ],
@@ -268,10 +249,7 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
 
   static List<_ConfettiPiece> _generateConfetti() {
     final rng = Random();
-    const colors = [
-      Color(0xFFFF4444), Color(0xFF44AAFF), Color(0xFFFFD700),
-      Color(0xFF44FF88), Color(0xFFFF44FF), Color(0xFFFF8800), Color(0xFF8844FF),
-    ];
+    const colors = AppTheme.hudConfettiColors;
     return List.generate(32, (i) => _ConfettiPiece(
       x: rng.nextDouble(),
       speed: 0.5 + rng.nextDouble() * 0.8,

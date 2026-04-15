@@ -165,7 +165,7 @@
   "tutorialGameOverText": "Le plateau se remplit à chaque mouvement. Plus de place + aucune fusion possible = Game Over !",
   "tutorialTitle": "SHAPE MERGE 2048",
   "tutorialGoButton": "GO !",
-  "hudNewBest": "★ RECORD !",
+  "hudNewBest": "RECORD !",
   "hudBest": "RECORD {n}",
   "@hudBest": {
     "placeholders": {
@@ -263,5 +263,26 @@
   "coachComplete": "C'est parti ! 🚀",
   "coachCompleteDesc": "Tu es prêt ! Fusionne, utilise tes jokers et bats ton record !",
   "coachTapContinue": "Touche pour continuer",
-  "coachSkip": "Passer"
+  "coachSkip": "Passer",
+  "guestPlayer": "Joueur invité",
+  "signIn": "Se connecter",
+  "streakLabel": "Série",
+  "gamesPlayed": "Parties jouées",
+  "totalMerges": "Fusions totales",
+  "profile": "Profil",
+  "settings": "Réglages",
+  "home": "Accueil",
+  "soundSettings": "Sons",
+  "musicSettings": "Musique",
+  "vibrationSettings": "Vibration",
+  "notifications": "Notifications",
+  "version": "Version",
+  "privacyPolicy": "Politique de confidentialité",
+  "restorePurchases": "Restaurer les achats",
+  "offlineMode": "Mode hors-ligne",
+  "quitGameConfirmTitle": "Quitter la partie ?",
+  "quitGameConfirmMessage": "Ta progression sera perdue.",
+  "quitGameCancel": "Continuer",
+  "quitGameConfirm": "Quitter",
+  "scoreSubmitError": "Score non synchronisé. Vérifie ta connexion."
 }

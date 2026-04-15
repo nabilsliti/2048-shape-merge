@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/shape_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
@@ -16,7 +16,7 @@ void main() {
         boardSize,
         const GameState(),
       );
-      expect(state.shapes.length, startShapes);
+      expect(state.shapes.length, BoardTuning.startShapes);
       expect(state.score, 0);
       expect(state.gameActive, true);
     });
@@ -52,7 +52,7 @@ void main() {
 
       expect(result.mergedShape, isNotNull);
       expect(result.mergedShape!.level, 2);
-      expect(result.pointsEarned, scoreForMerge(2));
+      expect(result.pointsEarned, Scoring.forMerge(2));
     });
 
     test('attemptMerge with non-matching shapes returns null merge', () {
@@ -80,7 +80,7 @@ void main() {
     });
 
     test('isBoardFull at max shapes', () {
-      final shapes = List.generate(maxShapes, (i) => GameShape(
+      final shapes = List.generate(BoardTuning.maxShapes, (i) => GameShape(
         id: '$i', x: 0, y: 0,
         type: ShapeType.circle, color: const Color(0xFF4FC3F7), level: 1,
       ));

@@ -3,11 +3,11 @@ import 'package:shape_merge/core/constants/shape_types.dart';
 
 class GameShape {
   final String id;
-  double x;
-  double y;
+  final double x;
+  final double y;
   final ShapeType type;
   final Color color;
-  int level;
+  final int level;
   final bool isWildcard;
 
   GameShape({
@@ -27,6 +27,26 @@ class GameShape {
     if (isWildcard || other.isWildcard) return true;
     return type == other.type && color == other.color;
   }
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'x': x,
+        'y': y,
+        'type': type.index,
+        'color': color.toARGB32(),
+        'level': level,
+        'isWildcard': isWildcard,
+      };
+
+  factory GameShape.fromJson(Map<String, Object?> json) => GameShape(
+        id: json['id'] as String,
+        x: (json['x'] as num).toDouble(),
+        y: (json['y'] as num).toDouble(),
+        type: ShapeType.values[json['type'] as int],
+        color: Color(json['color'] as int),
+        level: json['level'] as int,
+        isWildcard: json['isWildcard'] as bool? ?? false,
+      );
 
   GameShape copyWith({
     String? id,

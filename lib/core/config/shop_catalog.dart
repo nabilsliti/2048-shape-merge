@@ -63,8 +63,8 @@ abstract final class ShopCatalog {
     freeJokers: 5,
     radar: 1,
     fallbackPrice: '1,99 €',
-    gradStart: Color(0xFF00E676),
-    gradEnd: Color(0xFF00A84E),
+    gradStart: Color(0xFF7C4DFF),
+    gradEnd: Color(0xFF304FFE),
     lKey: 'Star',
   );
 

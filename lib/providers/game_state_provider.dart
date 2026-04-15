@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
+import 'package:shape_merge/core/services/analytics_service.dart';
 import 'package:shape_merge/core/services/firestore_service.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
@@ -37,6 +39,8 @@ final jokerSuggestionProvider = StateProvider<JokerType?>((_) => null);
 
 class GameStateNotifier extends StateNotifier<GameState> {
   GameStateNotifier() : super(const GameState());
+
+  static const _radarDuration = Duration(seconds: 5);
 
   Size? _boardSize;
   LocalStorageService? _storage;
@@ -73,6 +77,44 @@ class GameStateNotifier extends StateNotifier<GameState> {
   void startNewGame() {
     if (_boardSize == null) return;
     state = GameEngine.startNewGame(_boardSize!, state);
+    _saveCheckpoint();
+    unawaited(AnalyticsService.instance.logGameStart());
+  }
+
+  void _saveCheckpoint() {
+    if (!state.gameActive) {
+      _storage?.clearGameCheckpoint();
+      return;
+    }
+    try {
+      final json = jsonEncode(state.toJson());
+      _storage?.saveGameCheckpoint(json);
+    } catch (_) {
+      // Best-effort — don't crash the game for a save failure.
+    }
+  }
+
+  /// Attempts to restore a game that was in progress when the app was killed.
+  /// Returns true if a checkpoint was found and restored.
+  bool tryRestoreCheckpoint() {
+    final raw = _storage?.gameCheckpoint;
+    if (raw == null) return false;
+    try {
+      final map = jsonDecode(raw) as Map<String, Object?>;
+      final restored = GameState.fromJson(map);
+      if (restored.shapes.isEmpty || !restored.gameActive) {
+        _storage?.clearGameCheckpoint();
+        return false;
+      }
+      state = restored.copyWith(
+        bestScore: state.bestScore, // Keep authoritative bestScore from provider
+        jokerInventory: state.jokerInventory, // Use current persisted jokers
+      );
+      return true;
+    } catch (_) {
+      _storage?.clearGameCheckpoint();
+      return false;
+    }
   }
 
   void _incrementJokerUsed() {
@@ -84,6 +126,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   void _checkAfterJoker() {
     if (_boardSize == null) return;
     state = GameEngine.checkAfterJoker(state, _boardSize!);
+    _saveCheckpoint();
   }
 
   void loadSavedState({required int bestScore, required JokerInventory jokers}) {
@@ -106,6 +149,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       wasTap: wasTap,
     );
     state = result.state;
+    _saveCheckpoint();
     return (mergedShape: result.mergedShape, pointsEarned: result.pointsEarned, wasTap: result.wasTap, comboCount: result.comboCount);
   }
 
@@ -125,6 +169,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       score: state.score + result.scoreBonus,
     );
     _incrementJokerUsed();
+    unawaited(AnalyticsService.instance.logJokerUsed(JokerType.bomb));
     _saveJokers();
     _checkAfterJoker();
   }
@@ -142,6 +187,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       jokerInventory: result.inventory,
     );
     _incrementJokerUsed();
+    unawaited(AnalyticsService.instance.logJokerUsed(JokerType.wildcard));
     _saveJokers();
   }
 
@@ -157,6 +203,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       score: state.score + result.scoreBonus,
     );
     _incrementJokerUsed();
+    unawaited(AnalyticsService.instance.logJokerUsed(JokerType.reducer));
     _saveJokers();
     _checkAfterJoker();
   }
@@ -181,6 +228,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       maxLevelReached: newMaxLevel,
     );
     _incrementJokerUsed();
+    unawaited(AnalyticsService.instance.logJokerUsed(JokerType.evolution));
     _saveJokers();
   }
 
@@ -196,29 +244,43 @@ class GameStateNotifier extends StateNotifier<GameState> {
       score: state.score + result.scoreBonus,
     );
     _incrementJokerUsed();
+    unawaited(AnalyticsService.instance.logJokerUsed(JokerType.megaBomb));
     _saveJokers();
     _checkAfterJoker();
   }
 
   Timer? _radarTimer;
+  StateController<Map<String, int>>? _radarHighlightNotifier;
 
-  void activateRadar(WidgetRef ref) {
+  /// Inject the radar highlight notifier so we don't need WidgetRef.
+  void setRadarHighlightNotifier(StateController<Map<String, int>> notifier) {
+    _radarHighlightNotifier = notifier;
+  }
+
+  void activateRadar() {
     if (state.jokerInventory.countOf(JokerType.radar) <= 0) return;
     final pairs = JokerHandler.findMergeablePairs(state.shapes);
-    ref.read(radarHighlightProvider.notifier).state = pairs;
+    _radarHighlightNotifier?.state = pairs;
     state = state.copyWith(
       jokerInventory: JokerHandler.useRadar(state.jokerInventory),
       radarActive: true,
     );
     _incrementJokerUsed();
+    unawaited(AnalyticsService.instance.logJokerUsed(JokerType.radar));
     _saveJokers();
     _radarTimer?.cancel();
-    _radarTimer = Timer(const Duration(seconds: 5), () {
+    _radarTimer = Timer(_radarDuration, () {
       if (mounted) {
         state = state.copyWith(radarActive: false);
-        ref.read(radarHighlightProvider.notifier).state = {};
+        _radarHighlightNotifier?.state = {};
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _radarTimer?.cancel();
+    super.dispose();
   }
 
   void addJokers(JokerType type, [int amount = 1]) {

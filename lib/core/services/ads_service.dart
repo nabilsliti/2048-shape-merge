@@ -6,6 +6,7 @@ import 'package:shape_merge/core/constants/ad_units.dart';
 class AdsService {
   BannerAd? bannerAd;
   RewardedAd? _rewardedAd;
+  bool _disposed = false;
 
   String get _bannerAdUnitId => AdUnits.banner;
 
@@ -72,7 +73,11 @@ class AdsService {
   }
 
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     bannerAd?.dispose();
+    bannerAd = null;
     _rewardedAd?.dispose();
+    _rewardedAd = null;
   }
 }

@@ -167,11 +167,7 @@ class _BubblePainter extends CustomPainter {
     const gradient = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [
-        Color(0xF5140030), // deep purple
-        Color(0xF5080020), // dark navy
-        Color(0xF5100028), // deep violet
-      ],
+      colors: AppTheme.coachBackdropColors,
     );
     canvas.drawPath(
       path,

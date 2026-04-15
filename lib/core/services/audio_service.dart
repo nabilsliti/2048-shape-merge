@@ -190,18 +190,23 @@ class AudioService {
   void playBomb() => playJoker('bomb');
   void playReducer() => playJoker('reducer');
   void playWildcard() => playJoker('wildcard');
+  void playEvolution() => playJoker('evolution');
   void playCombo(int level) => level > AudioCatalog.comboThreshold ? playLevelUp() : playMerge();
 
   // ── Cleanup ───────────────────────────────────────────────────────────────
 
+  bool _disposed = false;
+
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     stopGameMusic();
     if (_musicSource != null && _soloud.isInitialized) {
       _soloud.disposeSource(_musicSource!);
       _musicSource = null;
     }
     for (final source in _sources.values) {
-      _soloud.disposeSource(source);
+      if (_soloud.isInitialized) _soloud.disposeSource(source);
     }
     _sources.clear();
     _preloaded = false;

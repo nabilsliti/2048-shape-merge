@@ -21,6 +21,9 @@ class GameState {
   /// ID of the shape created by the last merge (for chain detection).
   final String? lastMergedShapeId;
 
+  /// Cached merge success rate (0.0–1.0) over the last 20 drags.
+  final double recentMergeRate;
+
   const GameState({
     this.shapes = const [],
     this.score = 0,
@@ -35,13 +38,8 @@ class GameState {
     this.jokersUsedThisGame = 0,
     this.comboCount = 0,
     this.lastMergedShapeId,
+    this.recentMergeRate = 0.5,
   });
-
-  /// 0.0–1.0 merge success rate over the last 20 drags.
-  double get recentMergeRate {
-    if (recentAttempts.isEmpty) return 0.5;
-    return recentAttempts.where((b) => b).length / recentAttempts.length;
-  }
 
   GameState copyWith({
     List<GameShape>? shapes,
@@ -58,6 +56,8 @@ class GameState {
     int? comboCount,
     String? lastMergedShapeId,
   }) {
+    final attempts = recentAttempts ?? this.recentAttempts;
+    final rate = recentAttempts != null ? _computeMergeRate(attempts) : recentMergeRate;
     return GameState(
       shapes: shapes ?? this.shapes,
       score: score ?? this.score,
@@ -68,10 +68,61 @@ class GameState {
       gameActive: gameActive ?? this.gameActive,
       isPaused: isPaused ?? this.isPaused,
       radarActive: radarActive ?? this.radarActive,
-      recentAttempts: recentAttempts ?? this.recentAttempts,
+      recentAttempts: attempts,
       jokersUsedThisGame: jokersUsedThisGame ?? this.jokersUsedThisGame,
       comboCount: comboCount ?? this.comboCount,
       lastMergedShapeId: lastMergedShapeId ?? this.lastMergedShapeId,
+      recentMergeRate: rate,
+    );
+  }
+
+  static double _computeMergeRate(List<bool> attempts) {
+    if (attempts.isEmpty) return 0.5;
+    return attempts.where((b) => b).length / attempts.length;
+  }
+
+  /// Serializes only the fields needed to resume a game in progress.
+  Map<String, Object?> toJson() => {
+        'shapes': shapes.map((s) => s.toJson()).toList(),
+        'score': score,
+        'bestScore': bestScore,
+        'mergeCount': mergeCount,
+        'maxLevelReached': maxLevelReached,
+        'jokerInventory': {
+          'bomb': jokerInventory.bomb,
+          'wildcard': jokerInventory.wildcard,
+          'reducer': jokerInventory.reducer,
+          'radar': jokerInventory.radar,
+          'evolution': jokerInventory.evolution,
+          'megaBomb': jokerInventory.megaBomb,
+        },
+        'jokersUsedThisGame': jokersUsedThisGame,
+        'comboCount': comboCount,
+      };
+
+  factory GameState.fromJson(Map<String, Object?> json) {
+    final jokerMap = json['jokerInventory'] as Map<String, Object?>? ?? {};
+    return GameState(
+      shapes: (json['shapes'] as List<Object?>?)
+              ?.whereType<Map<String, Object?>>()
+              .map(GameShape.fromJson)
+              .toList() ??
+          [],
+      score: json['score'] as int? ?? 0,
+      bestScore: json['bestScore'] as int? ?? 0,
+      mergeCount: json['mergeCount'] as int? ?? 0,
+      maxLevelReached: json['maxLevelReached'] as int? ?? 1,
+      jokerInventory: JokerInventory(
+        bomb: jokerMap['bomb'] as int? ?? 0,
+        wildcard: jokerMap['wildcard'] as int? ?? 0,
+        reducer: jokerMap['reducer'] as int? ?? 0,
+        radar: jokerMap['radar'] as int? ?? 0,
+        evolution: jokerMap['evolution'] as int? ?? 0,
+        megaBomb: jokerMap['megaBomb'] as int? ?? 0,
+      ),
+      jokersUsedThisGame: json['jokersUsedThisGame'] as int? ?? 0,
+      comboCount: json['comboCount'] as int? ?? 0,
+      gameActive: true,
     );
   }
 }

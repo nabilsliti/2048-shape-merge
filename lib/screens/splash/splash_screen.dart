@@ -51,6 +51,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     final notifier = ref.read(gameStateProvider.notifier);
     notifier.setStorage(storage);
+    notifier.setRadarHighlightNotifier(ref.read(radarHighlightProvider.notifier));
 
     // If signed in, load jokers from Firestore; otherwise from localStorage
     final user = ref.read(authStateProvider).valueOrNull;

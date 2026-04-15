@@ -773,7 +773,7 @@ abstract class AppLocalizations {
   /// No description provided for @hudNewBest.
   ///
   /// In en, this message translates to:
-  /// **'★ NEW BEST'**
+  /// **'NEW BEST'**
   String get hudNewBest;
 
   /// No description provided for @hudBest.
@@ -1231,6 +1231,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skip'**
   String get coachSkip;
+
+  /// No description provided for @guestPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest Player'**
+  String get guestPlayer;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get signIn;
+
+  /// No description provided for @streakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get streakLabel;
+
+  /// No description provided for @gamesPlayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Games Played'**
+  String get gamesPlayed;
+
+  /// No description provided for @totalMerges.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Merges'**
+  String get totalMerges;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @soundSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sounds'**
+  String get soundSettings;
+
+  /// No description provided for @musicSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get musicSettings;
+
+  /// No description provided for @vibrationSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get vibrationSettings;
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Purchases'**
+  String get restorePurchases;
+
+  /// No description provided for @offlineMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline mode'**
+  String get offlineMode;
+
+  /// No description provided for @quitGameConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit game?'**
+  String get quitGameConfirmTitle;
+
+  /// No description provided for @quitGameConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress will be lost.'**
+  String get quitGameConfirmMessage;
+
+  /// No description provided for @quitGameCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get quitGameCancel;
+
+  /// No description provided for @quitGameConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit'**
+  String get quitGameConfirm;
+
+  /// No description provided for @scoreSubmitError.
+  ///
+  /// In en, this message translates to:
+  /// **'Score not synced. Check your connection.'**
+  String get scoreSubmitError;
 }
 
 class _AppLocalizationsDelegate

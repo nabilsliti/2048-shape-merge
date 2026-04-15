@@ -1,3 +1,4 @@
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 
 class JokerInventory {
@@ -9,21 +10,21 @@ class JokerInventory {
   final int megaBomb;
 
   const JokerInventory({
-    this.bomb = initialJokerCount,
-    this.wildcard = initialJokerCount,
-    this.reducer = initialJokerCount,
+    this.bomb = JokerStartingCounts.bomb,
+    this.wildcard = JokerStartingCounts.wildcard,
+    this.reducer = JokerStartingCounts.reducer,
     this.radar = 0,
     this.evolution = 0,
     this.megaBomb = 0,
   });
 
   const JokerInventory.initial()
-      : bomb = initialJokerCount,
-        wildcard = initialJokerCount,
-        reducer = initialJokerCount,
-        radar = initialRadarCount,
-        evolution = initialEvolutionCount,
-        megaBomb = initialMegaBombCount;
+      : bomb = JokerStartingCounts.bomb,
+        wildcard = JokerStartingCounts.wildcard,
+        reducer = JokerStartingCounts.reducer,
+        radar = JokerStartingCounts.radar,
+        evolution = JokerStartingCounts.evolution,
+        megaBomb = JokerStartingCounts.megaBomb;
 
   int countOf(JokerType type) => switch (type) {
         JokerType.bomb => bomb,

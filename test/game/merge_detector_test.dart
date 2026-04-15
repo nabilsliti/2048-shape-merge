@@ -66,6 +66,37 @@ void main() {
           false);
     });
 
+    test('hasPairs returns true with wildcard + any same-level shape', () {
+      final wildcard = GameShape(
+        id: 'w', x: 0, y: 0,
+        type: ShapeType.star, color: Colors.white, level: 1,
+        isWildcard: true,
+      );
+      expect(MergeDetector.hasPairs([wildcard, shapeDiffType]), true);
+    });
+
+    test('hasPairs returns true with two wildcards at same level', () {
+      final w1 = GameShape(
+        id: 'w1', x: 0, y: 0,
+        type: ShapeType.star, color: Colors.white, level: 2,
+        isWildcard: true,
+      );
+      final w2 = GameShape(
+        id: 'w2', x: 10, y: 0,
+        type: ShapeType.star, color: Colors.white, level: 2,
+        isWildcard: true,
+      );
+      expect(MergeDetector.hasPairs([w1, w2]), true);
+    });
+
+    test('hasPairs returns false with empty list', () {
+      expect(MergeDetector.hasPairs([]), false);
+    });
+
+    test('hasPairs returns false with single shape', () {
+      expect(MergeDetector.hasPairs([shapeA]), false);
+    });
+
     test('countPairs counts correctly', () {
       final shapes = [shapeA, shapeB, shapeDiffType, shapeDiffColor];
       expect(MergeDetector.countPairs(shapes), 1);

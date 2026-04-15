@@ -21,16 +21,19 @@ class FirestoreService {
   Future<void> submitScore(LeaderboardEntry entry) async {
     try {
       final docRef = _leaderboardRef.doc(entry.uid);
-      final doc = await docRef.get();
-
-      if (!doc.exists || ((doc.data()?['score'] as num?)?.toInt() ?? 0) < entry.score) {
-        await docRef.set(entry.toFirestore());
-        _log.info('Score submitted: ${entry.score} for ${entry.uid}');
-      } else {
-        _log.debug('Score ${entry.score} not higher than existing');
-      }
+      await _firestore.runTransaction((tx) async {
+        final doc = await tx.get(docRef);
+        final existing = (doc.data()?['score'] as num?)?.toInt() ?? 0;
+        if (!doc.exists || existing < entry.score) {
+          tx.set(docRef, entry.toFirestore());
+          _log.info('Score submitted: ${entry.score} for ${entry.uid}');
+        } else {
+          _log.debug('Score ${entry.score} not higher than existing $existing');
+        }
+      });
     } catch (e) {
       _log.error('Score submission failed', error: e);
+      rethrow;
     }
   }
 
@@ -138,26 +141,17 @@ class FirestoreService {
     }
   }
 
-  /// Deletes all server-side data for [uid].
-  /// Order matters: delete sub-collections first (Firestore does not cascade).
+  /// Deletes all server-side data for [uid] atomically.
   Future<void> deleteAccount(String uid) async {
     try {
-      // 1. Delete sub-document dailyChallenges
-      await _dailyChallengesRef(uid).delete();
+      final batch = _firestore.batch();
+      batch.delete(_dailyChallengesRef(uid));
+      batch.delete(_playerRef(uid));
+      batch.delete(_leaderboardRef.doc(uid));
+      await batch.commit();
     } catch (e) {
-      _log.warning('deleteAccount: dailyChallenges removal failed', error: e);
-    }
-    try {
-      // 2. Delete player document
-      await _playerRef(uid).delete();
-    } catch (e) {
-      _log.warning('deleteAccount: player doc removal failed', error: e);
-    }
-    try {
-      // 3. Delete leaderboard entry
-      await _leaderboardRef.doc(uid).delete();
-    } catch (e) {
-      _log.warning('deleteAccount: leaderboard entry removal failed', error: e);
+      _log.error('deleteAccount failed for $uid', error: e);
+      rethrow;
     }
   }
 

@@ -11,4 +11,6 @@ abstract final class AppRoutes {
   static const game = '/home/game';
   static const shop = '/shop';
   static const leaderboard = '/leaderboard';
+  static const profile = '/profile';
+  static const settings = '/settings';
 }

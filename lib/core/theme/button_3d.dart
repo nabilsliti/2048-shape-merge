@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:vibration/vibration.dart';
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -49,10 +50,21 @@ class Button3D extends StatefulWidget {
       Button3D(topColor: AppTheme.yellowTop, bottomColor: AppTheme.yellowBot, borderColor: AppTheme.yellowBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
 
   factory Button3D.gold({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
-      Button3D(topColor: const Color(0xFFD4A017), bottomColor: const Color(0xFF9B7A0F), borderColor: AppTheme.goldDeep, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
+      Button3D(topColor: AppTheme.goldButtonTop, bottomColor: AppTheme.goldButtonBot, borderColor: AppTheme.goldDeep, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
 
   factory Button3D.gray({required Widget child, VoidCallback? onPressed, EdgeInsetsGeometry? padding, double borderRadius = 14, bool expand = false, double depth = 6}) =>
       Button3D(topColor: AppTheme.grayTop, bottomColor: AppTheme.grayBot, borderColor: AppTheme.grayBorder, onPressed: onPressed, padding: padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 12), borderRadius: borderRadius, expand: expand, depth: depth, child: child);
+
+  /// Cached vibration preference — updated by VibrationNotifier.
+  static bool _vibrationEnabled = true;
+
+  /// Read-only access for other widgets that need to check vibration state.
+  static bool get vibrationEnabled => _vibrationEnabled;
+
+  /// Call this when the vibration setting changes.
+  static void updateVibrationEnabled(bool enabled) {
+    _vibrationEnabled = enabled;
+  }
 
   @override
   State<Button3D> createState() => _Button3DState();
@@ -78,6 +90,12 @@ class _Button3DState extends State<Button3D> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
+  void _vibrateIfEnabled() {
+    if (Button3D._vibrationEnabled) {
+      Vibration.vibrate(duration: 30);
+    }
+  }
+
   Widget _wrapWidth(Widget child) =>
       widget.expand ? child : IntrinsicWidth(child: child);
 
@@ -86,7 +104,8 @@ class _Button3DState extends State<Button3D> with SingleTickerProviderStateMixin
     return GestureDetector(
       onTapDown: (_) {
         if (widget.onPressed != null) {
-          HapticFeedback.lightImpact();
+          AudioService.instance.playButtonTap();
+          _vibrateIfEnabled();
           _squashController.forward();
           setState(() => _isPressed = true);
         }

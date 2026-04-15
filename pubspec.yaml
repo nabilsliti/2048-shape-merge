@@ -52,6 +52,8 @@ dependencies:
   vector_math: ^2.1.4
   flutter_soloud: ^4.0.1
   package_info_plus: ^8.0.0
+  vibration: ^3.1.8
+  connectivity_plus: ^6.1.4
 
 dev_dependencies:
   flutter_test:

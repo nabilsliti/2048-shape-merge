@@ -23,10 +23,17 @@ import 'package:shape_merge/screens/hub/main_hub_screen.dart';
 import 'package:shape_merge/screens/game/game_screen.dart';
 import 'package:shape_merge/screens/shop/shop_screen.dart';
 import 'package:shape_merge/screens/leaderboard/leaderboard_screen.dart';
+import 'package:shape_merge/screens/profile/profile_screen.dart';
+import 'package:shape_merge/screens/settings/settings_screen.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 
 final _router = GoRouter(
   initialLocation: AppRoutes.splash,
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(
+      child: Text('Page introuvable: ${state.uri}'),
+    ),
+  ),
   routes: [
     GoRoute(
       path: AppRoutes.splash,
@@ -41,6 +48,15 @@ final _router = GoRouter(
         child: AdShell(navigationShell: navigationShell),
       ),
       branches: [
+        // Index 0 — Shop
+        StatefulShellBranch(routes: [
+          GoRoute(path: AppRoutes.shop, builder: (_, __) => const ShopScreen()),
+        ]),
+        // Index 1 — Leaderboard
+        StatefulShellBranch(routes: [
+          GoRoute(path: AppRoutes.leaderboard, builder: (_, __) => const LeaderboardScreen()),
+        ]),
+        // Index 2 — Home (center)
         StatefulShellBranch(routes: [
           GoRoute(
             path: AppRoutes.home,
@@ -50,11 +66,13 @@ final _router = GoRouter(
             ],
           ),
         ]),
+        // Index 3 — Profile
         StatefulShellBranch(routes: [
-          GoRoute(path: AppRoutes.shop, builder: (_, __) => const ShopScreen()),
+          GoRoute(path: AppRoutes.profile, builder: (_, __) => const ProfileScreen()),
         ]),
+        // Index 4 — Settings
         StatefulShellBranch(routes: [
-          GoRoute(path: AppRoutes.leaderboard, builder: (_, __) => const LeaderboardScreen()),
+          GoRoute(path: AppRoutes.settings, builder: (_, __) => const SettingsScreen()),
         ]),
       ],
     ),

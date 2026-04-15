@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
@@ -9,9 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/core/widgets/joker_choice_dialog.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 
 import 'package:shape_merge/core/config/shop_catalog.dart';
@@ -21,6 +20,7 @@ import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
+import 'package:vibration/vibration.dart';
 
 
 part 'widgets/joker_stock_card.dart';
@@ -110,10 +110,16 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                       padding: EdgeInsets.zero,
                       borderRadius: 22,
                       onPressed: () {
-                        AudioService.instance.playButtonTap();
-                        context.go(AppRoutes.home);
+                        final fromGame = GoRouterState.of(context).extra == 'from_game';
+                        if (fromGame) {
+                          StatefulNavigationShell.of(context).goBranch(2);
+                        } else if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go(AppRoutes.home);
+                        }
                       },
-                      child: const SizedBox(
+                      child: SizedBox(
                         width: 44,
                         height: 44,
                         child: PremiumIcon.back(size: 22),
@@ -145,12 +151,12 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                       gradStart: AppTheme.gold,
                       gradEnd: AppTheme.victoryBadgeBot,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 12),
                     _NoAdsCard(
                       price: iap.price(IapProducts.noAds),
                       onBuy: () => _buyProduct(context, ref, IapProducts.noAds),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                   ],
 
                   // ── PACKS JOKERS section ──
@@ -177,7 +183,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // ── Watch ad for free joker ──
                   _SectionHeader(
@@ -191,7 +197,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
                     label: l10n.watchAd.toUpperCase(),
                     subtitle: l10n.watchAdReward,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                 ],
               ),
@@ -361,28 +367,9 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
   }
 
   Future<void> _showJokerChoiceDialog(BuildContext context, WidgetRef ref) async {
-    final chosenType = await showDialog<JokerType>(
-      context: context,
-      barrierColor: Colors.transparent,
-      builder: (ctx) => Stack(
-        fit: StackFit.expand,
-        children: [
-          const SpaceBackground(darken: 0.5),
-          Center(
-            child: Dialog(
-              backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: _JokerChoicePanel(),
-            ),
-          ),
-        ],
-      ),
-    );
+    final chosenType = await JokerChoiceDialog.show(context);
 
     if (chosenType == null) return; // user tapped RETOUR
-
-    // Play reward sound immediately on validation
-    AudioService.instance.playReward();
 
     // Scroll to top so the inventory animation is visible
     if (_scrollController.hasClients) {

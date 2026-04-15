@@ -3,11 +3,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
+import 'package:shape_merge/core/theme/app_theme.dart';
 
 /// Visual effect played at a shape's position when a joker is used.
 ///
 /// Each joker has a unique premium animation:
-/// - **Bomb**: fiery cross-blast + rotating debris
+/// - **Bomb**: flame explosion with rising fire tongues + embers
 /// - **MegaBomb**: triple-ring shockwave + rotating ember field
 /// - **Wildcard**: magic portal spiral + orbiting star burst
 /// - **Reducer**: gravity implosion + descending chevrons
@@ -116,78 +117,122 @@ class _JokerEffectPainter extends CustomPainter {
     }
   }
 
-  // ── Bomb: fiery cross-blast with rotating debris ──────────────────────
+  // ── Bomb: flame explosion with rising fire tongues ─────────────────────
 
   void _paintBomb(Canvas canvas, double cx, double cy, Size size) {
     final opacity = (1.0 - progress).clamp(0.0, 1.0);
-    final maxR = size.width * 0.44;
+    final maxR = size.width * 0.48;
     final eased = Curves.easeOutCubic.transform(progress);
 
-    // Hot core flash — radial gradient
-    if (progress < 0.35) {
-      final flashT = progress / 0.35;
-      final flashR = (maxR * 0.55 * flashT).clamp(0.1, double.infinity);
+    // Fireball core — expanding radial gradient (white → yellow → orange → red)
+    if (progress < 0.5) {
+      final coreT = progress / 0.5;
+      final coreR = (maxR * 0.5 * coreT).clamp(0.1, double.infinity);
       canvas.drawCircle(
         Offset(cx, cy),
-        flashR,
+        coreR,
         Paint()
           ..shader = ui.Gradient.radial(
             Offset(cx, cy),
-            flashR,
+            coreR,
             [
-              Colors.white.withValues(alpha: (1 - flashT) * 0.7),
-              color.withValues(alpha: (1 - flashT) * 0.5),
-              color.withValues(alpha: 0),
+              Colors.white.withValues(alpha: (1 - coreT) * 0.9),
+              AppTheme.explosionYellow.withValues(alpha: (1 - coreT) * 0.7),
+              AppTheme.explosionOrange.withValues(alpha: (1 - coreT) * 0.5),
+              AppTheme.explosionDarkRed.withValues(alpha: 0),
             ],
-            [0.0, 0.5, 1.0],
+            [0.0, 0.25, 0.6, 1.0],
           ),
       );
     }
 
-    // Cross-blast — 4 cardinal streaks expanding outward
-    final blastLen = maxR * eased;
-    final blastWidth = 7.0 * (1 - progress);
-    final blastPaint = Paint()
-      ..strokeWidth = blastWidth
-      ..strokeCap = StrokeCap.round
-      ..color = color.withValues(alpha: opacity * 0.8);
-    canvas.drawLine(
-        Offset(cx - blastLen, cy), Offset(cx + blastLen, cy), blastPaint);
-    canvas.drawLine(
-        Offset(cx, cy - blastLen), Offset(cx, cy + blastLen), blastPaint);
+    // Flame tongues — 10 tongues rising outward with organic wobble
+    for (var i = 0; i < 10; i++) {
+      final baseAngle = (i / 10) * pi * 2;
+      // Each tongue has staggered start for organic feel
+      final stagger = (i % 3) * 0.05;
+      final flameP = ((progress - stagger) / (1.0 - stagger)).clamp(0.0, 1.0);
+      if (flameP <= 0) continue;
 
-    // Thinner diagonal streaks
-    final diagLen = blastLen * 0.65;
-    final diagPaint = Paint()
-      ..strokeWidth = blastWidth * 0.45
-      ..strokeCap = StrokeCap.round
-      ..color = color.withValues(alpha: opacity * 0.4);
-    canvas.drawLine(Offset(cx - diagLen, cy - diagLen),
-        Offset(cx + diagLen, cy + diagLen), diagPaint);
-    canvas.drawLine(Offset(cx + diagLen, cy - diagLen),
-        Offset(cx - diagLen, cy + diagLen), diagPaint);
+      final flameEased = Curves.easeOut.transform(flameP);
+      // Wobble via sin — flames flicker laterally
+      final wobble = sin(flameP * pi * 3 + i * 1.7) * 0.15;
+      final angle = baseAngle + wobble;
 
-    // Chunky rotating rectangular debris — 8 fragments
-    for (var i = 0; i < 8; i++) {
-      final angle = (i / 8) * pi * 2 + 0.2;
-      final dist = maxR * 0.75 * eased;
-      final px = cx + cos(angle) * dist;
-      final py = cy + sin(angle) * dist;
-      final pSize = 3.5 * (1 - progress * 0.6);
-      final rot = angle + progress * 2;
-      canvas.save();
-      canvas.translate(px, py);
-      canvas.rotate(rot);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-              center: Offset.zero, width: pSize * 2.0, height: pSize),
-          Radius.circular(pSize * 0.25),
-        ),
-        Paint()..color = color.withValues(alpha: opacity * 0.85),
+      // Flame stretches outward and upward (bias toward top)
+      final upBias = -0.3 * sin(baseAngle).abs(); // flames favor upward
+      final dist = maxR * 0.85 * flameEased;
+      final tipX = cx + cos(angle) * dist;
+      final tipY = cy + sin(angle) * dist + upBias * dist;
+
+      // Flame tongue as tapered path (wide base → narrow tip)
+      final baseW = 8.0 * (1 - flameP * 0.7);
+      final perpX = -sin(angle) * baseW;
+      final perpY = cos(angle) * baseW;
+      final midDist = dist * 0.5;
+      final midX = cx + cos(angle) * midDist;
+      final midY = cy + sin(angle) * midDist + upBias * midDist * 0.5;
+
+      final flamePath = Path()
+        ..moveTo(cx + perpX, cy + perpY)
+        ..quadraticBezierTo(midX + perpX * 0.6, midY + perpY * 0.6, tipX, tipY)
+        ..quadraticBezierTo(midX - perpX * 0.6, midY - perpY * 0.6, cx - perpX, cy - perpY)
+        ..close();
+
+      // Inner flames are brighter (yellow), outer are darker (red-orange)
+      final flameColor = Color.lerp(
+        AppTheme.flameBaseYellow, // yellow at base
+        AppTheme.flameTipRed, // dark red at tip
+        flameEased,
+      )!;
+
+      canvas.drawPath(
+        flamePath,
+        Paint()..color = flameColor.withValues(alpha: opacity * 0.8),
       );
-      canvas.restore();
     }
+
+    // Rising embers/sparks — small bright dots floating upward
+    for (var i = 0; i < 12; i++) {
+      final seed = i * 137.5; // golden angle for spread
+      final emberDelay = (i % 4) * 0.08;
+      final emberP = ((progress - emberDelay) / (1.0 - emberDelay)).clamp(0.0, 1.0);
+      if (emberP <= 0) continue;
+
+      final angle = seed * pi / 180;
+      final radialDist = maxR * (0.3 + 0.6 * emberP);
+      // Embers drift upward as they travel
+      final rise = -maxR * 0.4 * emberP * emberP;
+      final px = cx + cos(angle) * radialDist;
+      final py = cy + sin(angle) * radialDist + rise;
+
+      final emberSize = (2.5 + (i % 3)) * (1 - emberP * 0.6);
+      final emberOpacity = opacity * (1 - emberP * 0.5);
+
+      // Bright yellow-orange core
+      canvas.drawCircle(
+        Offset(px, py),
+        emberSize,
+        Paint()..color = AppTheme.emberOrange.withValues(alpha: emberOpacity * 0.9),
+      );
+      // White hot center
+      canvas.drawCircle(
+        Offset(px, py),
+        emberSize * 0.4,
+        Paint()..color = Colors.white.withValues(alpha: emberOpacity * 0.6),
+      );
+    }
+
+    // Outer heat haze ring — faint expanding circle
+    final hazeR = maxR * eased;
+    canvas.drawCircle(
+      Offset(cx, cy),
+      hazeR,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.0 * (1 - progress)
+        ..color = AppTheme.heatHazeRed.withValues(alpha: opacity * 0.25),
+    );
   }
 
   // ── MegaBomb: triple-ring shockwave + rotating ember field ────────────

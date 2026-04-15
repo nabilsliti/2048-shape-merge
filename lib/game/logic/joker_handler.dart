@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
@@ -23,7 +23,7 @@ class JokerHandler {
     final matching = MergeDetector.findMatchingShapes(target, shapes);
     final toRemove = {target.id, ...matching.map((s) => s.id)};
     final remaining = shapes.where((s) => !toRemove.contains(s.id)).toList();
-    final bonus = toRemove.length * 10;
+    final bonus = toRemove.length * JokerBonusTuning.bombBonusPerShape;
 
     return (
       shapes: remaining,
@@ -76,7 +76,7 @@ class JokerHandler {
       return (
         shapes: remaining,
         inventory: inventory.use(JokerType.reducer),
-        scoreBonus: 5,
+        scoreBonus: JokerBonusTuning.reducerDestroyBonus,
       );
     }
 
@@ -163,7 +163,7 @@ class JokerHandler {
     }
 
     final newLevel = target.level + 1;
-    final bonus = scoreForMerge(newLevel);
+    final bonus = Scoring.forMerge(newLevel);
     GameShape? evolved;
     final updated = shapes.map((s) {
       if (s.id == target.id) {
@@ -195,7 +195,7 @@ class JokerHandler {
     final toRemove =
         shapes.where((s) => s.level == target.level).map((s) => s.id).toSet();
     final remaining = shapes.where((s) => !toRemove.contains(s.id)).toList();
-    final bonus = toRemove.length * 15;
+    final bonus = toRemove.length * JokerBonusTuning.megaBombBonusPerShape;
 
     return (
       shapes: remaining,

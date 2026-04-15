@@ -350,7 +350,7 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: const BoxDecoration(
-                        gradient: LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
+                        gradient: LinearGradient(colors: [AppTheme.shopBuyButton1, AppTheme.shopBuyButton2]),
                         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusMedium)),
                       ),
                       child: Text('🎬 ${l10n.badgeFree}', style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
@@ -385,12 +385,12 @@ class _AdGratuitButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
+              gradient: const LinearGradient(colors: [AppTheme.shopBuyButton1, AppTheme.shopBuyButton2]),
               borderRadius: BorderRadius.circular(AppTheme.radiusXXTiny),
               border: Border.all(color: Colors.white.withValues(alpha: 0.25 + pulse.value * 0.2), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.shopPackStar1.withValues(alpha: 0.3 + pulse.value * 0.3),
+                  color: AppTheme.shopBuyButton1.withValues(alpha: 0.3 + pulse.value * 0.3),
                   offset: const Offset(0, 4),
                   blurRadius: 10 + pulse.value * 6,
                   spreadRadius: pulse.value * 2,
@@ -441,7 +441,7 @@ class _AnimatedPriceButtonState extends State<_AnimatedPriceButton> with TickerP
 
   void _handleTap() {
     _tap.forward(from: 0);
-    HapticFeedback.lightImpact();
+    if (Button3D.vibrationEnabled) Vibration.vibrate(duration: 30);
     widget.onTap?.call();
   }
 
@@ -463,12 +463,12 @@ class _AnimatedPriceButtonState extends State<_AnimatedPriceButton> with TickerP
                 vertical: widget.large ? 8 : 6,
               ),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppTheme.shopPackStar1, AppTheme.shopPackStar2]),
+                gradient: const LinearGradient(colors: [AppTheme.shopBuyButton1, AppTheme.shopBuyButton2]),
                 borderRadius: BorderRadius.circular(AppTheme.radiusXXTiny),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.25 + _pulse.value * 0.2 + glowBoost), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.shopPackStar1.withValues(alpha: 0.3 + _pulse.value * 0.3 + glowBoost),
+                    color: AppTheme.shopBuyButton1.withValues(alpha: 0.3 + _pulse.value * 0.3 + glowBoost),
                     offset: const Offset(0, 4),
                     blurRadius: 10 + _pulse.value * 6 + glowBoost * 10,
                     spreadRadius: _pulse.value * 2 + glowBoost * 4,

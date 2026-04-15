@@ -1,16 +1,14 @@
 import 'dart:math';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
-import 'package:shape_merge/core/config/firestore_keys.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/core/widgets/google_sign_in_button.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -21,20 +19,6 @@ import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
 
 const _log = AppLogger('Leaderboard');
-
-
-
-void _debugFirestore() async {
-  try {
-    final snap = await FirebaseFirestore.instance.collection(FirestoreKeys.leaderboard).get();
-    _log.debug('Direct Firestore read: ${snap.docs.length} docs');
-    for (final doc in snap.docs) {
-      _log.debug('  ${doc.id}: ${doc.data()}');
-    }
-  } catch (e) {
-    _log.error('Direct Firestore read FAILED', error: e);
-  }
-}
 
 /// Standalone screen (used by router for /leaderboard fallback).
 class LeaderboardScreen extends StatelessWidget {
@@ -78,8 +62,8 @@ class LeaderboardScreenContent extends ConsumerWidget {
                       child: Button3D.gold(
                         padding: EdgeInsets.zero,
                         borderRadius: 22,
-                        onPressed: () => context.go(AppRoutes.home),
-                        child: const SizedBox(
+                        onPressed: () => context.canPop() ? context.pop() : context.go(AppRoutes.home),
+                        child: SizedBox(
                           width: 44,
                           height: 44,
                           child: PremiumIcon.back(size: 22),
@@ -127,26 +111,8 @@ class LeaderboardScreenContent extends ConsumerWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Button3D.blue(
-                          expand: true,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          onPressed: () => ref.read(authServiceProvider).signInWithGoogle(),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 24,
-                                height: 24,
-                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                                child: Center(child: Text('G', style: GoogleFonts.fredoka(fontSize: AppTheme.fontGBtn, fontWeight: FontWeight.w900, color: AppTheme.googleBlue)))),
-                              const SizedBox(width: 10),
-                              Text(l10n.signInGoogle.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
-                            ],
-                          ),
-                        ),
+                      GoogleSignInButton(
+                        onPressed: () => ref.read(authServiceProvider).signInWithGoogle(),
                       ),
                     ],
                   ),
@@ -175,8 +141,8 @@ class LeaderboardScreenContent extends ConsumerWidget {
                     child: Button3D.gold(
                       padding: EdgeInsets.zero,
                       borderRadius: 22,
-                      onPressed: () => context.go(AppRoutes.home),
-                      child: const SizedBox(
+                      onPressed: () => context.canPop() ? context.pop() : context.go(AppRoutes.home),
+                      child: SizedBox(
                         width: 44,
                         height: 44,
                         child: PremiumIcon.back(size: 22),
@@ -196,7 +162,6 @@ class LeaderboardScreenContent extends ConsumerWidget {
                 _log.debug('Leaderboard data: ${entries.length} entries');
 
                 if (entries.isEmpty) {
-                  _debugFirestore();
                   return Center(
                     child: Text(l10n.noScoresYet, style: GoogleFonts.nunito(color: AppTheme.muted, fontWeight: FontWeight.w900)),
                   );
@@ -214,13 +179,11 @@ class LeaderboardScreenContent extends ConsumerWidget {
                   const accents = [AppTheme.goldLight, AppTheme.medalSilver2, AppTheme.medalBronze2];
                   const meAccent = AppTheme.leaderMyRank;
                   final accent = isMe ? meAccent : (isTop3 ? accents[visualIndex] : Colors.white.withValues(alpha: 0.08));
-                  final levelColor = AppTheme.colorForLevel(entry.maxLevel);
-
                   return Container(
                     margin: const EdgeInsets.only(bottom: 6),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                      borderRadius: BorderRadius.circular(8),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -289,64 +252,40 @@ class LeaderboardScreenContent extends ConsumerWidget {
                           child: Text(avatarEmoji(entry.avatarId), style: const TextStyle(fontSize: AppTheme.fontRegular)),
                         ),
                         const SizedBox(width: 8),
-                        // ── Name + Level ──
+                        // ── Name ──
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Text(
-                                entry.displayName,
-                                style: GoogleFonts.nunito(
-                                  fontSize: AppTheme.fontXSmall, fontWeight: FontWeight.w800,
-                                  color: isMe ? meAccent : (isTop3 ? Colors.white : Colors.white.withValues(alpha: 0.8)),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 1),
-                              Row(
-                                children: [
-                                  Icon(RetentionUI.levelIcon, color: levelColor, size: 11),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    'Niv. ${entry.maxLevel}',
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: AppTheme.fontMini,
-                                      fontWeight: FontWeight.w600,
-                                      color: levelColor.withValues(alpha: 0.8),
-                                    ),
+                              Flexible(
+                                child: Text(
+                                  entry.displayName,
+                                  style: GoogleFonts.nunito(
+                                    fontSize: AppTheme.fontXSmall, fontWeight: FontWeight.w800,
+                                    color: isMe ? meAccent : (isTop3 ? Colors.white : Colors.white.withValues(alpha: 0.8)),
                                   ),
-                                  if (isMe) ...[
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      l10n.leaderboardYou,
-                                      style: GoogleFonts.nunito(
-                                        fontSize: AppTheme.fontMini, fontWeight: FontWeight.w700,
-                                        color: meAccent.withValues(alpha: 0.6),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
+                              if (isMe) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  l10n.leaderboardYou,
+                                  style: GoogleFonts.nunito(
+                                    fontSize: AppTheme.fontMini, fontWeight: FontWeight.w700,
+                                    color: meAccent.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
                         const SizedBox(width: 8),
                         // ── Score ──
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusXTiny),
-                            color: (isTop3 || isMe) ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
-                            border: Border.all(
-                              color: (isTop3 || isMe) ? accent.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.06),
-                            ),
-                          ),
-                          child: Text(
-                            '${entry.score}',
-                            style: GoogleFonts.fredoka(
-                              fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w700,
-                              color: (isTop3 || isMe) ? accent : Colors.white.withValues(alpha: 0.6),
-                            ),
+                        Text(
+                          '${entry.score}',
+                          style: GoogleFonts.fredoka(
+                            fontSize: AppTheme.fontRegular, fontWeight: FontWeight.w700,
+                            color: (isTop3 || isMe) ? accent : Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
                       ],

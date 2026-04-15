@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
@@ -93,10 +92,12 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
         // Nebula background effects
         Positioned.fill(
           child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _bgAnim,
-              builder: (context, _) => CustomPaint(
-                painter: _HomeNebulaPainter(_bgAnim.value),
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _bgAnim,
+                builder: (context, _) => CustomPaint(
+                  painter: _HomeNebulaPainter(_bgAnim.value),
+                ),
               ),
             ),
           ),
@@ -104,10 +105,12 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
         // Floating particles
         Positioned.fill(
           child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _bgAnim,
-              builder: (context, _) => CustomPaint(
-                painter: _HomeParticlesPainter(_bgAnim.value),
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _bgAnim,
+                builder: (context, _) => CustomPaint(
+                  painter: _HomeParticlesPainter(_bgAnim.value),
+                ),
               ),
             ),
           ),
@@ -115,24 +118,27 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
         // Floating transparent shapes (bubbles)
         Positioned.fill(
           child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _bgAnim,
-              builder: (context, _) => CustomPaint(
-                painter: _FloatingShapesPainter(_bgAnim.value),
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _bgAnim,
+                builder: (context, _) => CustomPaint(
+                  painter: _FloatingShapesPainter(_bgAnim.value),
+                ),
               ),
             ),
           ),
         ),
         // Main content
         Positioned.fill(
-          child: SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
+          child: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: MediaQuery.of(context).viewPadding.top,
+              ),
               child: Column(
                 children: [
-                  const SizedBox(height: 24),
 
                   // ── Best Score — floating premium display ──
                   _BestScoreDisplay(
@@ -141,12 +147,12 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                     confettiCtrl: _confettiCtrl,
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
                   // ── Daily challenges card ──
                   const DailyChallengeCard(),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
                   // ── Play button — full width Button3D green ──
                   Button3D.green(
@@ -169,46 +175,9 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                       ),
                     ),
 
-                  const SizedBox(height: 12),
-
-                  // ── Shop & Leaderboard — same style as level badge chip ──
-                  SizedBox(
-                    height: 80,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _LevelBadgeButton(
-                            onPressed: () {
-                              // Audio joué SEULEMENT dans game_screen
-                              context.go(AppRoutes.shop);
-                            },
-                            child: Image.asset(
-                              'assets/images/shop.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _LevelBadgeButton(
-                            onPressed: () {
-                              // Audio joué SEULEMENT dans game_screen
-                              context.go(AppRoutes.leaderboard);
-                            },
-                            child: Image.asset(
-                              'assets/images/podium.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 70), // space for ad banner
+                  const SizedBox(height: 24), // space for bottom nav + ad
                 ],
               ),
-            ),
           ),
         ),
         // Full-screen confetti rain on new record

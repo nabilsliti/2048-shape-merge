@@ -399,7 +399,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tutorialGoButton => 'GO !';
 
   @override
-  String get hudNewBest => '★ RECORD !';
+  String get hudNewBest => 'RECORD !';
 
   @override
   String hudBest(String n) {
@@ -649,4 +649,61 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get coachSkip => 'Passer';
+
+  @override
+  String get guestPlayer => 'Joueur invité';
+
+  @override
+  String get signIn => 'Se connecter';
+
+  @override
+  String get streakLabel => 'Série';
+
+  @override
+  String get gamesPlayed => 'Parties jouées';
+
+  @override
+  String get totalMerges => 'Fusions totales';
+
+  @override
+  String get profile => 'Profil';
+
+  @override
+  String get settings => 'Réglages';
+
+  @override
+  String get home => 'Accueil';
+
+  @override
+  String get soundSettings => 'Sons';
+
+  @override
+  String get musicSettings => 'Musique';
+
+  @override
+  String get vibrationSettings => 'Vibration';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get restorePurchases => 'Restaurer les achats';
+
+  @override
+  String get offlineMode => 'Mode hors-ligne';
+
+  @override
+  String get quitGameConfirmTitle => 'Quitter la partie ?';
+
+  @override
+  String get quitGameConfirmMessage => 'Ta progression sera perdue.';
+
+  @override
+  String get quitGameCancel => 'Continuer';
+
+  @override
+  String get quitGameConfirm => 'Quitter';
+
+  @override
+  String get scoreSubmitError => 'Score non synchronisé. Vérifie ta connexion.';
 }

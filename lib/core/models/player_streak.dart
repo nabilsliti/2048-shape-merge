@@ -29,8 +29,11 @@ class PlayerStreak {
     );
   }
 
+  /// Number of rewards in the weekly cycle.
+  static const int rewardCycleLength = 7;
+
   /// Returns (JokerType, amount) for the reward at [index] in the weekly cycle.
-  static (JokerType, int) rewardForIndex(int index) => switch (index % 7) {
+  static (JokerType, int) rewardForIndex(int index) => switch (index % rewardCycleLength) {
     0 => (JokerType.bomb, 1),
     1 => (JokerType.wildcard, 1),
     2 => (JokerType.reducer, 1),

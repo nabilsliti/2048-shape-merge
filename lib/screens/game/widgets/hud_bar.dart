@@ -6,7 +6,6 @@ import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
-import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/screens/game/widgets/coach_overlay.dart';
 
 part 'hud_painters.dart';
@@ -18,6 +17,7 @@ class HudBar extends ConsumerStatefulWidget {
   final int shapeCount;
   final int mergeCount;
   final VoidCallback? onPause;
+  final VoidCallback? onShop;
 
   const HudBar({
     super.key,
@@ -26,6 +26,7 @@ class HudBar extends ConsumerStatefulWidget {
     required this.shapeCount,
     required this.mergeCount,
     this.onPause,
+    this.onShop,
   });
 
   @override
@@ -92,15 +93,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
       rotSpeed: (rng.nextDouble() - 0.5) * 8,
       width: 3 + rng.nextDouble() * 4,
       height: 5 + rng.nextDouble() * 6,
-      color: [
-        const Color(0xFFFF4444),
-        const Color(0xFF44AAFF),
-        const Color(0xFFFFD700),
-        const Color(0xFF44FF88),
-        const Color(0xFFFF44FF),
-        const Color(0xFFFF8800),
-        const Color(0xFF8844FF),
-      ][i % 7],
+      color: AppTheme.hudConfettiColors[i % AppTheme.hudConfettiColors.length],
     ));
   }
 
@@ -110,7 +103,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
     final bestScore = widget.bestScore;
     final shapeCount = widget.shapeCount;
     final mergeCount = widget.mergeCount;
-    final capacityRatio = shapeCount / maxShapes;
+    final capacityRatio = shapeCount / BoardTuning.maxShapes;
     final capColor = capacityRatio < 0.6
         ? AppTheme.capGood
         : capacityRatio < 0.85
@@ -125,7 +118,8 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
           // ── Score (hero — gets more space) ────────
           Expanded(
             flex: 3,
-            child: KeyedSubtree(
+            child: RepaintBoundary(
+              child: KeyedSubtree(
               key: CoachKeys.hudScore,
               child: Stack(
               clipBehavior: Clip.none,
@@ -247,7 +241,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
                                         end: Alignment.centerRight,
                                         colors: const [
                                           Colors.white,
-                                          Color(0xFFFFF8E0),
+                                          AppTheme.scoreHighlight,
                                           Colors.white,
                                         ],
                                         stops: [
@@ -301,6 +295,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
               ),
             ),
           ),
+          ),
 
           _divider(),
 
@@ -318,7 +313,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
                 ),
               ),
               value: '$shapeCount',
-              label: '/$maxShapes',
+              label: '/${BoardTuning.maxShapes}',
               color: capColor,
               valueColor: shapeCount >= 25 ? AppTheme.capDanger : null,
             ),
@@ -346,47 +341,23 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
 
           _divider(),
 
-          // ── Audio Controls ────────────────────────
-          Consumer(
-            builder: (context, ref, _) {
-              final soundEnabled = ref.watch(audioProvider);
-              final musicEnabled = ref.watch(musicProvider);
-              
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Sound toggle 🔊
-                  Button3D.blue(
-                    padding: const EdgeInsets.all(6),
-                    borderRadius: 8,
-                    onPressed: () {
-                      AudioService.instance.playButtonTap();
-                      ref.read(audioProvider.notifier).toggle();
-                    },
-                    child: Icon(
-                      soundEnabled ? Icons.volume_up : Icons.volume_off,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  // Music toggle 🎵
-                  Button3D.blue(
-                    padding: const EdgeInsets.all(6),
-                    borderRadius: 8,
-                    onPressed: () {
-                      AudioService.instance.playButtonTap();
-                      ref.read(musicProvider.notifier).toggle();
-                    },
-                    child: Icon(
-                      musicEnabled ? Icons.music_note : Icons.music_off,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                ],
-              );
+          // ── Shop button ───────────────────────────
+          Button3D.gold(
+            padding: const EdgeInsets.all(8),
+            borderRadius: 10,
+            onPressed: () {
+              widget.onShop?.call();
             },
+            child: Transform.scale(
+              scale: 1.6,
+              child: Image.asset(
+                'assets/images/shop-cart.webp',
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+              ),
+            ),
           ),
 
           const SizedBox(width: 6),
@@ -396,10 +367,9 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
             padding: const EdgeInsets.all(8),
             borderRadius: 10,
             onPressed: () {
-              AudioService.instance.playButtonTap();
               widget.onPause?.call();
             },
-            child: const Icon(Icons.pause, color: Colors.white, size: 18),
+            child: const Icon(Icons.pause, color: Colors.white, size: 24),
           ),
         ],
       ),

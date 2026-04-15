@@ -148,15 +148,26 @@ class PremiumIcon extends StatelessWidget {
   final CustomPainter painter;
   final double size;
 
-  const PremiumIcon.play({super.key, this.size = 32}) : painter = const _PlayPainterConst();
-  const PremiumIcon.back({super.key, this.size = 32}) : painter = const _BackArrowPainterConst();
-  const PremiumIcon.rocket({super.key, this.size = 32}) : painter = const _RocketPainterConst();
-  const PremiumIcon.save({super.key, this.size = 32}) : painter = const _SavePainterConst();
-  const PremiumIcon.logout({super.key, this.size = 32}) : painter = const _LogoutPainterConst();
-  const PremiumIcon.resume({super.key, this.size = 32}) : painter = const _ResumePainterConst();
-  const PremiumIcon.home({super.key, this.size = 32}) : painter = const _HomePainterConst();
-  const PremiumIcon.replay({super.key, this.size = 32}) : painter = const _ReplayPainterConst();
-  const PremiumIcon.close({super.key, this.size = 32}) : painter = const _CloseXPainterConst();
+  const PremiumIcon._({super.key, required this.painter, this.size = 32});
+
+  factory PremiumIcon.play({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_playDelegate), size: size);
+  factory PremiumIcon.back({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_backArrowDelegate), size: size);
+  factory PremiumIcon.rocket({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_rocketDelegate), size: size);
+  factory PremiumIcon.save({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_saveDelegate), size: size);
+  factory PremiumIcon.logout({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_logoutDelegate), size: size);
+  factory PremiumIcon.resume({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_resumeDelegate), size: size);
+  factory PremiumIcon.home({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_homeDelegate), size: size);
+  factory PremiumIcon.replay({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_replayDelegate), size: size);
+  factory PremiumIcon.close({Key? key, double size = 32}) =>
+      PremiumIcon._(key: key, painter: _DelegatingPainter(_closeXDelegate), size: size);
 
   @override
   Widget build(BuildContext context) {
@@ -168,9 +179,11 @@ class PremiumIcon extends StatelessWidget {
   }
 }
 
-class _PlayPainterConst extends CustomPainter {
-  const _PlayPainterConst();
-  static final _delegate = PlayIconPainter();
+/// Generic const-compatible wrapper that delegates to a static painter instance.
+/// Eliminates 9 identical boilerplate classes.
+class _DelegatingPainter extends CustomPainter {
+  final CustomPainter _delegate;
+  const _DelegatingPainter(this._delegate);
 
   @override
   void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
@@ -179,90 +192,13 @@ class _PlayPainterConst extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _BackArrowPainterConst extends CustomPainter {
-  const _BackArrowPainterConst();
-  static final _delegate = BackArrowPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _RocketPainterConst extends CustomPainter {
-  const _RocketPainterConst();
-  static final _delegate = RocketPlayPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _SavePainterConst extends CustomPainter {
-  const _SavePainterConst();
-  static final _delegate = SaveCheckPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _LogoutPainterConst extends CustomPainter {
-  const _LogoutPainterConst();
-  static final _delegate = LogoutPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ResumePainterConst extends CustomPainter {
-  const _ResumePainterConst();
-  static final _delegate = ResumePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _HomePainterConst extends CustomPainter {
-  const _HomePainterConst();
-  static final _delegate = HomePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ReplayPainterConst extends CustomPainter {
-  const _ReplayPainterConst();
-  static final _delegate = ReplayPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _CloseXPainterConst extends CustomPainter {
-  const _CloseXPainterConst();
-  static final _delegate = CloseXPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) => _delegate.paint(canvas, size);
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+// Static painter instances — created once, reused forever.
+final _playDelegate = PlayIconPainter();
+final _backArrowDelegate = BackArrowPainter();
+final _rocketDelegate = RocketPlayPainter();
+final _saveDelegate = SaveCheckPainter();
+final _logoutDelegate = LogoutPainter();
+final _resumeDelegate = ResumePainter();
+final _homeDelegate = HomePainter();
+final _replayDelegate = ReplayPainter();
+final _closeXDelegate = CloseXPainter();

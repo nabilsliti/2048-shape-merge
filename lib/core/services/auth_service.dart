@@ -24,8 +24,8 @@ class AuthService {
       _log.info('Google Sign-In: starting...');
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        lastError = 'Sign-In cancelled (googleUser==null)';
-        _log.warning('Google Sign-In: $lastError');
+        // User voluntarily cancelled — not an error, don't show SnackBar.
+        _log.info('Google Sign-In: cancelled by user');
         return null;
       }
       _log.info('Google Sign-In: got user ${googleUser.email}');

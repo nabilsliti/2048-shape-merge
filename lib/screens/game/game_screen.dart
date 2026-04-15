@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shape_merge/core/config/app_routes.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
+import 'package:shape_merge/core/services/analytics_service.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
@@ -30,6 +34,7 @@ import 'package:shape_merge/screens/game/widgets/merge_effect.dart';
 import 'package:shape_merge/screens/game/widgets/score_popup.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
 import 'package:shape_merge/core/widgets/game_panel.dart';
+import 'package:shape_merge/core/widgets/offline_banner.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -46,7 +51,8 @@ class GameScreen extends ConsumerStatefulWidget {
   ConsumerState<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends ConsumerState<GameScreen> {
+class _GameScreenState extends ConsumerState<GameScreen>
+    with WidgetsBindingObserver {
   final List<Widget> _effects = [];
   bool _initialized = false;
   late bool _showTutorial = !GameScreen.tutorialSeen;
@@ -54,6 +60,32 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   static const _tutorialSeenKey = 'tutorial_seen';
 
   int _lastPersistedBest = 0;
+  ProviderSubscription<int>? _bestScoreListener;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final gameState = ref.read(gameStateProvider);
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        if (gameState.gameActive && !gameState.isPaused) {
+          ref.read(gameStateProvider.notifier).togglePause();
+          AudioService.instance.pauseGameMusic();
+        }
+      case AppLifecycleState.resumed:
+        // Game stays paused — user must manually resume via PauseOverlay.
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -67,7 +99,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         _lastPersistedBest = ref.read(gameStateProvider).bestScore;
 
         // Listen for best score changes and persist immediately
-        ref.listenManual(
+        _bestScoreListener = ref.listenManual(
           gameStateProvider.select((s) => s.bestScore),
           (previous, next) async {
             if (next > _lastPersistedBest) {
@@ -93,7 +125,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         // Start the game once board is laid out (setBoardSize called in GameBoard.build)
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          ref.read(gameStateProvider.notifier).startNewGame();
+          final notifier = ref.read(gameStateProvider.notifier);
+          // Try to restore a game interrupted by a crash or kill
+          if (!notifier.tryRestoreCheckpoint()) {
+            notifier.startNewGame();
+          }
         });
         // Start music
         if (AudioService.instance.musicEnabled) {
@@ -105,6 +141,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   @override
   void dispose() {
+    _bestScoreListener?.close();
+    WidgetsBinding.instance.removeObserver(this);
     AudioService.instance.stopGameMusic();
     super.dispose();
   }
@@ -139,15 +177,32 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       timestamp: now,
       weekKey: weekKey,
     );
-    ref.read(firestoreServiceProvider).submitScore(entry);
+    unawaited(ref.read(firestoreServiceProvider).submitScore(entry).catchError((Object e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.scoreSubmitError),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }));
   }
 
   // Bug B2 fix: gamesPlayed + totalMerges were never incremented.
-  void _updatePlayerStats(String uid, int sessionMerges) {
-    ref.read(firestoreServiceProvider).incrementPlayerStats(
+  Future<void> _updatePlayerStats(String uid, int sessionMerges) async {
+    await ref.read(firestoreServiceProvider).incrementPlayerStats(
       uid,
       mergesThisGame: sessionMerges,
     );
+    ref.invalidate(playerProvider);
+  }
+
+  Future<void> _updateLocalStats(int sessionMerges) async {
+    final storage = await ref.read(localStorageProvider.future);
+    await storage.incrementGamesPlayed();
+    await storage.addMerges(sessionMerges);
+    ref.invalidate(localStorageProvider);
   }
 
   @override
@@ -160,11 +215,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     // Auto-submit score to leaderboard when game ends
     if (!gameState.gameActive && !_scoreSubmitted) {
       _scoreSubmitted = true;
+      // Clear checkpoint — game is over, no need to restore
+      ref.read(localStorageProvider).whenData((s) => s.clearGameCheckpoint());
+      unawaited(AnalyticsService.instance.logGameOver(
+        score: gameState.score,
+        maxLevel: gameState.maxLevelReached,
+        mergeCount: gameState.mergeCount,
+        shapesOnBoard: gameState.shapes.length,
+      ));
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (isSignedIn) {
           _submitScore(user, gameState);
-          // Bug B2 fix: increment gamesPlayed + totalMerges (were never updated)
-          _updatePlayerStats(user.uid, gameState.mergeCount);
+          unawaited(_updatePlayerStats(user.uid, gameState.mergeCount));
+        } else {
+          _updateLocalStats(gameState.mergeCount);
         }
         // Sync daily challenge progress
         ref.read(dailyChallengeProvider.notifier).syncGameResult(
@@ -186,7 +250,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       });
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: !gameState.gameActive,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // Game active: pause instead of quitting
+        if (!gameState.isPaused) {
+          ref.read(gameStateProvider.notifier).togglePause();
+          AudioService.instance.pauseGameMusic();
+        }
+      },
+      child: Scaffold(
       body: Stack(
         children: [
           // Gradient background (same as shape-rush)
@@ -208,6 +282,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       onPause: () {
                         ref.read(gameStateProvider.notifier).togglePause();
                         AudioService.instance.pauseGameMusic();
+                      },
+                      onShop: () {
+                        // Silent pause — no overlay visible, just freeze state
+                        if (!gameState.isPaused) {
+                          ref.read(gameStateProvider.notifier).togglePause();
+                          AudioService.instance.pauseGameMusic();
+                        }
+                        // Switch to shop branch (IndexedStack keeps game alive)
+                        context.go(AppRoutes.shop, extra: 'from_game');
                       },
                     ),
                   ),
@@ -238,6 +321,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                             ),
                           ),
                           ..._effects,
+                          // Offline indicator — inside the board, top-right
+                          const Positioned(
+                            top: 6,
+                            right: 6,
+                            child: IgnorePointer(
+                              child: OfflineIndicator(autoPosition: false),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -272,6 +363,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               },
               onQuit: () {
                 final gs = ref.read(gameStateProvider);
+                // Clear checkpoint — user chose to quit, not continue later
+                ref.read(localStorageProvider).whenData((s) => s.clearGameCheckpoint());
+                final authState = ref.read(authStateProvider);
+                final quitUser = authState.valueOrNull;
+                if (quitUser != null) {
+                  unawaited(_updatePlayerStats(quitUser.uid, gs.mergeCount));
+                } else {
+                  _updateLocalStats(gs.mergeCount);
+                }
                 ref.read(dailyChallengeProvider.notifier).syncGameResult(
                   fusionsThisGame: gs.mergeCount,
                   scoreThisGame: gs.score,
@@ -283,6 +383,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   mergeCount: gs.mergeCount,
                   maxLevelReached: gs.maxLevelReached,
                 );
+                // Unpause first so the PauseOverlay is removed from the
+                // widget tree before the pop transition animation starts.
+                ref.read(gameStateProvider.notifier).togglePause();
                 context.pop();
               },
             ),
@@ -309,6 +412,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               },
             ),
         ],
+      ),
       ),
     );
   }

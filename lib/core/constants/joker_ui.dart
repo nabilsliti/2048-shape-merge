@@ -55,15 +55,6 @@ class JokerUI {
     }
   }
 
-  static String label(JokerType type) => switch (type) {
-    JokerType.bomb      => 'Bombe',
-    JokerType.wildcard  => 'Wildcard',
-    JokerType.reducer   => 'Réducteur',
-    JokerType.radar     => 'Radar',
-    JokerType.evolution => 'Évolution',
-    JokerType.megaBomb  => 'MégaBombe',
-  };
-
   /// Localized joker name.
   static String localizedLabel(JokerType type, AppLocalizations l10n) =>
       switch (type) {

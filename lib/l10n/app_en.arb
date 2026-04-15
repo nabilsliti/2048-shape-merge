@@ -165,7 +165,7 @@
   "tutorialGameOverText": "The board fills up with each move. No space + no possible merges = Game Over!",
   "tutorialTitle": "SHAPE MERGE 2048",
   "tutorialGoButton": "GO!",
-  "hudNewBest": "★ NEW BEST",
+  "hudNewBest": "NEW BEST",
   "hudBest": "BEST {n}",
   "@hudBest": {
     "placeholders": {
@@ -263,5 +263,26 @@
   "coachComplete": "Let's go! 🚀",
   "coachCompleteDesc": "You're ready! Merge, use jokers, and beat your record!",
   "coachTapContinue": "Tap to continue",
-  "coachSkip": "Skip"
+  "coachSkip": "Skip",
+  "guestPlayer": "Guest Player",
+  "signIn": "Sign In",
+  "streakLabel": "Streak",
+  "gamesPlayed": "Games Played",
+  "totalMerges": "Total Merges",
+  "profile": "Profile",
+  "settings": "Settings",
+  "home": "Home",
+  "soundSettings": "Sounds",
+  "musicSettings": "Music",
+  "vibrationSettings": "Vibration",
+  "notifications": "Notifications",
+  "version": "Version",
+  "privacyPolicy": "Privacy Policy",
+  "restorePurchases": "Restore Purchases",
+  "offlineMode": "Offline mode",
+  "quitGameConfirmTitle": "Quit game?",
+  "quitGameConfirmMessage": "Your progress will be lost.",
+  "quitGameCancel": "Continue",
+  "quitGameConfirm": "Quit",
+  "scoreSubmitError": "Score not synced. Check your connection."
 }

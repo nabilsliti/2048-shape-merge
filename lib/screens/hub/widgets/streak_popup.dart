@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +9,7 @@ import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
+import 'package:vibration/vibration.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -63,7 +63,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
   void _onCollect() {
     if (_collected || _showCollectAnim) return;
     setState(() => _showCollectAnim = true);
-    HapticFeedback.heavyImpact();
+    if (Button3D.vibrationEnabled) Vibration.vibrate(duration: 100);
     AudioService.instance.playReward(); // Son de récompense pour le streak
     _bounceCtrl.forward(from: 0);
     _plusOneCtrl.forward(from: 0);
@@ -80,7 +80,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
   Widget build(BuildContext context) {
     final result = widget.result;
     final streak = result.streak;
-    final todaySlot = (streak.nextRewardIndex - 1 + 7) % 7;
+    final todaySlot = (streak.nextRewardIndex - 1 + PlayerStreak.rewardCycleLength) % PlayerStreak.rewardCycleLength;
     final l10n = AppLocalizations.of(context)!;
 
     return Dialog(
@@ -133,7 +133,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
               padding: const EdgeInsets.all(8),
               borderRadius: 20,
               onPressed: () => Navigator.of(context).pop(),
-              child: const PremiumIcon.close(size: 22),
+              child: PremiumIcon.close(size: 22),
             ),
           ),
         ],

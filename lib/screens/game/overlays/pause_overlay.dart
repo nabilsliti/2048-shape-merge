@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
+import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
-class PauseOverlay extends StatelessWidget {
+class PauseOverlay extends ConsumerWidget {
   final VoidCallback onResume;
   final VoidCallback? onQuit;
 
   const PauseOverlay({super.key, required this.onResume, this.onQuit});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final soundEnabled = ref.watch(audioProvider);
+    final musicEnabled = ref.watch(musicProvider);
+    final vibrationEnabled = ref.watch(vibrationProvider);
 
     return Stack(
       fit: StackFit.expand,
@@ -72,14 +76,13 @@ class PauseOverlay extends StatelessWidget {
                       expand: true,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       onPressed: () {
-                        AudioService.instance.playButtonTap();
                         onResume();
                       },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const PremiumIcon.resume(size: 28),
+                          PremiumIcon.resume(size: 28),
                           const SizedBox(width: 10),
                           Text(l10n.resume.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                         ],
@@ -95,7 +98,6 @@ class PauseOverlay extends StatelessWidget {
                       expand: true,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       onPressed: () {
-                        AudioService.instance.playButtonTap();
                         if (onQuit != null) {
                           onQuit!();
                         } else {
@@ -106,12 +108,58 @@ class PauseOverlay extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const PremiumIcon.home(size: 28),
+                          PremiumIcon.home(size: 28),
                           const SizedBox(width: 10),
                           Text(l10n.quit.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
                         ],
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Audio toggles ─────────────────────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Button3D.blue(
+                        padding: const EdgeInsets.all(10),
+                        borderRadius: 12,
+                        onPressed: () {
+                          ref.read(musicProvider.notifier).toggle();
+                        },
+                        child: Icon(
+                          musicEnabled ? Icons.music_note : Icons.music_off,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Button3D.blue(
+                        padding: const EdgeInsets.all(10),
+                        borderRadius: 12,
+                        onPressed: () {
+                          ref.read(audioProvider.notifier).toggle();
+                        },
+                        child: Icon(
+                          soundEnabled ? Icons.volume_up : Icons.volume_off,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Button3D.blue(
+                        padding: const EdgeInsets.all(10),
+                        borderRadius: 12,
+                        onPressed: () {
+                          ref.read(vibrationProvider.notifier).toggle();
+                        },
+                        child: Icon(
+                          vibrationEnabled ? Icons.vibration : Icons.phone_android,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -123,10 +171,9 @@ class PauseOverlay extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 borderRadius: 20,
                 onPressed: () {
-                  AudioService.instance.playButtonTap();
                   onResume();
                 },
-                child: const PremiumIcon.close(size: 22),
+                child: PremiumIcon.close(size: 22),
               ),
             ),
           ]),

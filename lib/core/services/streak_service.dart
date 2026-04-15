@@ -88,7 +88,7 @@ class StreakService {
     } else if (player.lastLoginDate == yesterday) {
       // Consecutive day — increment from Firestore
       mergedStreak = player.currentStreak + 1;
-      mergedIndex = (player.nextRewardIndex + 1) % 7;
+      mergedIndex = (player.nextRewardIndex + 1) % PlayerStreak.rewardCycleLength;
     } else {
       // Streak broken or first ever — reset
       mergedStreak = 1;
@@ -129,10 +129,11 @@ class StreakService {
     if (current.lastLoginDate == today) {
       // Provide the pending reward using the *previous* index (the one that was
       // computed when the streak was incremented earlier today).
-      // nextRewardIndex already advanced, so the awarded index is (next - 1 + 7) % 7.
+      // nextRewardIndex already advanced, so the awarded index is (next - 1 + cycleLen) % cycleLen.
       final pendingReward = claimedToday
           ? null
-          : PlayerStreak.rewardForIndex((current.nextRewardIndex - 1 + 7) % 7);
+          : PlayerStreak.rewardForIndex(
+              (current.nextRewardIndex - 1 + PlayerStreak.rewardCycleLength) % PlayerStreak.rewardCycleLength);
 
       return StreakCheckResult(
         streakIncremented: false,
@@ -150,12 +151,12 @@ class StreakService {
     if (current.lastLoginDate == yesterday) {
       // Consecutive day — increment
       newStreak = current.currentStreak + 1;
-      newIndex = (current.nextRewardIndex + 1) % 7;
+      newIndex = (current.nextRewardIndex + 1) % PlayerStreak.rewardCycleLength;
       reset = false;
     } else {
       // Missed a day (or first login) — reset to 1
       newStreak = 1;
-      newIndex = 1 % 7; // J1 awarded today, next reward is index 1
+      newIndex = 1; // J1 awarded today, next reward is index 1
       reset = current.currentStreak > 0; // true only if there was a streak before
     }
 

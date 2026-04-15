@@ -142,6 +142,51 @@ class AppTheme {
   static const Color confetti3 = Color(0xFFFFEA00);
   static const Color confetti4 = Color(0xFF00FFFF);
 
+  /// HUD confetti used for new-best-score celebration.
+  static const List<Color> hudConfettiColors = [
+    Color(0xFFFF4444),
+    Color(0xFF44AAFF),
+    Color(0xFFFFD700),
+    Color(0xFF44FF88),
+    Color(0xFFFF44FF),
+    Color(0xFFFF8800),
+    Color(0xFF8844FF),
+  ];
+
+  /// Radar highlight ring colors.
+  static const List<Color> radarHighlightColors = [
+    Color(0xFFFFEA00), // yellow
+    Color(0xFF00E5FF), // cyan
+    Color(0xFFFF4081), // pink
+    Color(0xFF76FF03), // lime green
+    Color(0xFFE040FB), // purple
+    Color(0xFFFF6D00), // orange
+  ];
+
+  static const Color radarExtraBlue = Color(0xFF448AFF);
+
+  // ── Navbar ────────────────────────────────────────────────────
+  static const Color navBarBg           = Color(0xFF1e1b4b);
+  static const Color navBarBorder       = Color(0xFF4338ca);
+  static const Color navActiveCircle    = Color(0xFFffaa00);
+  static const Color navActiveShadow    = Color(0xFFb85e00);
+
+  // ── Button3D.gold colors ──────────────────────────────────────
+  static const Color goldButtonTop      = Color(0xFFD4A017);
+  static const Color goldButtonBot      = Color(0xFF9B7A0F);
+
+  // ── Hub CTA gradients ─────────────────────────────────────────
+  static const Color hubAdRewardOrange1 = Color(0xFFFF6D00);
+  static const Color hubAdRewardOrange2 = Color(0xFFFF3D00);
+  static const Color hubPurpleGlow      = Color(0xFF7C3AED);
+  static const Color hubDangerRed1      = Color(0xFFFF1744);
+  static const Color hubDangerRed2      = Color(0xFFD50000);
+  static const Color hubStreakPurple1   = Color(0xFF7C3AED);
+  static const Color hubStreakPurple2   = Color(0xFF4C1D95);
+
+  // ── Score text highlight ──────────────────────────────────────
+  static const Color scoreHighlight     = Color(0xFFFFF8E0);
+
   // ── Profile / auth ────────────────────────────────────────────
   static const Color profileGradTop = Color(0xFFEA80FC);
   static const Color profileGradBot = Color(0xFF7C4DFF);
@@ -174,20 +219,36 @@ class AppTheme {
   static const Color medalBronzeText  = Color(0xFF3E2723);
   static const Color medalBronzeShine = Color(0xFFFFF3E0);
 
+  // ── Bomb explosion effect ─────────────────────────────────────
+  static const Color explosionYellow  = Color(0xFFFFE040);
+  static const Color explosionOrange  = Color(0xFFFF6600);
+  static const Color explosionDarkRed = Color(0xFFCC2200);
+  static const Color flameBaseYellow  = Color(0xFFFFCC00);
+  static const Color flameTipRed      = Color(0xFFDD3300);
+  static const Color emberOrange      = Color(0xFFFF8800);
+  static const Color heatHazeRed      = Color(0xFFFF4400);
 
+  // ── Coach / tooltip backdrop gradient ────────────────────────
+  static const List<Color> coachBackdropColors = [
+    Color(0xF5140030), // deep purple
+    Color(0xF5080020), // dark navy
+    Color(0xF5100028), // deep violet
+  ];
 
   // ── Shop cards ────────────────────────────────────────────────
   static const Color shopDarkCard1    = Color(0xFF100030);
   static const Color shopDarkCard2    = Color(0xFF2A0060);
   static const Color shopDarkCard3    = Color(0xFF180045);
-  static const Color shopPackStar1    = Color(0xFF00E676);
-  static const Color shopPackStar2    = Color(0xFF00A84E);
+  static const Color shopPackStar1    = Color(0xFF7C4DFF);  // indigo vif
+  static const Color shopPackStar2    = Color(0xFF304FFE);
   static const Color shopPackComet1   = Color(0xFFAA00FF);  // violet néon comet
   static const Color shopPackComet2   = Color(0xFF6200EA);
   static const Color shopPackDiamond1 = Color(0xFFFF00FF);
   static const Color shopPackDiamond2 = Color(0xFF00FFFF);
   static const Color shopSectionCyan  = evolutionColor;    // 0xFF00FFFF (cyan néon)
   static const Color shopSectionPurple = Color(0xFFEA80FC);
+  static const Color shopBuyButton1   = Color(0xFF00E676);  // vert bouton achat
+  static const Color shopBuyButton2   = Color(0xFF00C853);
   static const Color shopNoAdsRed     = Color(0xFFFF1744);
   static const Color shopStrikeRed    = Color(0xFFFF5252); // Colors.redAccent
 

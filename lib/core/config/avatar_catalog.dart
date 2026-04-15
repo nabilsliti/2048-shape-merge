@@ -34,12 +34,9 @@ abstract final class AvatarCatalog {
     AvatarDef('heart', '❤️'),
   ];
 
+  static final _emojiMap = {for (final a in all) a.id: a.emoji};
+
   /// Returns emoji for a given avatar ID (or first avatar as default).
-  static String emoji(String? avatarId) {
-    if (avatarId == null) return all.first.emoji;
-    for (final a in all) {
-      if (a.id == avatarId) return a.emoji;
-    }
-    return all.first.emoji;
-  }
+  static String emoji(String? avatarId) =>
+      _emojiMap[avatarId] ?? all.first.emoji;
 }

@@ -96,8 +96,10 @@ class DailyChallenge {
     final ChallengeReward reward;
     if (rawReward is String) {
       reward = JokerReward(JokerType.values.byName(rawReward));
+    } else if (rawReward is Map) {
+      reward = ChallengeReward.fromMap(Map<String, Object?>.from(rawReward));
     } else {
-      reward = ChallengeReward.fromMap(rawReward as Map<String, Object?>);
+      reward = const JokerReward(JokerType.bomb);
     }
     return DailyChallenge(
       id: m['id'] as String,
@@ -149,12 +151,18 @@ class DailyChallengeState {
     'bonusCollected': bonusCollected,
   };
 
-  static DailyChallengeState fromMap(Map<String, Object?> m) =>
-      DailyChallengeState(
-        date: m['date'] as String,
-        challenges: (m['challenges'] as List<dynamic>)
-            .map((e) => DailyChallenge.fromMap(Map<String, Object?>.from(e as Map)))
-            .toList(),
-        bonusCollected: m['bonusCollected'] as bool? ?? false,
-      );
+  static DailyChallengeState fromMap(Map<String, Object?> m) {
+    final rawChallenges = m['challenges'];
+    final challenges = rawChallenges is List
+        ? rawChallenges
+            .whereType<Map<dynamic, dynamic>>()
+            .map((e) => DailyChallenge.fromMap(Map<String, Object?>.from(e)))
+            .toList()
+        : <DailyChallenge>[];
+    return DailyChallengeState(
+      date: m['date'] as String? ?? '',
+      challenges: challenges,
+      bonusCollected: m['bonusCollected'] as bool? ?? false,
+    );
+  }
 }

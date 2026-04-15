@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'merge_detector.dart';
@@ -43,10 +43,10 @@ class GameEngine {
       dropPosition,
     );
 
-    // Helper: append a drag result to the rolling window of 20 attempts
+    // Helper: append a drag result to the rolling window
     List<bool> updatedAttempts(bool merged) {
       final list = List<bool>.from(state.recentAttempts)..add(merged);
-      if (list.length > 20) list.removeAt(0);
+      if (list.length > BoardTuning.recentAttemptsWindow) list.removeAt(0);
       return list;
     }
 
@@ -56,7 +56,7 @@ class GameEngine {
       final attempts = updatedAttempts(false);
       final mergeRate = attempts.isEmpty ? 0.5 : attempts.where((b) => b).length / attempts.length;
       final updatedShapes = List<GameShape>.from(state.shapes);
-      if (updatedShapes.length < maxShapes) {
+      if (updatedShapes.length < BoardTuning.maxShapes) {
         final newShape = SpawnManager.spawnShape(updatedShapes, boardSize, mergeRate: mergeRate, totalMerges: state.mergeCount);
         updatedShapes.add(newShape);
       }
@@ -79,10 +79,10 @@ class GameEngine {
     final newLevel = target.level + 1;
     final midX = target.x;
     final midY = target.y;
-    final basePoints = scoreForMerge(newLevel);
-    // Combo multiplier: ×1.0 (no chain), ×1.5 (chain 1), ×2.0 (chain 2), ... (capped at ×5)
+    final basePoints = Scoring.forMerge(newLevel);
+    // Combo multiplier: ×1.0 (no chain), ×1.5 (chain 1), ×2.0 (chain 2), …
     final comboMultiplier = newCombo > 0
-        ? (1.0 + newCombo * 0.5).clamp(1.0, 5.0)
+        ? (1.0 + newCombo * ComboTuning.perComboIncrement).clamp(1.0, ComboTuning.maxMultiplier)
         : 1.0;
     final points = (basePoints * comboMultiplier).round();
 
@@ -102,8 +102,7 @@ class GameEngine {
         .toList()
       ..add(merged);
 
-    // Spawn after merge only if below max capacity
-    if (updatedShapes.length < maxShapes) {
+    if (updatedShapes.length < BoardTuning.maxShapes) {
       final spawnedShape = SpawnManager.spawnShape(updatedShapes, boardSize, mergeRate: mergeRate, totalMerges: state.mergeCount + 1);
       updatedShapes.add(spawnedShape);
     }
@@ -143,8 +142,7 @@ class GameEngine {
   ) {
     final updatedShapes = state.shapes.map((s) {
       if (s.id == shapeId) {
-        s.x = newX;
-        s.y = newY;
+        return s.copyWith(x: newX, y: newY);
       }
       return s;
     }).toList();
@@ -162,14 +160,14 @@ class GameEngine {
       // Board cleared — spawn fresh shapes so the game continues
       final shapes = <GameShape>[];
       var attempts = 0;
-      while (shapes.length < 3 && attempts < 6) {
+      while (shapes.length < BoardTuning.boardClearSpawnCount && attempts < BoardTuning.boardClearMaxAttempts) {
         shapes.add(SpawnManager.spawnShape(shapes, boardSize, mergeRate: state.recentMergeRate, totalMerges: state.mergeCount));
         attempts++;
       }
       return state.copyWith(shapes: shapes);
     }
 
-    if (state.shapes.length >= maxShapes) {
+    if (state.shapes.length >= BoardTuning.maxShapes) {
       if (!MergeDetector.hasPairs(state.shapes)) {
         // Game over
         return state.copyWith(gameActive: false);
@@ -178,12 +176,12 @@ class GameEngine {
     }
 
     if (!MergeDetector.hasPairs(state.shapes) &&
-        state.shapes.length < maxShapes) {
+        state.shapes.length < BoardTuning.maxShapes) {
       // No pairs but space — spawn until pair exists
       final shapes = List<GameShape>.from(state.shapes);
       var attempts = 0;
       while (
-          !MergeDetector.hasPairs(shapes) && shapes.length < maxShapes && attempts < 5) {
+          !MergeDetector.hasPairs(shapes) && shapes.length < BoardTuning.maxShapes && attempts < BoardTuning.rescueMaxAttempts) {
         shapes.add(SpawnManager.spawnShape(shapes, boardSize, mergeRate: state.recentMergeRate, totalMerges: state.mergeCount));
         attempts++;
       }
@@ -202,6 +200,6 @@ class GameEngine {
   }
 
   static bool isBoardFull(GameState state) {
-    return state.shapes.length >= maxShapes;
+    return state.shapes.length >= BoardTuning.maxShapes;
   }
 }

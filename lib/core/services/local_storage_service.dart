@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
+import 'package:shape_merge/core/services/integrity_guard.dart';
 
 class LocalStorageService {
   static const _bestScoreKey = 'bestScore';
@@ -15,6 +18,12 @@ class LocalStorageService {
   static const _guestNameKey = 'guestName';
   static const _guestAvatarKey = 'guestAvatar';
   static const _noAdsPurchasedKey = 'noAdsPurchased';
+  static const _gamesPlayedKey = 'gamesPlayed';
+  static const _totalMergesKey = 'totalMerges';
+
+  // ── Schema versioning ─────────────────────────────────────────────────────
+  static const _schemaVersionKey = 'schemaVersion';
+  static const _currentSchemaVersion = 2;
 
   // ── Retention keys (guest mode — mirror of Firestore fields for signed-in users) ──
   static const _currentStreakKey           = 'currentStreak';
@@ -37,7 +46,22 @@ class LocalStorageService {
 
   static Future<LocalStorageService> create() async {
     final prefs = await SharedPreferences.getInstance();
-    return LocalStorageService(prefs);
+    final service = LocalStorageService(prefs);
+    await service._runMigrations();
+    return service;
+  }
+
+  /// Runs all pending schema migrations in sequence.
+  Future<void> _runMigrations() async {
+    final version = _prefs.getInt(_schemaVersionKey) ?? 0;
+    if (version >= _currentSchemaVersion) return;
+
+    // v0 → v2: joker key migration (legacy migrationV2Done flag)
+    if (version < 2 && !migrationV2Done) {
+      await setMigrationV2Done();
+    }
+
+    await _prefs.setInt(_schemaVersionKey, _currentSchemaVersion);
   }
 
   int get bestScore => _prefs.getInt(_bestScoreKey) ?? 0;
@@ -51,16 +75,49 @@ class LocalStorageService {
   Future<void> setSoundEnabled(bool enabled) =>
       _prefs.setBool(_soundEnabledKey, enabled);
 
-  JokerInventory get jokerInventory => JokerInventory(
-        bomb: _prefs.getInt(_jokerBombKey) ?? initialJokerCount,
-        wildcard: _prefs.getInt(_jokerWildcardKey) ?? initialJokerCount,
-        reducer: _prefs.getInt(_jokerReducerKey) ?? initialJokerCount,
-        radar: _prefs.getInt(_jokerRadarKey) ?? initialRadarCount,
-        evolution: _prefs.getInt(_jokerEvolutionKey) ?? initialEvolutionCount,
-        megaBomb: _prefs.getInt(_jokerMegaBombKey) ?? initialMegaBombCount,
+  // ── Joker inventory (signed against tampering) ─────────────────────────────
+  static const _jokerSignedKey = 'jokerSigned';
+
+  JokerInventory get jokerInventory {
+    // Try signed format first
+    final signed = IntegrityGuard.unwrap(_prefs.getString(_jokerSignedKey));
+    if (signed != null) {
+      try {
+        final m = jsonDecode(signed) as Map<String, Object?>;
+        return JokerInventory(
+          bomb: m['b'] as int? ?? JokerStartingCounts.bomb,
+          wildcard: m['w'] as int? ?? JokerStartingCounts.wildcard,
+          reducer: m['r'] as int? ?? JokerStartingCounts.reducer,
+          radar: m['a'] as int? ?? 0,
+          evolution: m['e'] as int? ?? 0,
+          megaBomb: m['m'] as int? ?? 0,
+        );
+      } catch (_) {
+        // Fall through to legacy
+      }
+    }
+    // Legacy unsigned fallback (one-time migration)
+    return JokerInventory(
+        bomb: _prefs.getInt(_jokerBombKey) ?? JokerStartingCounts.bomb,
+        wildcard: _prefs.getInt(_jokerWildcardKey) ?? JokerStartingCounts.wildcard,
+        reducer: _prefs.getInt(_jokerReducerKey) ?? JokerStartingCounts.reducer,
+        radar: _prefs.getInt(_jokerRadarKey) ?? JokerStartingCounts.radar,
+        evolution: _prefs.getInt(_jokerEvolutionKey) ?? JokerStartingCounts.evolution,
+        megaBomb: _prefs.getInt(_jokerMegaBombKey) ?? JokerStartingCounts.megaBomb,
       );
+  }
 
   Future<void> saveJokerInventory(JokerInventory inventory) async {
+    final data = jsonEncode({
+      'b': inventory.bomb,
+      'w': inventory.wildcard,
+      'r': inventory.reducer,
+      'a': inventory.radar,
+      'e': inventory.evolution,
+      'm': inventory.megaBomb,
+    });
+    await _prefs.setString(_jokerSignedKey, IntegrityGuard.wrap(data));
+    // Keep legacy keys in sync for backwards compatibility during rollout
     await _prefs.setInt(_jokerBombKey, inventory.bomb);
     await _prefs.setInt(_jokerWildcardKey, inventory.wildcard);
     await _prefs.setInt(_jokerReducerKey, inventory.reducer);
@@ -85,6 +142,15 @@ class LocalStorageService {
 
   bool get noAdsPurchased => _prefs.getBool(_noAdsPurchasedKey) ?? false;
   Future<void> setNoAdsPurchased(bool value) => _prefs.setBool(_noAdsPurchasedKey, value);
+
+  // ── Game stats (guest mode) ───────────────────────────────────────────────
+  int get gamesPlayed => _prefs.getInt(_gamesPlayedKey) ?? 0;
+  Future<void> incrementGamesPlayed() =>
+      _prefs.setInt(_gamesPlayedKey, gamesPlayed + 1);
+
+  int get totalMerges => _prefs.getInt(_totalMergesKey) ?? 0;
+  Future<void> addMerges(int count) =>
+      _prefs.setInt(_totalMergesKey, totalMerges + count);
 
   // ── Streak (guest mode) ───────────────────────────────────────────────────
   int get currentStreak => _prefs.getInt(_currentStreakKey) ?? 0;
@@ -135,6 +201,16 @@ class LocalStorageService {
   String? get dailyChallengesJson => _prefs.getString(_dailyChallengesKey);
   Future<void> setDailyChallengesJson(String json) =>
       _prefs.setString(_dailyChallengesKey, json);
+
+  // ── Crash recovery (in-progress game checkpoint) ───────────────────────────
+  static const _gameCheckpointKey = 'gameCheckpoint';
+
+  String? get gameCheckpoint => _prefs.getString(_gameCheckpointKey);
+
+  Future<void> saveGameCheckpoint(String json) =>
+      _prefs.setString(_gameCheckpointKey, json);
+
+  Future<void> clearGameCheckpoint() => _prefs.remove(_gameCheckpointKey);
 
   // ── GDPR ─────────────────────────────────────────────────────────────────
   Future<void> clearAllData() => _prefs.clear();

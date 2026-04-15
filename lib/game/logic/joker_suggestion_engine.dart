@@ -1,5 +1,4 @@
 import 'package:shape_merge/core/config/game_tuning.dart';
-import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
@@ -48,9 +47,9 @@ class JokerSuggestionEngine {
     if (movesSinceLastSuggestion < SuggestionTuning.cooldownMoves) return null;
 
     // Don't suggest if board is mostly empty
-    if (shapes.length < maxShapes * SuggestionTuning.minFillToSuggest) return null;
+    if (shapes.length < BoardTuning.maxShapes * SuggestionTuning.minFillToSuggest) return null;
 
-    final fillRatio = shapes.length / maxShapes;
+    final fillRatio = shapes.length / BoardTuning.maxShapes;
     final pairCount = MergeDetector.countPairs(shapes);
 
     // ── 1. CRITICAL — about to game over ──

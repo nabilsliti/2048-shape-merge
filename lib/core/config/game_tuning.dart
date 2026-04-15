@@ -14,6 +14,18 @@ abstract final class BoardTuning {
   static const double snapRadius = 60.0;
   static const int maxSpawnAttempts = 80;
 
+  /// Rolling window of recent merge attempts for adaptive difficulty.
+  static const int recentAttemptsWindow = 20;
+
+  /// Number of shapes to spawn when the board is cleared.
+  static const int boardClearSpawnCount = 3;
+
+  /// Max spawn attempts when filling a cleared board.
+  static const int boardClearMaxAttempts = 6;
+
+  /// Max spawn attempts to rescue a board with no pairs.
+  static const int rescueMaxAttempts = 5;
+
   /// Probability to spawn a shape that matches an existing one.
   static const double smartSpawnChance = 0.60;
 
@@ -37,6 +49,27 @@ abstract final class ShapeSizing {
 abstract final class Scoring {
   /// Points = 2^newLevel × 10
   static int forMerge(int newLevel) => (1 << newLevel) * 10;
+}
+
+/// Chain-combo multiplier tuning.
+abstract final class ComboTuning {
+  /// Multiplier increment per consecutive combo (×1.5, ×2.0, …).
+  static const double perComboIncrement = 0.5;
+
+  /// Maximum combo multiplier cap.
+  static const double maxMultiplier = 5.0;
+}
+
+/// Joker score bonus values.
+abstract final class JokerBonusTuning {
+  /// Points per shape removed by a Bomb.
+  static const int bombBonusPerShape = 10;
+
+  /// Points for destroying a level-1 shape with Reducer.
+  static const int reducerDestroyBonus = 5;
+
+  /// Points per shape removed by a Mega Bomb.
+  static const int megaBombBonusPerShape = 15;
 }
 
 /// XP and level progression.
@@ -79,6 +112,11 @@ abstract final class JokerStartingCounts {
 
 /// Spawn logic adaptive thresholds.
 abstract final class SpawnTuning {
+  // Merge-rate bracket thresholds (descending order)
+  static const double highMergeRateThreshold = 0.7;
+  static const double medHighMergeRateThreshold = 0.5;
+  static const double medLowMergeRateThreshold = 0.3;
+
   // Adaptive smart-chance by merge rate brackets
   static const double chanceWhenHighMergeRate = 0.50;    // mergeRate > 0.7
   static const double chanceWhenMedHighMergeRate = 0.60; // mergeRate > 0.5
@@ -96,6 +134,9 @@ abstract final class SpawnTuning {
 
   /// Minimum gap between shapes when spawning (pixels).
   static const double minSpawnGap = 12.0;
+
+  /// Padding from board edge when spawning shapes (pixels).
+  static const double spawnMarginPadding = 8.0;
 
   /// Grid resolution for fallback spawn search.
   static const int gridSteps = 16;

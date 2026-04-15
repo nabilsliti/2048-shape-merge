@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +9,7 @@ import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
+import 'package:vibration/vibration.dart';
 
 class DailyChallengeCard extends ConsumerWidget {
   const DailyChallengeCard({super.key});
@@ -158,7 +158,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
 
   void _onCollectTap() {
     setState(() => _showCollectAnim = true);
-    HapticFeedback.heavyImpact();
+    if (Button3D.vibrationEnabled) Vibration.vibrate(duration: 100);
     _bounceCtrl.forward(from: 0);
     _plusOneCtrl.forward(from: 0);
     _sparkleCtrl.forward(from: 0);

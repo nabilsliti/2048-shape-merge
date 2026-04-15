@@ -77,10 +77,11 @@ class _ShapeWidgetState extends State<ShapeWidget>
 
   @override
   Widget build(BuildContext context) {
-    final size = shapeSize(widget.shape.level);
+    final size = ShapeSizing.forLevel(widget.shape.level);
     final scale = widget.isDragging ? 1.18 : 1.0;
 
-    return AnimatedBuilder(
+    return RepaintBoundary(
+      child: AnimatedBuilder(
       animation: Listenable.merge([_floatController, _entranceController]),
       builder: (context, child) {
         final eT = _entranceController.value;
@@ -155,6 +156,7 @@ class _ShapeWidgetState extends State<ShapeWidget>
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -175,14 +177,9 @@ class _ShapePainter extends CustomPainter {
 
   // Distinct bright colors for each radar group
   static const _radarGroupColors = [
-    Color(0xFFFFEA00), // yellow (original radar)
-    Color(0xFF00E5FF), // cyan
-    Color(0xFFFF4081), // pink
-    Color(0xFF76FF03), // lime green
-    Color(0xFFE040FB), // purple
-    Color(0xFFFF6D00), // orange
-    Color(0xFF00E676), // green
-    Color(0xFF448AFF), // blue
+    ...AppTheme.radarHighlightColors,
+    AppTheme.greenTop,  // green
+    AppTheme.radarExtraBlue,  // blue
   ];
 
   _ShapePainter({

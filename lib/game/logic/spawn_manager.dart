@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shape_merge/core/config/game_tuning.dart';
-import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/constants/shape_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'merge_detector.dart';
@@ -23,11 +22,11 @@ class SpawnManager {
 
     // Adaptive smart chance: high merge rate → harder (less smart); low → easier (more smart)
     // Board pressure: ≥pressureThreshold shapes always reduces smart chance
-    final double adaptiveChance = mergeRate > 0.7
+    final double adaptiveChance = mergeRate > SpawnTuning.highMergeRateThreshold
         ? SpawnTuning.chanceWhenHighMergeRate
-        : mergeRate > 0.5
+        : mergeRate > SpawnTuning.medHighMergeRateThreshold
             ? SpawnTuning.chanceWhenMedHighMergeRate
-            : mergeRate > 0.3
+            : mergeRate > SpawnTuning.medLowMergeRateThreshold
                 ? SpawnTuning.chanceWhenMedLowMergeRate
                 : SpawnTuning.chanceWhenLowMergeRate;
     final smartChance = existing.length >= SpawnTuning.pressureThreshold
@@ -87,7 +86,7 @@ class SpawnManager {
 
       type = template.type;
       color = template.color;
-      level = (_random.nextDouble() < levelCopyChance) ? template.level : 1;
+      level = (_random.nextDouble() < BoardTuning.levelCopyChance) ? template.level : 1;
     } else {
       type = ShapeType.values[_random.nextInt(ShapeType.values.length)];
       color = MergeDetector.shapeColors[
@@ -95,7 +94,7 @@ class SpawnManager {
       level = 1;
     }
 
-    final pos = _findFreePosition(existing, boardSize, shapeSize(level));
+    final pos = _findFreePosition(existing, boardSize, ShapeSizing.forLevel(level));
     return GameShape(
       id: _uuid.v4(),
       x: pos.dx,
@@ -112,13 +111,13 @@ class SpawnManager {
     final colors = List<Color>.of(MergeDetector.shapeColors)..shuffle(_random);
 
     // Spawn pairs — round-robin through types and colors for variety
-    for (var i = 0; i < startShapes ~/ 2; i++) {
+    for (var i = 0; i < BoardTuning.startShapes ~/ 2; i++) {
       final type = types[i % types.length];
       final color = colors[i % colors.length];
       const level = 1;
 
       for (var j = 0; j < 2; j++) {
-        final pos = _findFreePosition(shapes, boardSize, shapeSize(level));
+        final pos = _findFreePosition(shapes, boardSize, ShapeSizing.forLevel(level));
         shapes.add(GameShape(
           id: _uuid.v4(),
           x: pos.dx,
@@ -138,17 +137,16 @@ class SpawnManager {
     double size,
   ) {
     final halfSize = size / 2;
-    final margin = halfSize + 8; // S'assurer qu'aucune forme ne déborde
-    const minGap = 8.0;
+    final margin = halfSize + SpawnTuning.spawnMarginPadding; // Ensure shapes stay within board bounds
 
     // Phase 1: try random positions with comfortable gap
-    for (var attempt = 0; attempt < maxSpawnAttempts; attempt++) {
+    for (var attempt = 0; attempt < BoardTuning.maxSpawnAttempts; attempt++) {
       final x = margin + _random.nextDouble() * (boardSize.width - 2 * margin);
       final y = margin + _random.nextDouble() * (boardSize.height - 2 * margin);
 
       var hasOverlap = false;
       for (final shape in existing) {
-        final otherSize = shapeSize(shape.level);
+        final otherSize = ShapeSizing.forLevel(shape.level);
         final minDist = (size + otherSize) / 2 + SpawnTuning.minSpawnGap;
         final dx = x - shape.x;
         final dy = y - shape.y;
@@ -174,10 +172,10 @@ class SpawnManager {
         double closestDist = double.infinity;
 
         for (final shape in existing) {
-          final otherSize = shapeSize(shape.level);
+          final otherSize = ShapeSizing.forLevel(shape.level);
           final dx = x - shape.x;
           final dy = y - shape.y;
-          final dist = (dx * dx + dy * dy) - ((size + otherSize) / 2 + minGap) * ((size + otherSize) / 2 + minGap);
+          final dist = (dx * dx + dy * dy) - ((size + otherSize) / 2 + SpawnTuning.minSpawnGap) * ((size + otherSize) / 2 + SpawnTuning.minSpawnGap);
           if (dist < closestDist) closestDist = dist;
         }
 

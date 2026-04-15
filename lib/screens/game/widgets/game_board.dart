@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
@@ -11,6 +10,7 @@ import 'package:shape_merge/game/logic/joker_handler.dart';
 import 'package:shape_merge/game/logic/merge_detector.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/screens/game/widgets/shape_widget.dart';
 
 class GameBoard extends ConsumerStatefulWidget {
@@ -65,7 +65,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         onTap: () {
           // Tap on empty space while joker is active → trigger radiation
           if (jokerMode != JokerMode.none) {
-            HapticFeedback.lightImpact();
+            ref.read(vibrationProvider.notifier).vibrateLight();
             ref.read(jokerEmptyTapProvider.notifier).state++;
           }
         },
@@ -94,7 +94,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
     final isSnappingBack = _snapBackId == shape.id && _snapBackCtrl != null && _snapBackCtrl!.isAnimating;
     final isFlyingTo = _flyToShapeId == shape.id && _flyToCtrl != null && _flyToCtrl!.isAnimating;
     final isFlyTarget = _flyToTargetId == shape.id && _flyToCtrl != null && _flyToCtrl!.isAnimating;
-    final size = shapeSize(shape.level);
+    final size = ShapeSizing.forLevel(shape.level);
 
     var isHighlighted = false;
     if (_draggingId != null && _draggingId != shape.id) {
@@ -150,7 +150,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         onPanStart: (details) {
           if (jokerMode != JokerMode.none && jokerMode != JokerMode.radar) {
             // Joker actif (sauf radar) → radiation pour rappeler de taper une forme
-            HapticFeedback.lightImpact();
+            ref.read(vibrationProvider.notifier).vibrateLight();
             ref.read(jokerEmptyTapProvider.notifier).state++;
             return;
           }
@@ -159,7 +159,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
           // Cancel any running snap-back
           _snapBackCtrl?.stop();
           _snapBackId = null;
-          HapticFeedback.lightImpact();
+          ref.read(vibrationProvider.notifier).vibrateLight();
           setState(() {
             _draggingId = shape.id;
             _dragStartOffset = Offset(shape.x, shape.y);
@@ -189,16 +189,19 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       case JokerMode.bomb:
         notifier.useBomb(shape);
         AudioService.instance.playBomb();
+        ref.read(vibrationProvider.notifier).vibrate();
         widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.bomb);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.reducer:
         notifier.useReducer(shape);
         AudioService.instance.playReducer();
+        ref.read(vibrationProvider.notifier).vibrateMedium();
         widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.reducer);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.wildcard:
         notifier.spawnWildcard(shape.level);
         AudioService.instance.playWildcard();
+        ref.read(vibrationProvider.notifier).vibrateMedium();
         widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.wildcard);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.evolution:
@@ -206,8 +209,8 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
           shape, ref.read(gameStateProvider).shapes, ref.read(gameStateProvider).jokerInventory);
         notifier.useEvolution(shape);
         if (evoResult.evolvedShape != null) {
-          AudioService.instance.playMerge();
-          HapticFeedback.heavyImpact();
+          AudioService.instance.playEvolution();
+          ref.read(vibrationProvider.notifier).vibrate();
           widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.evolution);
           widget.onMerge?.call(
             Offset(evoResult.evolvedShape!.x, evoResult.evolvedShape!.y),
@@ -220,6 +223,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       case JokerMode.megaBomb:
         notifier.useMegaBomb(shape);
         AudioService.instance.playBomb();
+        ref.read(vibrationProvider.notifier).vibrate();
         widget.onJokerUsed?.call(Offset(shape.x, shape.y), JokerType.megaBomb);
         ref.read(jokerModeProvider.notifier).state = JokerMode.none;
       case JokerMode.radar:
@@ -281,7 +285,7 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
         }
       });
 
-      HapticFeedback.selectionClick();
+      ref.read(vibrationProvider.notifier).vibrateLight();
       AudioService.instance.playMergeAbort();
 
       setState(() {
@@ -339,12 +343,12 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       _recentMergedId = result.mergedShape!.id;
       // Progressive haptic: heavier on higher combos
       if (result.comboCount >= 5) {
-        HapticFeedback.heavyImpact();
-        HapticFeedback.heavyImpact();
+        ref.read(vibrationProvider.notifier).vibrate();
+        ref.read(vibrationProvider.notifier).vibrate();
       } else if (result.comboCount >= 3) {
-        HapticFeedback.heavyImpact();
+        ref.read(vibrationProvider.notifier).vibrate();
       } else {
-        HapticFeedback.mediumImpact();
+        ref.read(vibrationProvider.notifier).vibrateMedium();
       }
       // Progressive sound (combo only — basic merge already played at fly start)
       if (result.comboCount >= 3) {

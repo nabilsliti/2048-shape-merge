@@ -28,10 +28,29 @@ service cloud.firestore {
     // ── Leaderboard ─────────────────────────────────────
     match /leaderboard/{entryId} {
       allow read: if true;
+
+      function validLeaderboard() {
+        let d = request.resource.data;
+        return d.score is number
+            && d.score >= 0
+            && d.score <= 999999
+            && d.displayName is string
+            && d.displayName.size() <= 50
+            && d.mergeCount is number
+            && d.maxLevel is number;
+      }
+
+      // Rate limit: at most one update per 5 seconds.
+      function notTooFrequent() {
+        return !('timestamp' in resource.data)
+            || request.time > resource.data.timestamp + duration.value(5, 's');
+      }
+
       allow create: if isAuth() && request.auth.uid == entryId
-        && request.resource.data.score <= 999999;
+        && validLeaderboard();
       allow update: if isAuth() && request.auth.uid == entryId
-        && request.resource.data.score <= 999999;
+        && validLeaderboard()
+        && notTooFrequent();
       allow delete: if isAuth() && request.auth.uid == entryId;
     }
   }

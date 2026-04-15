@@ -381,7 +381,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
 
     // Shape centers in screen coordinates
     final shapeCircles = shapes.map((s) {
-      final r = shapeSize(s.level) / 2 + shapePad;
+      final r = ShapeSizing.forLevel(s.level) / 2 + shapePad;
       return (
         cx: boardRect.left + s.x,
         cy: boardRect.top + s.y,

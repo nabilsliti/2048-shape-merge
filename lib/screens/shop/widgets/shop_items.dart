@@ -131,7 +131,7 @@ class _NoAdsIconPainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// No-Ads section header
+// Section header (title + animated divider, no card background)
 // ═══════════════════════════════════════════════════════════════
 class _SectionHeader extends StatefulWidget {
   final String title;
@@ -160,23 +160,8 @@ class _SectionHeaderState extends State<_SectionHeader> with SingleTickerProvide
     return AnimatedBuilder(
       animation: _shimmer,
       builder: (context, _) {
-        final glow = 0.15 + math.sin(_shimmer.value * math.pi * 2) * 0.1;
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                widget.gradStart.withValues(alpha: 0.15),
-                AppTheme.sectionBg,
-                widget.gradEnd.withValues(alpha: 0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-            boxShadow: [BoxShadow(color: widget.gradStart.withValues(alpha: glow), blurRadius: 12)],
-          ),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: Column(
             children: [
               Row(

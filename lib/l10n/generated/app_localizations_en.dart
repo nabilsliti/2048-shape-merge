@@ -395,7 +395,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tutorialGoButton => 'GO!';
 
   @override
-  String get hudNewBest => '★ NEW BEST';
+  String get hudNewBest => 'NEW BEST';
 
   @override
   String hudBest(String n) {
@@ -640,4 +640,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get coachSkip => 'Skip';
+
+  @override
+  String get guestPlayer => 'Guest Player';
+
+  @override
+  String get signIn => 'Sign In';
+
+  @override
+  String get streakLabel => 'Streak';
+
+  @override
+  String get gamesPlayed => 'Games Played';
+
+  @override
+  String get totalMerges => 'Total Merges';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get home => 'Home';
+
+  @override
+  String get soundSettings => 'Sounds';
+
+  @override
+  String get musicSettings => 'Music';
+
+  @override
+  String get vibrationSettings => 'Vibration';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get restorePurchases => 'Restore Purchases';
+
+  @override
+  String get offlineMode => 'Offline mode';
+
+  @override
+  String get quitGameConfirmTitle => 'Quit game?';
+
+  @override
+  String get quitGameConfirmMessage => 'Your progress will be lost.';
+
+  @override
+  String get quitGameCancel => 'Continue';
+
+  @override
+  String get quitGameConfirm => 'Quit';
+
+  @override
+  String get scoreSubmitError => 'Score not synced. Check your connection.';
 }

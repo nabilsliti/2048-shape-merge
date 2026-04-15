@@ -121,15 +121,7 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
       rotSpeed: (rng.nextDouble() - 0.5) * 8,
       width: 4 + rng.nextDouble() * 5,
       height: 6 + rng.nextDouble() * 8,
-      color: [
-        const Color(0xFFFF4444),
-        const Color(0xFF44AAFF),
-        const Color(0xFFFFD700),
-        const Color(0xFF44FF88),
-        const Color(0xFFFF44FF),
-        const Color(0xFFFF8800),
-        const Color(0xFF8844FF),
-      ][i % 7],
+      color: AppTheme.hudConfettiColors[i % AppTheme.hudConfettiColors.length],
     ));
   }
 
@@ -176,8 +168,8 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
                   child: Transform.scale(
                   scale: trophyScale,
                   child: Container(
-                    width: 200,
-                    height: 200,
+                    width: 220,
+                    height: 220,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -231,7 +223,7 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
                           end: Alignment.centerRight,
                           colors: const [
                             Colors.white,
-                            Color(0xFFFFF8E0),
+                            AppTheme.scoreHighlight,
                             Colors.white,
                           ],
                           stops: [

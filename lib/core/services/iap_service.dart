@@ -162,10 +162,10 @@ class IapService {
 
   // ── Private ────────────────────────────────────────────────
 
-  void _onPurchaseUpdates(
+  Future<void> _onPurchaseUpdates(
     List<PurchaseDetails> updates,
     LocalStorageService storage,
-  ) {
+  ) async {
     for (final p in updates) {
       _log.debug('Update: ${p.productID} → ${p.status} error=${p.error?.message}');
 
@@ -177,11 +177,11 @@ class IapService {
           ));
 
         case PurchaseStatus.purchased:
-          _deliver(p, storage, restored: false);
+          await _deliver(p, storage, restored: false);
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
 
         case PurchaseStatus.restored:
-          _deliver(p, storage, restored: true);
+          await _deliver(p, storage, restored: true);
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
 
         case PurchaseStatus.error:
@@ -201,17 +201,17 @@ class IapService {
     }
   }
 
-  void _deliver(
+  Future<void> _deliver(
     PurchaseDetails purchase,
     LocalStorageService storage, {
     required bool restored,
-  }) {
+  }) async {
     final id = purchase.productID;
 
     // Persist no-ads flag
     if (id == IapProducts.noAds) {
       noAdsPurchased = true;
-      storage.setNoAdsPurchased(true);
+      await storage.setNoAdsPurchased(true);
     }
 
     // On restore, we skip joker delivery (items are already credited).

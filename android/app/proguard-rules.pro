@@ -41,3 +41,7 @@
 # Keep R8 from stripping metadata needed for Sign-In
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod
+
+# flutter_soloud (native audio engine)
+-keep class com.ryanheise.** { *; }
+-keep class org.libsdl.** { *; }
