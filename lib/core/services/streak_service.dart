@@ -127,13 +127,10 @@ class StreakService {
 
     // Already logged in today — no streak change, but reward may still be pending
     if (current.lastLoginDate == today) {
-      // Provide the pending reward using the *previous* index (the one that was
-      // computed when the streak was incremented earlier today).
-      // nextRewardIndex already advanced, so the awarded index is (next - 1 + cycleLen) % cycleLen.
       final pendingReward = claimedToday
           ? null
-          : PlayerStreak.rewardForIndex(
-              (current.nextRewardIndex - 1 + PlayerStreak.rewardCycleLength) % PlayerStreak.rewardCycleLength);
+          : PlayerStreak.rewardForStreak(current.currentStreak);
+      final milestone = claimedToday ? null : PlayerStreak.milestoneFor(current.currentStreak);
 
       return StreakCheckResult(
         streakIncremented: false,
@@ -141,6 +138,7 @@ class StreakService {
         reward: pendingReward,
         rewardClaimed: claimedToday,
         streak: current,
+        milestoneReward: milestone,
       );
     }
 
@@ -161,8 +159,8 @@ class StreakService {
     }
 
     final newLongest = newStreak > current.longestStreak ? newStreak : current.longestStreak;
-    // On reset the cycle restarts at index 0 (bomb); on consecutive day use planned index.
-    final reward = PlayerStreak.rewardForIndex(reset ? 0 : current.nextRewardIndex);
+    final reward = PlayerStreak.rewardForStreak(newStreak);
+    final milestone = PlayerStreak.milestoneFor(newStreak);
 
     final updatedStreak = PlayerStreak(
       currentStreak: newStreak,
@@ -179,7 +177,29 @@ class StreakService {
       reward: reward,
       streak: updatedStreak,
       showGuestNudge: showNudge,
+      milestoneReward: milestone,
     );
+  }
+
+  // ─────────────────────────────────────────────
+  // Signed→Guest sync (called on sign-out)
+  // ─────────────────────────────────────────────
+
+  Future<void> syncToLocalOnSignOut({
+    required Player player,
+    required LocalStorageService storage,
+  }) async {
+    final streak = PlayerStreak(
+      currentStreak: player.currentStreak,
+      longestStreak: player.longestStreak,
+      lastLoginDate: player.lastLoginDate,
+      nextRewardIndex: player.nextRewardIndex,
+    );
+    await _saveToStorage(streak, storage);
+    if (player.rewardClaimedDate != null) {
+      await storage.setRewardClaimedDate(player.rewardClaimedDate!);
+    }
+    _log.info('Synced streak to local on sign-out: ${streak.currentStreak}');
   }
 
   // ─────────────────────────────────────────────

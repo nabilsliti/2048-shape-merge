@@ -272,6 +272,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Reviens chaque jour pour accumuler\ndes bonus plus intéressants.';
 
   @override
+  String get dailyBonusTitle => 'BONUS QUOTIDIEN';
+
+  @override
+  String get dailyBonusSubtitle => 'Joue 7 jours de suite pour le bonus max';
+
+  @override
+  String get todayLabel => 'AUJOURD\'HUI';
+
+  @override
+  String get nextRewardIn => 'Prochaine récompense';
+
+  @override
   String get dailyObjectivesTitle => 'OBJECTIFS DU JOUR';
 
   @override
@@ -496,6 +508,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dayLabel => 'JOUR';
 
   @override
+  String get weeklyRewardsLabel => 'Récompense';
+
+  @override
+  String get weekLabel => 'Semaine';
+
+  @override
   String get levelShortLabel => 'NIV';
 
   @override
@@ -660,10 +678,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get streakLabel => 'Série';
 
   @override
+  String get bestStreak => 'Meilleure série';
+
+  @override
   String get gamesPlayed => 'Parties jouées';
 
   @override
   String get totalMerges => 'Fusions totales';
+
+  @override
+  String get levelLabel => 'Niveau';
 
   @override
   String get profile => 'Profil';

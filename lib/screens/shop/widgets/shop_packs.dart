@@ -301,21 +301,7 @@ class _WatchAdCardState extends State<_WatchAdCard> with TickerProviderStateMixi
                             final bounce = math.sin(_pulse.value * math.pi * 2) * 3;
                             return Transform.translate(
                               offset: Offset(0, bounce),
-                              child: Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [AppTheme.goldPale, AppTheme.gold],
-                                  ),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
-                                  boxShadow: [BoxShadow(color: AppTheme.gold.withValues(alpha: 0.5), blurRadius: 10)],
-                                ),
-                                child: const Center(child: Icon(Icons.smart_display_rounded, color: AppTheme.shopDarkCard1, size: 28)),
-                              ),
+                              child: Image.asset('assets/images/pub.webp', width: 48, height: 48),
                             );
                           },
                         ),

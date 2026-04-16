@@ -99,8 +99,13 @@ class NotificationService {
   /// Cancels any previous streak reminder first.
   Future<void> scheduleStreakReminder({
     String title = NotificationConfig.defaultTitle,
-    String body = NotificationConfig.defaultBody,
+    String? body,
+    int? streakDays,
   }) async {
+    final resolvedBody = body ??
+        (streakDays != null && streakDays > 0
+            ? 'Votre série de $streakDays jours est en danger ! Jouez pour la maintenir.'
+            : NotificationConfig.defaultBody);
     if (!_initialized) await init();
     if (kIsWeb) return;
 
@@ -127,7 +132,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       _streakReminderId,
       title,
-      body,
+      resolvedBody,
       fire,
       details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

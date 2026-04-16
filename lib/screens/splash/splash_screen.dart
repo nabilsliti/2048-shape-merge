@@ -6,7 +6,6 @@ import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
-import 'package:shape_merge/core/services/notification_service.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
@@ -74,10 +73,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await ref.read(streakProvider.notifier).checkAndUpdate();
     // Load or generate today's daily challenges
     await ref.read(dailyChallengeProvider.notifier).checkRenewal();
-    // Init notifications and request permission once; schedule streak reminder.
-    await NotificationService.instance.init();
-    await NotificationService.instance.requestPermission();
-    await NotificationService.instance.scheduleStreakReminder();
 
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;

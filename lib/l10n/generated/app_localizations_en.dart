@@ -268,6 +268,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streakLostDesc => 'Come back every day to earn\nbetter bonuses.';
 
   @override
+  String get dailyBonusTitle => 'DAILY BONUS';
+
+  @override
+  String get dailyBonusSubtitle => 'Play 7 days in a row for max bonus';
+
+  @override
+  String get todayLabel => 'TODAY';
+
+  @override
+  String get nextRewardIn => 'Next Reward';
+
+  @override
   String get dailyObjectivesTitle => 'DAILY GOALS';
 
   @override
@@ -492,6 +504,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayLabel => 'DAY';
 
   @override
+  String get weeklyRewardsLabel => 'Reward';
+
+  @override
+  String get weekLabel => 'Week';
+
+  @override
   String get levelShortLabel => 'LV';
 
   @override
@@ -651,10 +669,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streakLabel => 'Streak';
 
   @override
+  String get bestStreak => 'Best Streak';
+
+  @override
   String get gamesPlayed => 'Games Played';
 
   @override
   String get totalMerges => 'Total Merges';
+
+  @override
+  String get levelLabel => 'Level';
 
   @override
   String get profile => 'Profile';

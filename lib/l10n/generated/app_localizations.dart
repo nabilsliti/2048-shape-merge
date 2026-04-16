@@ -590,6 +590,30 @@ abstract class AppLocalizations {
   /// **'Come back every day to earn\nbetter bonuses.'**
   String get streakLostDesc;
 
+  /// No description provided for @dailyBonusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DAILY BONUS'**
+  String get dailyBonusTitle;
+
+  /// No description provided for @dailyBonusSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play 7 days in a row for max bonus'**
+  String get dailyBonusSubtitle;
+
+  /// No description provided for @todayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TODAY'**
+  String get todayLabel;
+
+  /// No description provided for @nextRewardIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Reward'**
+  String get nextRewardIn;
+
   /// No description provided for @dailyObjectivesTitle.
   ///
   /// In en, this message translates to:
@@ -956,6 +980,18 @@ abstract class AppLocalizations {
   /// **'DAY'**
   String get dayLabel;
 
+  /// No description provided for @weeklyRewardsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reward'**
+  String get weeklyRewardsLabel;
+
+  /// No description provided for @weekLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get weekLabel;
+
   /// No description provided for @levelShortLabel.
   ///
   /// In en, this message translates to:
@@ -1250,6 +1286,12 @@ abstract class AppLocalizations {
   /// **'Streak'**
   String get streakLabel;
 
+  /// No description provided for @bestStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Best Streak'**
+  String get bestStreak;
+
   /// No description provided for @gamesPlayed.
   ///
   /// In en, this message translates to:
@@ -1261,6 +1303,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Total Merges'**
   String get totalMerges;
+
+  /// No description provided for @levelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get levelLabel;
 
   /// No description provided for @profile.
   ///

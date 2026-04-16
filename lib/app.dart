@@ -1,13 +1,10 @@
-import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
-import 'package:shape_merge/core/config/notification_config.dart';
-import 'package:shape_merge/core/services/notification_service.dart';
+import 'package:shape_merge/core/services/streak_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/core/models/player.dart';
@@ -88,23 +85,15 @@ class ShapeMergeApp extends ConsumerStatefulWidget {
 
 class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
     with WidgetsBindingObserver {
-  StreamSubscription<String>? _notifSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Listen for notification taps and navigate to the hub.
-    _notifSub = NotificationService.instance.onNotificationTap.listen((payload) {
-      if (payload == NotificationConfig.streakPayload) {
-        _router.go(AppRoutes.home);
-      }
-    });
   }
 
   @override
   void dispose() {
-    _notifSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -120,8 +109,6 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
         // Re-check streak when user brings the app to foreground (next day scenario)
         ref.read(streakProvider.notifier).checkAndUpdate();
         ref.read(dailyChallengeProvider.notifier).checkRenewal();
-        // Reschedule streak reminder in case user opened without playing
-        NotificationService.instance.scheduleStreakReminder();
       case AppLifecycleState.detached:
         break;
     }
@@ -165,6 +152,20 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
       } else {
         // ── Going to guest mode ──
         notifier.clearSignedIn();
+
+        // Sync streak from Firestore → localStorage before switching to guest
+        if (prevUser != null) {
+          ref.read(playerProvider.future).then((player) async {
+            if (player != null) {
+              final storage = await ref.read(localStorageProvider.future);
+              await const StreakService().syncToLocalOnSignOut(
+                player: player,
+                storage: storage,
+              );
+            }
+          });
+        }
+
         // Reload guest data from localStorage
         ref.read(localStorageProvider.future).then((storage) {
           notifier.loadSavedState(

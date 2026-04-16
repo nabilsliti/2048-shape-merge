@@ -21,6 +21,7 @@ import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
+import 'package:shape_merge/providers/streak_provider.dart';
 import 'package:shape_merge/screens/game/overlays/game_over_overlay.dart';
 import 'package:shape_merge/screens/game/overlays/pause_overlay.dart';
 import 'package:shape_merge/screens/game/widgets/coach_overlay.dart';
@@ -246,7 +247,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
         // User just played — cancel the streak-danger reminder and reschedule
         // for 23 h from now so the reminder fires tomorrow if they don't play.
         NotificationService.instance
-            .scheduleStreakReminder();
+            .scheduleStreakReminder(
+          streakDays: ref.read(streakProvider)?.streak.currentStreak ?? 0,
+        );
       });
     }
 

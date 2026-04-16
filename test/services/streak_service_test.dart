@@ -135,11 +135,15 @@ void main() {
       expect(PlayerStreak.yesterdayKey(), expectedKey);
     });
 
-    test('rewardForIndex cycles through 7 rewards', () {
+    test('rewardForIndex cycles through 7 rewards with scaling', () {
       final rewards = List.generate(7, PlayerStreak.rewardForIndex);
       expect(rewards.length, 7);
-      // Index 0 and 7 should be same
-      expect(PlayerStreak.rewardForIndex(0), PlayerStreak.rewardForIndex(7));
+      // Week 1 day 1: bomb ×1
+      final (type0, amount0) = PlayerStreak.rewardForIndex(0);
+      // Week 2 day 1: same type, ×2
+      final (type7, amount7) = PlayerStreak.rewardForIndex(7);
+      expect(type0, type7); // same joker type in the cycle
+      expect(amount7, amount0 * 2); // week 2 scales ×2
     });
   });
 }

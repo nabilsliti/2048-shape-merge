@@ -306,10 +306,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _StatCard(
+                      icon: Icons.layers,
+                      label: l10n.levelLabel,
+                      value: '${gameState.maxLevelReached}',
+                      color: AppTheme.blueTop,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
                       icon: Icons.videogame_asset,
                       label: l10n.gamesPlayed,
                       value: '${isSignedIn ? (player?.gamesPlayed ?? 0) : (localStorage?.gamesPlayed ?? 0)}',
                       color: AppTheme.greenTop,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.local_fire_department,
+                      label: l10n.bestStreak,
+                      value: '${isSignedIn ? (player?.longestStreak ?? 0) : (localStorage?.longestStreak ?? 0)}',
+                      color: AppTheme.redTop,
                     ),
                   ),
                 ],
@@ -416,15 +438,15 @@ class _StatCard extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.fredoka(
                   fontSize: 16,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
               Text(
                 label,
-                style: GoogleFonts.nunito(
+                style: GoogleFonts.fredoka(
                   fontSize: 11,
                   color: Colors.white60,
                 ),

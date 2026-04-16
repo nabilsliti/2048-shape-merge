@@ -14,6 +14,7 @@ class AdsService {
 
   Future<void> init() async {
     await MobileAds.instance.initialize();
+    loadRewardedAd();
   }
 
   void loadBannerAd({required void Function(BannerAd) onLoaded}) {

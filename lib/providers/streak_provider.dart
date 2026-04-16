@@ -60,6 +60,14 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
     final (jokerType, amount) = state!.reward!;
     _ref.read(gameStateProvider.notifier).addJokers(jokerType, amount);
 
+    // Also deliver milestone bonus rewards if any
+    final milestone = state!.milestoneReward;
+    if (milestone != null) {
+      for (final (mType, mAmount) in milestone) {
+        _ref.read(gameStateProvider.notifier).addJokers(mType, mAmount);
+      }
+    }
+
     // Persist claimed date — Firestore if signed in, localStorage if guest
     final todayKey = PlayerStreak.todayKey();
     final user = _ref.read(authStateProvider).valueOrNull;

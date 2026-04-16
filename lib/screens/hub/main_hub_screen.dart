@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:shape_merge/core/constants/joker_types.dart';
-import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
+import 'package:shape_merge/core/widgets/joker_choice_dialog.dart';
 import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
@@ -31,34 +30,14 @@ class MainHubScreen extends ConsumerStatefulWidget {
 }
 
 class _MainHubScreenState extends ConsumerState<MainHubScreen> {
-  bool _streakPopupShown = false;
 
   @override
   Widget build(BuildContext context) {
     // Initialize IAP early to catch pending purchases
     ref.watch(iapReadyProvider);
 
-    // Reset auto-show guard when account changes so the popup can show again
-    ref.listen(authStateProvider, (prev, next) {
-      final prevUid = prev?.valueOrNull?.uid;
-      final nextUid = next.valueOrNull?.uid;
-      if (prevUid != nextUid) {
-        _streakPopupShown = false;
-      }
-    });
-
-    // Show streak popup once automatically when a new streak day is earned
-    ref.listen(streakProvider, (prev, next) {
-      if (next != null && next.reward != null && !next.rewardClaimed && !_streakPopupShown) {
-        _streakPopupShown = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          StreakPopup.show(context, next).then((_) {
-            ref.read(streakProvider.notifier).ensureRewardClaimed();
-          });
-        });
-      }
-    });
+    // Preload rewarded ad (same pattern as shop)
+    ref.read(adsServiceProvider).loadRewardedAd();
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
@@ -173,10 +152,11 @@ class _TopHud extends ConsumerWidget {
               StreakFlameButton(
                 streakCount: streakCount,
                 dayLabel: l10n.dayLabel,
+                hasReward: streakResult != null &&
+                    streakResult.reward != null &&
+                    !streakResult.rewardClaimed,
                 onTap: streakResult != null
-                    ? () => StreakPopup.show(context, streakResult).then((_) {
-                          ref.read(streakProvider.notifier).ensureRewardClaimed();
-                        })
+                    ? () => StreakPopup.show(context, streakResult)
                     : null,
               ),
             ],
@@ -221,23 +201,10 @@ class _TopHud extends ConsumerWidget {
     }
 
     if (context.mounted) {
-      // Give a random joker as reward
-      const types = JokerType.values;
-      final chosen = types[DateTime.now().millisecondsSinceEpoch % types.length];
-      ref.read(gameStateProvider.notifier).addJokers(chosen);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              JokerUI.icon(chosen, size: 20),
-              const SizedBox(width: 8),
-              Text('+1 Joker', style: GoogleFonts.nunito(fontWeight: FontWeight.w700)),
-            ],
-          ),
-          backgroundColor: AppTheme.greenTop,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      final chosen = await JokerChoiceDialog.show(context);
+      if (chosen != null) {
+        ref.read(gameStateProvider.notifier).addJokers(chosen);
+      }
       adsService.loadRewardedAd();
     }
   }
