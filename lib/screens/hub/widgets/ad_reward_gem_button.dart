@@ -16,52 +16,45 @@ class AdRewardGemButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 56,
-        height: 68,
+        width: 70,
+        height: 82,
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // Static glow behind image
-            Positioned(
-              top: 6,
-              left: 4,
-              right: 4,
-              bottom: 16,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.hubPurpleGlow.withValues(alpha: 0.25),
-                      blurRadius: 22,
-                      spreadRadius: 4,
-                    ),
-                    BoxShadow(
-                      color: AppTheme.gold.withValues(alpha: 0.1),
-                      blurRadius: 28,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
+            // Circle button — same style as bottom nav active
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.navActiveCircle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  const BoxShadow(
+                    color: AppTheme.navActiveShadow,
+                    offset: Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-            ),
-            // Pub image
-            Positioned(
-              top: 0,
-              left: 2,
-              right: 2,
-              bottom: 14,
-              child: Image.asset(
-                'assets/images/pub.webp',
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.medium,
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Image.asset(
+                  'assets/images/pub.webp',
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                ),
               ),
             ),
             // "AD" badge top-right
             Positioned(
               top: -2,
-              right: 0,
+              right: 2,
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),

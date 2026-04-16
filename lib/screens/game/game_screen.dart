@@ -268,8 +268,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
         children: [
           // Gradient background (same as shape-rush)
           Positioned.fill(child: AppTheme.backgroundWidget()),
-          SafeArea(
-            bottom: false,
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
             child: Column(
               children: [
                 // HUD bar
