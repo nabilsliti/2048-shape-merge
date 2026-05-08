@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 
 class JokerInventory {
+  static const maxPerType = 99;
   final int bomb;
   final int wildcard;
   final int reducer;
@@ -45,12 +48,12 @@ class JokerInventory {
       };
 
   JokerInventory add(JokerType type, [int amount = 1]) => switch (type) {
-        JokerType.bomb => copyWith(bomb: bomb + amount),
-        JokerType.wildcard => copyWith(wildcard: wildcard + amount),
-        JokerType.reducer => copyWith(reducer: reducer + amount),
-        JokerType.radar => copyWith(radar: radar + amount),
-        JokerType.evolution => copyWith(evolution: evolution + amount),
-        JokerType.megaBomb => copyWith(megaBomb: megaBomb + amount),
+        JokerType.bomb => copyWith(bomb: math.min(bomb + amount, maxPerType)),
+        JokerType.wildcard => copyWith(wildcard: math.min(wildcard + amount, maxPerType)),
+        JokerType.reducer => copyWith(reducer: math.min(reducer + amount, maxPerType)),
+        JokerType.radar => copyWith(radar: math.min(radar + amount, maxPerType)),
+        JokerType.evolution => copyWith(evolution: math.min(evolution + amount, maxPerType)),
+        JokerType.megaBomb => copyWith(megaBomb: math.min(megaBomb + amount, maxPerType)),
       };
 
   JokerInventory addAll(int amount) {
@@ -81,6 +84,17 @@ class JokerInventory {
       megaBomb: megaBomb ?? this.megaBomb,
     );
   }
+
+  /// Merge two inventories by taking the max of each joker type.
+  /// Used when a guest signs in to avoid losing locally-purchased jokers.
+  JokerInventory mergeMax(JokerInventory other) => JokerInventory(
+        bomb: math.max(bomb, other.bomb),
+        wildcard: math.max(wildcard, other.wildcard),
+        reducer: math.max(reducer, other.reducer),
+        radar: math.max(radar, other.radar),
+        evolution: math.max(evolution, other.evolution),
+        megaBomb: math.max(megaBomb, other.megaBomb),
+      );
 
   Map<String, int> toMap() => {
         'bomb': bomb,

@@ -50,48 +50,21 @@ class _StatColumn extends StatelessWidget {
   }
 }
 
-// ─── Star painter — golden 5-point star ─────────────────────
-class _StarPainter extends CustomPainter {
-  final bool glow;
-  _StarPainter({this.glow = false});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final outerR = size.width * 0.46;
-    final innerR = outerR * 0.42;
-
-    final path = _starPath(cx, cy, outerR, innerR, 5);
-
-    if (glow) {
-      canvas.drawPath(path, Paint()
-        ..color = AppTheme.gold.withValues(alpha: 0.5)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
-    }
-
-    canvas.drawPath(path, Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(cx, cy - outerR),
-        Offset(cx, cy + outerR),
-        [AppTheme.goldLight, AppTheme.goldAntique],
-      ));
-
-    canvas.drawPath(path, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.6
-      ..color = AppTheme.goldPale.withValues(alpha: 0.6));
-  }
-
-  @override
-  bool shouldRepaint(covariant _StarPainter old) => old.glow != glow;
-}
-
 // ─── Ring painter — capacity arc gauge ──────────────────────
 class _RingPainter extends CustomPainter {
   final double ratio;
   final Color color;
   _RingPainter({required this.ratio, required this.color});
+
+  static final _trackPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..color = Colors.white.withValues(alpha: 0.06);
+  static final _arcPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+  static final _dotPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.7);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -102,21 +75,14 @@ class _RingPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
 
     // Track
-    canvas.drawArc(rect, -pi / 2, 2 * pi, false, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = sw
-      ..strokeCap = StrokeCap.round
-      ..color = Colors.white.withValues(alpha: 0.06));
+    canvas.drawArc(rect, -pi / 2, 2 * pi, false, _trackPaint..strokeWidth = sw);
 
     // Arc
-    canvas.drawArc(rect, -pi / 2, 2 * pi * ratio.clamp(0.0, 1.0), false, Paint()
-      ..style = PaintingStyle.stroke
+    canvas.drawArc(rect, -pi / 2, 2 * pi * ratio.clamp(0.0, 1.0), false, _arcPaint
       ..strokeWidth = sw
-      ..strokeCap = StrokeCap.round
       ..color = color);
 
     // 3x3 grid dots in center
-    final dotPaint = Paint()..color = Colors.white.withValues(alpha: 0.7);
     final dotR = r * 0.12;
     final gap = r * 0.35;
     for (var dx = -1; dx <= 1; dx++) {
@@ -124,7 +90,7 @@ class _RingPainter extends CustomPainter {
         canvas.drawCircle(
           Offset(cx + dx * gap, cy + dy * gap),
           dotR,
-          dotPaint,
+          _dotPaint,
         );
       }
     }
@@ -165,24 +131,6 @@ class _BoltPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ─── Helper ─────────────────────────────────────────────────
-Path _starPath(double cx, double cy, double outer, double inner, int points) {
-  final path = Path();
-  for (var i = 0; i < points * 2; i++) {
-    final angle = (i * pi / points) - pi / 2;
-    final r = i.isEven ? outer : inner;
-    final px = cx + cos(angle) * r;
-    final py = cy + sin(angle) * r;
-    if (i == 0) {
-      path.moveTo(px, py);
-    } else {
-      path.lineTo(px, py);
-    }
-  }
-  path.close();
-  return path;
 }
 
 // ─── Confetti data model ────────────────────────────────────

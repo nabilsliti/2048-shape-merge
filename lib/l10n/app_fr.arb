@@ -26,17 +26,17 @@
   "musicOn": "Musique activée",
   "musicOff": "Musique désactivée",
   "jokerBomb": "Bombe",
-  "jokerBombDesc": "Cible une forme et détruit toutes les formes de même type et couleur",
+  "jokerBombDesc": "Détruit toutes les pièces identiques (même forme et couleur), quel que soit leur niveau",
   "jokerWildcard": "Wildcard",
-  "jokerWildcardDesc": "Invoque une forme spéciale qui fusionne avec n'importe quelle forme du même niveau",
+  "jokerWildcardDesc": "Invoque une forme spéciale qui fusionne avec n'importe quelle forme du même niveau, peu importe sa forme ou couleur",
   "jokerReducer": "Réducteur",
   "jokerReducerDesc": "Réduit le niveau d'une forme de 1. Au niveau 1, elle disparaît !",
   "jokerRadar": "Radar",
-  "jokerRadarDesc": "Révèle toutes les fusions possibles pendant 5 secondes",
+  "jokerRadarDesc": "Révèle tous les groupes de formes fusionnables (même forme, couleur et niveau) pendant 5 secondes",
   "jokerEvolution": "Évolution",
   "jokerEvolutionDesc": "Augmente le niveau d'une forme de +1 sans fusion",
   "jokerMegaBomb": "Méga Bombe",
-  "jokerMegaBombDesc": "Détruit toutes les formes du même niveau, peu importe leur type",
+  "jokerMegaBombDesc": "Détruit toutes les pièces du même niveau, peu importe leur forme ou couleur",
   "onboardingTitle1": "Comment jouer",
   "onboardingDesc1": "Glisse une forme sur une forme identique pour les fusionner et marquer des points !",
   "onboardingTitle2": "Tes Jokers",
@@ -111,7 +111,7 @@
       "n": {"type": "int"}
     }
   },
-  "objectiveParties": "{n, plural, =1{Jouer 1 partie} other{Jouer {n} parties}}",
+  "objectiveParties": "{n, plural, =1{Terminer 1 partie} other{Terminer {n} parties}}",
   "@objectiveParties": {
     "placeholders": {
       "n": {"type": "int"}
@@ -125,6 +125,36 @@
   },
   "objectiveJokersUses": "{n, plural, =1{Utiliser 1 joker} other{Utiliser {n} jokers}}",
   "@objectiveJokersUses": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveShapesDestroyed": "{n, plural, =1{Détruire 1 forme avec une bombe} other{Détruire {n} formes avec des bombes}}",
+  "@objectiveShapesDestroyed": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveWildcardMerges": "{n, plural, =1{Faire 1 fusion avec un wildcard} other{Faire {n} fusions avec un wildcard}}",
+  "@objectiveWildcardMerges": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveHighLevelMerges": "{n, plural, =1{Créer 1 forme de rang 6+} other{Créer {n} formes de rang 6+}}",
+  "@objectiveHighLevelMerges": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveBoardClears": "{n, plural, =1{Vider le plateau 1 fois} other{Vider le plateau {n} fois}}",
+  "@objectiveBoardClears": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveMaxCombo": "Atteindre un combo de {n}",
+  "@objectiveMaxCombo": {
     "placeholders": {
       "n": {"type": "int"}
     }
@@ -188,11 +218,15 @@
   "leaderboardYou": "Toi",
   "leaderboardError": "Erreur de chargement du classement",
   "packStarName": "Pack Étoile",
+  "packRescueName": "Pack Sauvetage",
   "packCometName": "Pack Comète",
+  "packBoostName": "Pack Boost",
   "packDiamondName": "Pack Diamant",
   "badgeStarter": "STARTER",
-  "badgePopular": "POPULAIRE",
-  "badgeBestValue": "MEILLEUR CHOIX",
+  "badgeRescue": "SURVIE",
+  "badgePopular": "MEILLEUR RAPPORT",
+  "badgeBoost": "PREMIUM",
+  "badgeBestValue": "MAX",
   "purchaseSuccess": "Achat réussi !",
   "purchaseError": "Erreur d'achat",
   "purchasesRestored": "Achats restaurés !",
@@ -200,7 +234,7 @@
   "jokerCategoryClassic": "CLASSIQUE",
   "jokerCategoryPremium": "PREMIUM",
   "noAdsTitle": "ZÉRO PUB + JOKERS",
-  "badgeOneTimePurchase": "✨ ACHAT UNIQUE",
+  "badgeOneTimePurchase": "ACHAT UNIQUE",
   "noAdsDescription": "Supprime toutes les pubs !",
   "sectionJokerPacks": "PACKS JOKERS",
   "sectionFreeJoker": "JOKER GRATUIT",
@@ -246,27 +280,27 @@
   "jokerSuggestReducer": "Réducteur pour créer une paire",
   "jokerSuggestUse": "Utiliser",
 
-  "coachWelcome": "Bienvenue ! 🎮",
+  "coachWelcome": "Bienvenue !",
   "coachWelcomeDesc": "On va apprendre les bases ensemble !",
-  "coachWaitMerge": "À toi ! 🧩",
+  "coachWaitMerge": "À toi !",
   "coachWaitMergeDesc": "Glisse une forme sur une forme identique (même forme, même couleur, même niveau) pour fusionner !",
-  "coachMergeDone": "Bravo ! 🎉",
+  "coachMergeDone": "Bravo !",
   "coachMergeDoneDesc": "Tu maîtrises la fusion ! Chaque fusion augmente ton score.",
-  "coachJokers": "Tes Jokers 🃏",
+  "coachJokers": "Tes Jokers",
   "coachJokersDesc": "Voici tes jokers ! Chacun a un pouvoir unique.",
-  "coachWaitJokerLongPress": "Essaie ! 👇",
+  "coachWaitJokerLongPress": "Essaie !",
   "coachWaitJokerLongPressDesc": "Fais un appui long sur un joker pour voir sa description.",
-  "coachJokerDone": "Parfait ! 👏",
+  "coachJokerDone": "Parfait !",
   "coachJokerDoneDesc": "Tu peux consulter la description de chaque joker à tout moment.",
-  "coachJokerUse": "Utiliser un Joker 🎯",
+  "coachJokerUse": "Utiliser un Joker",
   "coachJokerUseDesc": "Touche un joker pour l'activer, puis touche une forme sur la grille pour appliquer son pouvoir.",
-  "coachScore": "Score ⭐",
+  "coachScore": "Score",
   "coachScoreDesc": "Ton score actuel. Chaque fusion rapporte des points.",
-  "coachCapacity": "Capacité ⭕",
+  "coachCapacity": "Capacité",
   "coachCapacityDesc": "Nombre de formes sur la grille. Quand c'est plein et qu'il n'y a plus de fusion possible, la partie est finie !",
-  "coachMerges": "Fusions ⚡",
+  "coachMerges": "Fusions",
   "coachMergesDesc": "Nombre total de fusions réalisées dans cette partie.",
-  "coachComplete": "C'est parti ! 🚀",
+  "coachComplete": "C'est parti !",
   "coachCompleteDesc": "Tu es prêt ! Fusionne, utilise tes jokers et bats ton record !",
   "coachTapContinue": "Touche pour continuer",
   "coachSkip": "Passer",
@@ -292,5 +326,50 @@
   "quitGameConfirmMessage": "Ta progression sera perdue.",
   "quitGameCancel": "Continuer",
   "quitGameConfirm": "Quitter",
-  "scoreSubmitError": "Score non synchronisé. Vérifie ta connexion."
+  "scoreSubmitError": "Score non synchronisé. Vérifie ta connexion.",
+  "reviveAd": "Continuer gratuitement",
+  "blockedAgain": "Bloqué à nouveau 😬",
+  "noMoreMoves": "Plus de mouvements 😱",
+  "saveMyGame": "Sauver ma partie",
+  "newGame": "Nouvelle partie",
+  "pageNotFound": "Page introuvable : {uri}",
+  "@pageNotFound": {
+    "placeholders": {
+      "uri": {"type": "String"}
+    }
+  },
+  "xpAmount": "{n} XP",
+  "@xpAmount": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "adLabel": "PUB",
+  "rewardPlusJoker": "+1 ",
+  "rewardX2": " x2",
+  "quantityFormat": "×{count}",
+  "@quantityFormat": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "premiumStarLabel": "★ PREMIUM",
+  "rewardPlusN": "+{n}",
+  "@rewardPlusN": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "bonusStars": "★ BONUS ★",
+  "shapePackLabel": "Pack de formes",
+  "shapePackClassic": "Classique",
+  "shapePackEmoji": "Emoji",
+  "packEmojiPackName": "Pack Emoji",
+  "emojiPackDesc": "6 emojis pour remplacer vos formes",
+  "badgeEmojiPack": "NOUVEAU",
+  "bestChoice": "MEILLEUR CHOIX",
+  "rescueHeroDesc": "Sauve ta partie et continue ton meilleur run",
+  "rescueCtaLabel": "Sauver ma partie \uD83D\uDD25",
+  "freeJokerShort": "+1 joker au choix",
+  "sectionMoreOffers": "PLUS D'OFFRES"
 }

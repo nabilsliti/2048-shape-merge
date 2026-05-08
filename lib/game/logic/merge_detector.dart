@@ -84,8 +84,9 @@ class MergeDetector {
     return shapes
         .where((s) =>
             s.id != target.id &&
-            s.type == target.type &&
-            s.color == target.color)
+            s.level == target.level &&
+            (s.isWildcard || target.isWildcard ||
+                (s.type == target.type && s.color == target.color)))
         .toList();
   }
 }

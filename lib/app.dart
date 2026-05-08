@@ -1,19 +1,27 @@
+import 'dart:math' as math;
+
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
-import 'package:shape_merge/core/services/streak_service.dart';
+import 'package:shape_merge/core/constants/shape_pack.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
+import 'package:shape_merge/core/services/local_storage_service.dart';
+import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/core/models/player.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
+import 'package:shape_merge/providers/shape_pack_provider.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
 import 'package:shape_merge/screens/splash/splash_screen.dart';
 import 'package:shape_merge/screens/hub/main_hub_screen.dart';
@@ -24,11 +32,13 @@ import 'package:shape_merge/screens/profile/profile_screen.dart';
 import 'package:shape_merge/screens/settings/settings_screen.dart';
 import 'package:shape_merge/core/widgets/ad_banner_widget.dart';
 
+const _log = AppLogger('App');
+
 final _router = GoRouter(
   initialLocation: AppRoutes.splash,
   errorBuilder: (context, state) => Scaffold(
     body: Center(
-      child: Text('Page introuvable: ${state.uri}'),
+      child: Text(AppLocalizations.of(context)!.pageNotFound(state.uri.toString())),
     ),
   ),
   routes: [
@@ -138,44 +148,111 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
       if (nextUser != null) {
         notifier.setSignedIn(nextUser.uid, ref.read(firestoreServiceProvider));
         ref.read(streakProvider.notifier).migrateAndRefresh(nextUser);
-        // Load the new account's data (bestScore + jokers) from Firestore
-        ref.read(playerProvider.future).then((player) {
-          if (player != null) {
-            notifier.loadSavedState(
-              bestScore: player.bestScore,
-              jokers: player.jokerInventory,
+        // Load the new account's data from Firestore, merge guest jokers
+        // (max per type) so locally-purchased jokers are never lost,
+        // then clear localStorage.
+        ref.read(playerProvider.future).then((player) async {
+          final storage = await ref.read(localStorageProvider.future);
+          final fs = ref.read(firestoreServiceProvider);
+          final uid = nextUser.uid;
+
+          // ── Replay pending guest purchases via CF ──
+          final pending = storage.pendingPurchases;
+          if (pending.isNotEmpty) {
+            for (final p in pending) {
+              try {
+                final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+                    .httpsCallable('verifyPurchase');
+                final result = await callable.call<Map<String, dynamic>>({
+                  'productId': p['productId'],
+                  'purchaseToken': p['purchaseToken'],
+                  'platform': p['platform'],
+                });
+                final status = result.data['status'] as String?;
+                _log.info('Replayed pending purchase ${p['productId']}: $status');
+              } catch (e) {
+                _log.warning('Failed to replay pending purchase ${p['productId']}: $e');
+              }
+            }
+            await storage.clearPendingPurchases();
+          }
+
+          // ── After replaying purchases, reload player to get updated jokers ──
+          final freshPlayer = pending.isNotEmpty
+              ? await fs.getPlayer(uid)
+              : player;
+
+          // Jokers: server is source of truth (purchases verified via CF)
+          final serverJokers = freshPlayer?.jokerInventory ?? const JokerInventory.initial();
+
+          // Merge scalar fields: max(local, server) so no progression is lost
+          final mergedBestScore = math.max(storage.bestScore, freshPlayer?.bestScore ?? 0);
+          final mergedLevel = math.max(storage.playerLevel, freshPlayer?.level ?? 1);
+          final mergedCurrentXP = math.max(storage.currentXP, freshPlayer?.currentXP ?? 0);
+          final mergedTotalXP = math.max(storage.totalXP, freshPlayer?.totalXP ?? 0);
+          final mergedGamesPlayed = math.max(storage.gamesPlayed, freshPlayer?.gamesPlayed ?? 0);
+          final mergedTotalMerges = math.max(storage.totalMerges, freshPlayer?.totalMerges ?? 0);
+
+          notifier.loadSavedState(
+            bestScore: mergedBestScore,
+            jokers: serverJokers,
+          );
+
+          // Sync noAdsPurchased from Firestore immediately
+          final isNoAds = freshPlayer?.noAdsPurchased ?? false;
+          ref.read(noAdsPurchasedProvider.notifier).state = isNoAds;
+          ref.read(iapServiceProvider).noAdsPurchased = isNoAds;
+
+          // Sync emojiPackPurchased from Firestore immediately
+          final isEmojiPack = freshPlayer?.emojiPackPurchased ?? false;
+          ref.read(emojiPackPurchasedProvider.notifier).state = isEmojiPack;
+          ref.read(iapServiceProvider).emojiPackPurchased = isEmojiPack;
+
+          // Persist merged scalar fields to Firestore if anything changed
+          if (mergedBestScore > (freshPlayer?.bestScore ?? 0)) {
+            fs.updateBestScore(uid, mergedBestScore);
+          }
+          if (mergedLevel > (freshPlayer?.level ?? 1) ||
+              mergedTotalXP > (freshPlayer?.totalXP ?? 0)) {
+            fs.updateXP(uid,
+              level: mergedLevel,
+              currentXP: mergedCurrentXP,
+              totalXP: mergedTotalXP,
             );
           }
+          if (mergedGamesPlayed > (freshPlayer?.gamesPlayed ?? 0) ||
+              mergedTotalMerges > (freshPlayer?.totalMerges ?? 0)) {
+            await fs.savePlayer(
+              (freshPlayer ?? Player(uid: uid, displayName: 'Guest')).copyWith(
+                gamesPlayed: mergedGamesPlayed,
+                totalMerges: mergedTotalMerges,
+              ),
+            );
+          }
+
+          await _resetLocalToDefaults(storage);
         });
         // Reload daily challenges for the new account
         ref.read(dailyChallengeProvider.notifier).checkRenewal();
       } else {
-        // ── Going to guest mode ──
+        // ── Going to guest mode — localStorage was already reset at sign-in
+        // (_resetLocalToDefaults), so just load fresh defaults.
         notifier.clearSignedIn();
-
-        // Sync streak from Firestore → localStorage before switching to guest
-        if (prevUser != null) {
-          ref.read(playerProvider.future).then((player) async {
-            if (player != null) {
-              final storage = await ref.read(localStorageProvider.future);
-              await const StreakService().syncToLocalOnSignOut(
-                player: player,
-                storage: storage,
-              );
-            }
-          });
+        notifier.loadSavedState(
+          bestScore: 0,
+          jokers: const JokerInventory.initial(),
+        );
+        // Reset no-ads state: guest profile is blank
+        ref.read(noAdsPurchasedProvider.notifier).state = false;
+        ref.read(iapServiceProvider).noAdsPurchased = false;
+        ref.read(emojiPackPurchasedProvider.notifier).state = false;
+        ref.read(iapServiceProvider).emojiPackPurchased = false;
+        // Reset emoji shape pack to classic if selected
+        if (ref.read(shapePackProvider) == ShapePack.emoji) {
+          ref.read(shapePackProvider.notifier).select(ShapePack.classic);
         }
-
-        // Reload guest data from localStorage
-        ref.read(localStorageProvider.future).then((storage) {
-          notifier.loadSavedState(
-            bestScore: storage.bestScore,
-            jokers: storage.jokerInventory,
-          );
-        });
-        // Reload guest daily challenges + streak
-        ref.read(dailyChallengeProvider.notifier).checkRenewal();
         ref.read(streakProvider.notifier).checkAndUpdate();
+        ref.read(dailyChallengeProvider.notifier).checkRenewal();
       }
     });
 
@@ -195,11 +272,24 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
         jokers: player.jokerInventory,
       );
 
+      // Sync noAdsPurchased from Firestore (single source of truth when signed in)
+      if (player.noAdsPurchased) {
+        ref.read(noAdsPurchasedProvider.notifier).state = true;
+        ref.read(iapServiceProvider).noAdsPurchased = true;
+      }
+
+      // Sync emojiPackPurchased from Firestore
+      if (player.emojiPackPurchased) {
+        ref.read(emojiPackPurchasedProvider.notifier).state = true;
+        ref.read(iapServiceProvider).emojiPackPurchased = true;
+      }
+
       // Also fetch leaderboard score (may be higher than Player.bestScore)
+      final capturedUid = currentUser.uid;
       ref.read(firestoreServiceProvider).getLeaderboardScore(player.uid).then((lbScore) {
-        // Guard: user may have signed out while the network call was in-flight
+        // Guard: user may have signed out or switched account
         final stillSignedIn = ref.read(authStateProvider).valueOrNull;
-        if (stillSignedIn == null) return;
+        if (stillSignedIn == null || stillSignedIn.uid != capturedUid) return;
 
         final best = [player.bestScore, lbScore].reduce((a, b) => a > b ? a : b);
         if (best > ref.read(gameStateProvider).bestScore) {
@@ -208,7 +298,7 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
             jokers: ref.read(gameStateProvider).jokerInventory,
           );
           if (best > player.bestScore) {
-            ref.read(firestoreServiceProvider).updateBestScore(player.uid, best);
+            ref.read(firestoreServiceProvider).updateBestScore(capturedUid, best);
           }
         }
       });
@@ -227,5 +317,25 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
       ],
       supportedLocales: AppLocalizations.supportedLocales,
     );
+  }
+
+  /// Reset localStorage to fresh guest defaults on sign-out.
+  Future<void> _resetLocalToDefaults(LocalStorageService storage) async {
+    await storage.setBestScore(0);
+    await storage.saveJokerInventory(const JokerInventory.initial());
+    await storage.setPlayerLevel(1);
+    await storage.setCurrentXP(0);
+    await storage.setTotalXP(0);
+    await storage.setCurrentStreak(0);
+    await storage.setLongestStreak(0);
+    await storage.setNextRewardIndex(0);
+    await storage.setGamesPlayed(0);
+    await storage.setTotalMerges(0);
+    await storage.setDailyChallengesJson('');
+    await storage.clearGameCheckpoint();
+    await storage.clearLastLoginDate();
+    await storage.clearRewardClaimedDate();
+    await storage.setNoAdsPurchased(false);
+    await storage.setEmojiPackPurchased(false);
   }
 }

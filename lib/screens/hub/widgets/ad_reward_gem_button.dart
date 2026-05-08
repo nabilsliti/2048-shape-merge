@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // Ad Reward Button — static pub image + glow + badges
@@ -110,7 +111,7 @@ class AdRewardGemButton extends StatelessWidget {
                     ],
                   ),
                   child: Text(
-                    '+1 🃏',
+                    '${AppLocalizations.of(context)!.rewardPlusN(1)} 🃏',
                     style: GoogleFonts.fredoka(
                       fontSize: AppTheme.fontTiny,
                       fontWeight: FontWeight.w700,

@@ -187,22 +187,36 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
                       : null,
                   child: SizedBox(
                     height: 36,
-                    child: Center(child: widget.icon),
+                    child: Center(
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            center: const Alignment(-0.3, -0.3),
+                            colors: [widget.color.withValues(alpha: 0.15), AppTheme.cardBg, AppTheme.jokerOrbBgDark],
+                          ),
+                          border: Border.all(color: widget.color.withValues(alpha: 0.4), width: 1.5),
+                        ),
+                        child: Center(child: widget.icon),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 // Counter with flash
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 300),
                   style: GoogleFonts.fredoka(
-                    fontSize: _bounce.isAnimating ? AppTheme.fontH2 : AppTheme.fontH4,
-                    fontWeight: FontWeight.w900,
+                    fontSize: _bounce.isAnimating ? AppTheme.fontH2 : 20,
+                    fontWeight: FontWeight.w800,
                     color: _bounce.isAnimating ? Colors.white : (widget.count > 0 ? AppTheme.gold : AppTheme.muted),
                     shadows: _bounce.isAnimating
                         ? [Shadow(color: widget.color, blurRadius: 12)]
                         : [],
                   ),
-                  child: Text('×$counterShown'),
+                  child: Text(AppLocalizations.of(context)!.quantityFormat(counterShown)),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -228,7 +242,7 @@ class _JokerStockState extends State<_JokerStock> with TickerProviderStateMixin 
                 child: Opacity(
                   opacity: plusOpacity,
                   child: Text(
-                    '+1',
+                    AppLocalizations.of(context)!.rewardPlusN(1),
                     style: GoogleFonts.fredoka(
                       fontSize: AppTheme.fontH1,
                       fontWeight: FontWeight.w900,

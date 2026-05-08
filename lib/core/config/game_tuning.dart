@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:shape_merge/core/constants/joker_types.dart';
+
 // ─────────────────────────────────────────────────────────────
 // Game Tuning — all gameplay constants in one place.
 //
@@ -72,6 +74,21 @@ abstract final class JokerBonusTuning {
   static const int megaBombBonusPerShape = 15;
 }
 
+/// Revive system settings.
+abstract final class ReviveTuning {
+  /// Number of lowest-level shapes removed on revive.
+  static const int shapesToRemove = 10;
+
+  /// Max revives per game.
+  static const int maxPerGame = 1;
+}
+
+/// Interstitial ad settings.
+abstract final class InterstitialTuning {
+  /// Show interstitial every N game overs.
+  static const int showEveryNGameOvers = 3;
+}
+
 /// XP and level progression.
 abstract final class Progression {
   static const int maxLevel = 50;
@@ -100,14 +117,41 @@ abstract final class Progression {
   static const double streakMultiplier = 1.1;
 }
 
+/// Rewards given on level-up.
+/// Each entry maps a level to a list of (JokerType, amount) rewards.
+/// Levels not in the map give no reward.
+abstract final class LevelUpRewards {
+  static const Map<int, List<(JokerType, int)>> rewards = {
+    2:  [(JokerType.bomb, 2)],
+    3:  [(JokerType.wildcard, 2)],
+    4:  [(JokerType.reducer, 2)],
+    5:  [(JokerType.bomb, 3), (JokerType.wildcard, 1)],
+    7:  [(JokerType.radar, 1)],
+    10: [(JokerType.evolution, 1), (JokerType.bomb, 2)],
+    12: [(JokerType.megaBomb, 1)],
+    15: [(JokerType.wildcard, 3), (JokerType.radar, 1)],
+    18: [(JokerType.evolution, 1), (JokerType.reducer, 3)],
+    20: [(JokerType.megaBomb, 1), (JokerType.bomb, 3)],
+    25: [(JokerType.evolution, 2), (JokerType.wildcard, 2)],
+    30: [(JokerType.megaBomb, 2), (JokerType.radar, 2)],
+    35: [(JokerType.evolution, 2), (JokerType.bomb, 5)],
+    40: [(JokerType.megaBomb, 2), (JokerType.wildcard, 5)],
+    45: [(JokerType.radar, 3), (JokerType.evolution, 2)],
+    50: [(JokerType.megaBomb, 3), (JokerType.evolution, 3), (JokerType.radar, 3)],
+  };
+
+  /// Returns rewards for reaching [level], or empty list if none.
+  static List<(JokerType, int)> forLevel(int level) => rewards[level] ?? const [];
+}
+
 /// Initial joker inventory for new players.
 abstract final class JokerStartingCounts {
-  static const int bomb = 5;
-  static const int wildcard = 5;
-  static const int reducer = 5;
-  static const int radar = 3;
-  static const int evolution = 2;
-  static const int megaBomb = 2;
+  static const int bomb = 3;
+  static const int wildcard = 3;
+  static const int reducer = 3;
+  static const int radar = 1;
+  static const int evolution = 1;
+  static const int megaBomb = 1;
 }
 
 /// Spawn logic adaptive thresholds.

@@ -10,6 +10,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'app.dart';
 import 'core/services/audio_service.dart';
+import 'core/services/remote_config_service.dart';
 import 'screens/game/game_screen.dart';
 import 'firebase_options.dart';
 
@@ -26,6 +27,7 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  unawaited(RemoteConfigService.instance.init());
   await AudioService.instance.init();
   await GameScreen.preload();
   await MobileAds.instance.initialize();

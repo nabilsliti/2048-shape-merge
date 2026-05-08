@@ -96,6 +96,13 @@ class _JokerEffectPainter extends CustomPainter {
     required this.color,
   });
 
+  // Reusable Paint objects to avoid per-frame GC pressure
+  static final _fillPaint = Paint();
+  static final _strokePaint = Paint()..style = PaintingStyle.stroke;
+  static final _blurPaint4 = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+  static final _blurPaint3 = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+  static final _sweepStrokePaint = Paint()..style = PaintingStyle.stroke;
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
@@ -131,7 +138,7 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx, cy),
         coreR,
-        Paint()
+        _fillPaint
           ..shader = ui.Gradient.radial(
             Offset(cx, cy),
             coreR,
@@ -188,7 +195,7 @@ class _JokerEffectPainter extends CustomPainter {
 
       canvas.drawPath(
         flamePath,
-        Paint()..color = flameColor.withValues(alpha: opacity * 0.8),
+        _fillPaint..color = flameColor.withValues(alpha: opacity * 0.8),
       );
     }
 
@@ -213,13 +220,13 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(px, py),
         emberSize,
-        Paint()..color = AppTheme.emberOrange.withValues(alpha: emberOpacity * 0.9),
+        _fillPaint..color = AppTheme.emberOrange.withValues(alpha: emberOpacity * 0.9),
       );
       // White hot center
       canvas.drawCircle(
         Offset(px, py),
         emberSize * 0.4,
-        Paint()..color = Colors.white.withValues(alpha: emberOpacity * 0.6),
+        _fillPaint..color = Colors.white.withValues(alpha: emberOpacity * 0.6),
       );
     }
 
@@ -228,8 +235,8 @@ class _JokerEffectPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(cx, cy),
       hazeR,
-      Paint()
-        ..style = PaintingStyle.stroke
+      _strokePaint
+        
         ..strokeWidth = 3.0 * (1 - progress)
         ..color = AppTheme.heatHazeRed.withValues(alpha: opacity * 0.25),
     );
@@ -249,7 +256,7 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx, cy),
         flashR,
-        Paint()
+        _fillPaint
           ..shader = ui.Gradient.radial(
             Offset(cx, cy),
             flashR,
@@ -268,8 +275,8 @@ class _JokerEffectPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(cx, cy),
       outerR,
-      Paint()
-        ..style = PaintingStyle.stroke
+      _strokePaint
+        
         ..strokeWidth = 6.0 * (1 - progress)
         ..color = color.withValues(alpha: opacity * 0.9),
     );
@@ -282,8 +289,8 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx, cy),
         innerR,
-        Paint()
-          ..style = PaintingStyle.stroke
+        _strokePaint
+          
           ..strokeWidth = 3.0 * (1 - innerP)
           ..color = Colors.white.withValues(alpha: (1 - innerP) * 0.6),
       );
@@ -296,8 +303,8 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx, cy),
         thirdR,
-        Paint()
-          ..style = PaintingStyle.stroke
+        _strokePaint
+          
           ..strokeWidth = 2.0 * (1 - thirdP)
           ..color = color.withValues(alpha: (1 - thirdP) * 0.35),
       );
@@ -314,14 +321,14 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(px, py),
         pSize,
-        Paint()..color = color.withValues(alpha: opacity * 0.75),
+        _fillPaint..color = color.withValues(alpha: opacity * 0.75),
       );
       // Hot white core on every other ember
       if (i.isEven) {
         canvas.drawCircle(
           Offset(px, py),
           pSize * 0.4,
-          Paint()..color = Colors.white.withValues(alpha: opacity * 0.5),
+          _fillPaint..color = Colors.white.withValues(alpha: opacity * 0.5),
         );
       }
     }
@@ -346,8 +353,8 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset.zero,
         ringR,
-        Paint()
-          ..style = PaintingStyle.stroke
+        _strokePaint
+          
           ..strokeWidth = 2.5 * (1 - progress * 0.4)
           ..color = color.withValues(alpha: ringOpacity),
       );
@@ -362,7 +369,7 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx, cy),
         glowR,
-        Paint()
+        _fillPaint
           ..shader = ui.Gradient.radial(
             Offset(cx, cy),
             glowR,
@@ -398,7 +405,7 @@ class _JokerEffectPainter extends CustomPainter {
         ..close();
       canvas.drawPath(
         star,
-        Paint()
+        _fillPaint
           ..color = (i.isEven ? color : Colors.white)
               .withValues(alpha: opacity * 0.85),
       );
@@ -411,7 +418,7 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx + cos(angle) * dist, cy + sin(angle) * dist),
         1.5 * (1 - progress),
-        Paint()..color = Colors.white.withValues(alpha: opacity * 0.5),
+        _fillPaint..color = Colors.white.withValues(alpha: opacity * 0.5),
       );
     }
   }
@@ -428,8 +435,8 @@ class _JokerEffectPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(cx, cy),
       ringR,
-      Paint()
-        ..style = PaintingStyle.stroke
+      _strokePaint
+        
         ..strokeWidth = 3.0 * (1 - progress * 0.5)
         ..color = color.withValues(alpha: opacity * 0.6),
     );
@@ -445,7 +452,7 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(px, py),
         pSize,
-        Paint()..color = color.withValues(alpha: opacity * 0.7),
+        _fillPaint..color = color.withValues(alpha: opacity * 0.7),
       );
     }
 
@@ -466,8 +473,8 @@ class _JokerEffectPainter extends CustomPainter {
         ..lineTo(cx + halfW, chevronY - 3);
       canvas.drawPath(
         chevron,
-        Paint()
-          ..style = PaintingStyle.stroke
+        _strokePaint
+          
           ..strokeWidth = 2.5 * (1 - localP * 0.5)
           ..strokeCap = StrokeCap.round
           ..color = color.withValues(alpha: localOpacity * 0.8),
@@ -481,7 +488,7 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx, cy),
         pulseR,
-        Paint()..color = Colors.white.withValues(alpha: (1 - pulseP) * 0.5),
+        _fillPaint..color = Colors.white.withValues(alpha: (1 - pulseP) * 0.5),
       );
     }
   }
@@ -504,7 +511,7 @@ class _JokerEffectPainter extends CustomPainter {
       );
       canvas.drawRect(
         beamRect,
-        Paint()
+        _fillPaint
           ..shader = ui.Gradient.linear(
             Offset(cx, cy),
             Offset(cx, cy - beamH),
@@ -517,9 +524,8 @@ class _JokerEffectPainter extends CustomPainter {
       // Outer glow on beam
       canvas.drawRect(
         beamRect.inflate(3),
-        Paint()
-          ..color = color.withValues(alpha: (1 - beamP) * 0.15)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        _blurPaint4
+          ..color = color.withValues(alpha: (1 - beamP) * 0.15),
       );
     }
 
@@ -542,7 +548,7 @@ class _JokerEffectPainter extends CustomPainter {
         canvas.drawCircle(
           Offset(cx + xOff, dotY),
           dotSize,
-          Paint()
+          _fillPaint
             ..color = (strand == 0 ? color : Colors.white)
                 .withValues(alpha: localOpacity * 0.7),
         );
@@ -564,7 +570,7 @@ class _JokerEffectPainter extends CustomPainter {
         ..close();
       canvas.drawPath(
         arrow,
-        Paint()..color = color.withValues(alpha: arrowFade * 0.9),
+        _fillPaint..color = color.withValues(alpha: arrowFade * 0.9),
       );
     }
 
@@ -578,7 +584,7 @@ class _JokerEffectPainter extends CustomPainter {
         canvas.drawCircle(
           Offset(cx + cos(angle) * dist, sparkY + sin(angle) * dist),
           2.0 * (1 - sparkP),
-          Paint()
+          _fillPaint
             ..color = Colors.white.withValues(alpha: (1 - sparkP) * 0.6),
         );
       }
@@ -601,8 +607,8 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(cx, cy),
         ringR,
-        Paint()
-          ..style = PaintingStyle.stroke
+        _strokePaint
+          
           ..strokeWidth = 2.5 * (1 - localP)
           ..color = color.withValues(alpha: localOpacity * 0.6),
       );
@@ -617,8 +623,8 @@ class _JokerEffectPainter extends CustomPainter {
 
       // Sweep trail — fading arc behind the arm
       const trailArc = pi * 0.4;
-      final trailPaint = Paint()
-        ..style = PaintingStyle.stroke
+      final trailPaint = _sweepStrokePaint
+        
         ..strokeWidth = 2.0
         ..shader = ui.Gradient.sweep(
           Offset(cx, cy),
@@ -640,7 +646,7 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawLine(
         Offset(cx, cy),
         Offset(px, py),
-        Paint()
+        _strokePaint
           ..strokeWidth = 1.8
           ..strokeCap = StrokeCap.round
           ..color = color.withValues(alpha: opacity * 0.6),
@@ -671,15 +677,14 @@ class _JokerEffectPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(blipX, blipY),
         5.0,
-        Paint()
-          ..color = color.withValues(alpha: blipOpacity * 0.2)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+        _blurPaint3
+          ..color = color.withValues(alpha: blipOpacity * 0.2),
       );
       // Blip dot
       canvas.drawCircle(
         Offset(blipX, blipY),
         2.5,
-        Paint()..color = color.withValues(alpha: blipOpacity * 0.8),
+        _fillPaint..color = color.withValues(alpha: blipOpacity * 0.8),
       );
     }
 
@@ -688,7 +693,7 @@ class _JokerEffectPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(cx, cy),
       3.0 * pulse,
-      Paint()..color = color.withValues(alpha: opacity * 0.7),
+      _fillPaint..color = color.withValues(alpha: opacity * 0.7),
     );
   }
 

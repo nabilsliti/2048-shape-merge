@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shape_merge/core/config/shop_catalog.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
@@ -19,6 +21,7 @@ class IapProducts {
   static const packComet = 'pack_comet';
   static const packDiamond = 'pack_diamond';
   static const noAds = 'no_ads';
+  static const emojiPack = 'pack_emoji';
 
   static Set<String> get allIds => ShopCatalog.allIds;
 
@@ -62,8 +65,12 @@ class IapService {
   /// Persisted flag — `true` after the user bought the no-ads pack.
   bool noAdsPurchased = false;
 
-  /// Callback: a product was successfully delivered (jokers should be added).
-  void Function(String productId)? onProductDelivered;
+  /// Persisted flag — `true` after the user bought the emoji shape pack.
+  bool emojiPackPurchased = false;
+
+  /// Callback: a product was successfully delivered.
+  /// [serverVerified] is true when Cloud Function credited jokers in Firestore.
+  void Function(String productId, {required bool serverVerified})? onProductDelivered;
 
   /// Callback: purchase flow status changed (for loading spinners, errors…).
   void Function(IapResult result)? onStatusChanged;
@@ -78,6 +85,7 @@ class IapService {
     }
 
     noAdsPurchased = storage.noAdsPurchased;
+    emojiPackPurchased = storage.emojiPackPurchased;
 
     _sub = _iap.purchaseStream.listen(
       (updates) => _onPurchaseUpdates(updates, storage),
@@ -208,23 +216,69 @@ class IapService {
   }) async {
     final id = purchase.productID;
 
-    // Persist no-ads flag
+    // ── Server-side verification via Cloud Function ──
+    if (!restored) {
+      try {
+        final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+            .httpsCallable('verifyPurchase');
+        _log.info('Calling verifyPurchase for $id...');
+        final result = await callable.call<Map<String, dynamic>>({
+          'productId': id,
+          'purchaseToken': purchase.verificationData.serverVerificationData,
+          'platform': Platform.isIOS ? 'ios' : 'android',
+        });
+        final status = result.data['status'] as String?;
+        if (status == 'ok' || status == 'already_processed') {
+          _log.info('Purchase verified server-side: $id ($status)');
+          onProductDelivered?.call(id, serverVerified: true);
+        } else {
+          _log.error('Unexpected verification status: $status');
+          onStatusChanged?.call(IapResult(
+            status: IapStatus.error,
+            productId: id,
+            errorMessage: 'Vérification échouée ($status)',
+          ));
+          return;
+        }
+      } catch (e) {
+        _log.warning('Server verification failed for $id: $e');
+        // User may not be signed in — deliver locally so they don't lose purchase
+        _log.info('Delivering $id locally (no server verification)');
+        // Save pending purchase for replay on sign-in
+        await storage.addPendingPurchase(
+          productId: id,
+          purchaseToken: purchase.verificationData.serverVerificationData,
+          platform: Platform.isIOS ? 'ios' : 'android',
+        );
+        _log.info('Saved pending purchase for $id');
+        onProductDelivered?.call(id, serverVerified: false);
+      }
+    }
+
+    // Persist no-ads flag locally
     if (id == IapProducts.noAds) {
       noAdsPurchased = true;
       await storage.setNoAdsPurchased(true);
+      if (restored) {
+        onStatusChanged?.call(IapResult(
+          status: IapStatus.restored,
+          productId: id,
+        ));
+        return;
+      }
     }
 
-    // On restore, we skip joker delivery (items are already credited).
-    // On fresh purchase, we always deliver.
-    if (!restored) {
-      onProductDelivered?.call(id);
-    } else if (id == IapProducts.noAds) {
-      // For no-ads restores, just fire status (no jokers).
-      onStatusChanged?.call(IapResult(
-        status: IapStatus.restored,
-        productId: id,
-      ));
-      return;
+    // Persist emoji pack flag locally
+    if (id == IapProducts.emojiPack) {
+      emojiPackPurchased = true;
+      await storage.setEmojiPackPurchased(true);
+      if (restored) {
+        onStatusChanged?.call(IapResult(
+          status: IapStatus.restored,
+          productId: id,
+        ));
+        return;
+      }
     }
 
     onStatusChanged?.call(IapResult(

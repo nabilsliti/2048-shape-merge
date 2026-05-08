@@ -30,7 +30,7 @@ class StreakFlameButton extends StatefulWidget {
 }
 
 class _StreakFlameButtonState extends State<StreakFlameButton>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   AnimationController? _zoom;
   Timer? _clockTimer;
   String _countdown = '';

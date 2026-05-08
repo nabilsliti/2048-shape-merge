@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/services/analytics_service.dart';
+import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/firestore_service.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/game/logic/game_engine.dart';
@@ -58,13 +60,32 @@ class GameStateNotifier extends StateNotifier<GameState> {
   }
 
   /// Clear signed-in context (sign-out). Jokers go back to localStorage.
-  /// Immediately resets bestScore so the UI updates without waiting for
-  /// the async localStorage reload.
   void clearSignedIn() {
     _uid = null;
     _firestoreService = null;
-    state = state.copyWith(bestScore: 0);
   }
+
+  /// Reload joker inventory from Firestore (e.g. after server-side purchase).
+  /// Throws if not signed in or if Firestore read fails.
+  Future<void> refreshJokersFromFirestore() async {
+    if (_uid == null || _firestoreService == null) {
+      throw StateError('Cannot refresh jokers: user not signed in (uid=$_uid)');
+    }
+    const AppLogger('GameState').info('Refreshing jokers from Firestore for $_uid...');
+    final player = await _firestoreService!.getPlayer(_uid!);
+    if (player != null) {
+      const AppLogger('GameState').info('Jokers from Firestore: bomb=${player.jokerInventory.bomb}, wildcard=${player.jokerInventory.wildcard}, reducer=${player.jokerInventory.reducer}');
+      state = state.copyWith(jokerInventory: player.jokerInventory);
+    } else {
+      const AppLogger('GameState').warning('Player doc not found in Firestore for $_uid');
+    }
+  }
+
+  /// Whether the user is signed in with Firestore context.
+  bool get isSignedIn => _uid != null && _firestoreService != null;
+
+  /// Current joker inventory (read-only access for merge logic).
+  JokerInventory get jokerInventory => state.jokerInventory;
 
   void _saveJokers() {
     if (_uid != null && _firestoreService != null) {
@@ -158,15 +179,18 @@ class GameStateNotifier extends StateNotifier<GameState> {
   }
 
   void useBomb(GameShape target) {
+    final shapesBefore = state.shapes.length;
     final result = JokerHandler.useBomb(
       target,
       state.shapes,
       state.jokerInventory,
     );
+    final destroyed = shapesBefore - result.shapes.length;
     state = state.copyWith(
       shapes: result.shapes,
       jokerInventory: result.inventory,
       score: state.score + result.scoreBonus,
+      shapesDestroyedThisGame: state.shapesDestroyedThisGame + destroyed,
     );
     _incrementJokerUsed();
     unawaited(AnalyticsService.instance.logJokerUsed(JokerType.bomb));
@@ -233,20 +257,38 @@ class GameStateNotifier extends StateNotifier<GameState> {
   }
 
   void useMegaBomb(GameShape target) {
+    final shapesBefore = state.shapes.length;
     final result = JokerHandler.useMegaBomb(
       target,
       state.shapes,
       state.jokerInventory,
     );
+    final destroyed = shapesBefore - result.shapes.length;
     state = state.copyWith(
       shapes: result.shapes,
       jokerInventory: result.inventory,
       score: state.score + result.scoreBonus,
+      shapesDestroyedThisGame: state.shapesDestroyedThisGame + destroyed,
     );
     _incrementJokerUsed();
     unawaited(AnalyticsService.instance.logJokerUsed(JokerType.megaBomb));
     _saveJokers();
     _checkAfterJoker();
+  }
+
+  /// Revive the game after game over — removes the N lowest-level shapes.
+  void revive() {
+    if (_boardSize == null || state.gameActive) return;
+    final sorted = List<GameShape>.from(state.shapes)
+      ..sort((a, b) => a.level.compareTo(b.level));
+    final toRemove = sorted.take(ReviveTuning.shapesToRemove).map((s) => s.id).toSet();
+    final remaining = state.shapes.where((s) => !toRemove.contains(s.id)).toList();
+    state = state.copyWith(
+      shapes: remaining,
+      gameActive: true,
+    );
+    state = GameEngine.checkAfterJoker(state, _boardSize!);
+    _saveCheckpoint();
   }
 
   Timer? _radarTimer;

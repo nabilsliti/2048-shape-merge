@@ -418,28 +418,34 @@ class AppTheme {
   // TEXT STYLES
   // ════════════════════════════════════════════════════════════════
 
-  /// Fredoka Black title with 4-direction black stroke + bottom shadow.
-  static TextStyle titleStyle([double size = fontLarge]) => GoogleFonts.fredoka(
-        fontSize: size,
-        fontWeight: FontWeight.w900,
-        color: Colors.white,
-        shadows: const [
-          Shadow(offset: Offset(-1, -1), color: Colors.black),
-          Shadow(offset: Offset(1, -1),  color: Colors.black),
-          Shadow(offset: Offset(-1,  1), color: Colors.black),
-          Shadow(offset: Offset(1,   1), color: Colors.black),
-          Shadow(offset: Offset(0,   4), color: Colors.black54),
-        ],
-      );
+  // Cached base style — avoids GoogleFonts lookup on every call.
+  static final TextStyle _fredokaBase = GoogleFonts.fredoka(
+    fontWeight: FontWeight.w900,
+    color: Colors.white,
+    shadows: const [
+      Shadow(offset: Offset(-1, -1), color: Colors.black),
+      Shadow(offset: Offset(1, -1),  color: Colors.black),
+      Shadow(offset: Offset(-1,  1), color: Colors.black),
+      Shadow(offset: Offset(1,   1), color: Colors.black),
+      Shadow(offset: Offset(0,   4), color: Colors.black54),
+    ],
+  );
 
-  static TextStyle get scoreStyle => GoogleFonts.fredoka(
+  /// Pre-cached title sizes used most often.
+  static final Map<double, TextStyle> _titleCache = {};
+
+  /// Fredoka Black title with 4-direction black stroke + bottom shadow.
+  static TextStyle titleStyle([double size = fontLarge]) =>
+      _titleCache[size] ??= _fredokaBase.copyWith(fontSize: size);
+
+  static final TextStyle scoreStyle = GoogleFonts.fredoka(
         fontSize: fontH1,
         fontWeight: FontWeight.w900,
         color: gold,
         shadows: const [Shadow(offset: Offset(0, 2), color: Colors.black54)],
       );
 
-  static TextStyle get hudStyle => GoogleFonts.nunito(
+  static final TextStyle hudStyle = GoogleFonts.nunito(
         fontSize: fontRegular,
         fontWeight: FontWeight.w900,
         color: text,

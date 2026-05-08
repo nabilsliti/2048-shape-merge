@@ -18,6 +18,7 @@ class LocalStorageService {
   static const _guestNameKey = 'guestName';
   static const _guestAvatarKey = 'guestAvatar';
   static const _noAdsPurchasedKey = 'noAdsPurchased';
+  static const _emojiPackPurchasedKey = 'emojiPackPurchased';
   static const _gamesPlayedKey = 'gamesPlayed';
   static const _totalMergesKey = 'totalMerges';
 
@@ -143,14 +144,19 @@ class LocalStorageService {
   bool get noAdsPurchased => _prefs.getBool(_noAdsPurchasedKey) ?? false;
   Future<void> setNoAdsPurchased(bool value) => _prefs.setBool(_noAdsPurchasedKey, value);
 
+  bool get emojiPackPurchased => _prefs.getBool(_emojiPackPurchasedKey) ?? false;
+  Future<void> setEmojiPackPurchased(bool value) => _prefs.setBool(_emojiPackPurchasedKey, value);
+
   // ── Game stats (guest mode) ───────────────────────────────────────────────
   int get gamesPlayed => _prefs.getInt(_gamesPlayedKey) ?? 0;
   Future<void> incrementGamesPlayed() =>
       _prefs.setInt(_gamesPlayedKey, gamesPlayed + 1);
+  Future<void> setGamesPlayed(int v) => _prefs.setInt(_gamesPlayedKey, v);
 
   int get totalMerges => _prefs.getInt(_totalMergesKey) ?? 0;
   Future<void> addMerges(int count) =>
       _prefs.setInt(_totalMergesKey, totalMerges + count);
+  Future<void> setTotalMerges(int v) => _prefs.setInt(_totalMergesKey, v);
 
   // ── Streak (guest mode) ───────────────────────────────────────────────────
   int get currentStreak => _prefs.getInt(_currentStreakKey) ?? 0;
@@ -161,12 +167,14 @@ class LocalStorageService {
 
   String? get lastLoginDate => _prefs.getString(_lastLoginDateKey);
   Future<void> setLastLoginDate(String date) => _prefs.setString(_lastLoginDateKey, date);
+  Future<void> clearLastLoginDate() => _prefs.remove(_lastLoginDateKey);
 
   int get nextRewardIndex => _prefs.getInt(_nextRewardIndexKey) ?? 0;
   Future<void> setNextRewardIndex(int v) => _prefs.setInt(_nextRewardIndexKey, v);
 
   String? get rewardClaimedDate => _prefs.getString(_rewardClaimedDateKey);
   Future<void> setRewardClaimedDate(String date) => _prefs.setString(_rewardClaimedDateKey, date);
+  Future<void> clearRewardClaimedDate() => _prefs.remove(_rewardClaimedDateKey);
 
   // ── Level / XP (guest mode) ──────────────────────────────────────────────
   int get playerLevel => _prefs.getInt(_playerLevelKey) ?? 1;
@@ -211,6 +219,41 @@ class LocalStorageService {
       _prefs.setString(_gameCheckpointKey, json);
 
   Future<void> clearGameCheckpoint() => _prefs.remove(_gameCheckpointKey);
+
+  // ── Pending purchases (guest mode — replayed on sign-in) ─────────────────
+  static const _pendingPurchasesKey = 'pendingPurchases';
+
+  /// Returns list of pending purchases [{productId, purchaseToken, platform}].
+  List<Map<String, String>> get pendingPurchases {
+    final raw = _prefs.getString(_pendingPurchasesKey);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final list = jsonDecode(raw) as List<Object?>;
+      return list
+          .whereType<Map<String, Object?>>()
+          .map((m) => m.map((k, v) => MapEntry(k, v.toString())))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> addPendingPurchase({
+    required String productId,
+    required String purchaseToken,
+    required String platform,
+  }) async {
+    final list = pendingPurchases;
+    list.add({
+      'productId': productId,
+      'purchaseToken': purchaseToken,
+      'platform': platform,
+    });
+    await _prefs.setString(_pendingPurchasesKey, jsonEncode(list));
+  }
+
+  Future<void> clearPendingPurchases() =>
+      _prefs.remove(_pendingPurchasesKey);
 
   // ── GDPR ─────────────────────────────────────────────────────────────────
   Future<void> clearAllData() => _prefs.clear();

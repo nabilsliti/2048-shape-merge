@@ -1,6 +1,10 @@
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 
+/// Sentinel used by [GameState.copyWith] to distinguish "argument not
+/// provided" from "argument explicitly set to null" for nullable fields.
+const Object _unset = Object();
+
 class GameState {
   final List<GameShape> shapes;
   final int score;
@@ -24,6 +28,18 @@ class GameState {
   /// Cached merge success rate (0.0–1.0) over the last 20 drags.
   final double recentMergeRate;
 
+  // ── Stats for daily challenge objectives ───────────────────────────────────
+  /// Highest combo chain achieved this game (for `maxCombo` objective).
+  final int maxComboReached;
+  /// Number of shapes destroyed by bomb/megaBomb this game.
+  final int shapesDestroyedThisGame;
+  /// Number of fusions that produced a shape of level ≥ 6.
+  final int highLevelMergesThisGame;
+  /// Number of times the board was fully cleared this game.
+  final int boardClearsThisGame;
+  /// Number of fusions involving a wildcard shape.
+  final int wildcardMergesThisGame;
+
   const GameState({
     this.shapes = const [],
     this.score = 0,
@@ -39,6 +55,11 @@ class GameState {
     this.comboCount = 0,
     this.lastMergedShapeId,
     this.recentMergeRate = 0.5,
+    this.maxComboReached = 0,
+    this.shapesDestroyedThisGame = 0,
+    this.highLevelMergesThisGame = 0,
+    this.boardClearsThisGame = 0,
+    this.wildcardMergesThisGame = 0,
   });
 
   GameState copyWith({
@@ -54,7 +75,12 @@ class GameState {
     List<bool>? recentAttempts,
     int? jokersUsedThisGame,
     int? comboCount,
-    String? lastMergedShapeId,
+    Object? lastMergedShapeId = _unset,
+    int? maxComboReached,
+    int? shapesDestroyedThisGame,
+    int? highLevelMergesThisGame,
+    int? boardClearsThisGame,
+    int? wildcardMergesThisGame,
   }) {
     final attempts = recentAttempts ?? this.recentAttempts;
     final rate = recentAttempts != null ? _computeMergeRate(attempts) : recentMergeRate;
@@ -71,8 +97,15 @@ class GameState {
       recentAttempts: attempts,
       jokersUsedThisGame: jokersUsedThisGame ?? this.jokersUsedThisGame,
       comboCount: comboCount ?? this.comboCount,
-      lastMergedShapeId: lastMergedShapeId ?? this.lastMergedShapeId,
+      lastMergedShapeId: identical(lastMergedShapeId, _unset)
+          ? this.lastMergedShapeId
+          : lastMergedShapeId as String?,
       recentMergeRate: rate,
+      maxComboReached: maxComboReached ?? this.maxComboReached,
+      shapesDestroyedThisGame: shapesDestroyedThisGame ?? this.shapesDestroyedThisGame,
+      highLevelMergesThisGame: highLevelMergesThisGame ?? this.highLevelMergesThisGame,
+      boardClearsThisGame: boardClearsThisGame ?? this.boardClearsThisGame,
+      wildcardMergesThisGame: wildcardMergesThisGame ?? this.wildcardMergesThisGame,
     );
   }
 
@@ -98,6 +131,11 @@ class GameState {
         },
         'jokersUsedThisGame': jokersUsedThisGame,
         'comboCount': comboCount,
+        'maxComboReached': maxComboReached,
+        'shapesDestroyedThisGame': shapesDestroyedThisGame,
+        'highLevelMergesThisGame': highLevelMergesThisGame,
+        'boardClearsThisGame': boardClearsThisGame,
+        'wildcardMergesThisGame': wildcardMergesThisGame,
       };
 
   factory GameState.fromJson(Map<String, Object?> json) {
@@ -122,6 +160,11 @@ class GameState {
       ),
       jokersUsedThisGame: json['jokersUsedThisGame'] as int? ?? 0,
       comboCount: json['comboCount'] as int? ?? 0,
+      maxComboReached: json['maxComboReached'] as int? ?? 0,
+      shapesDestroyedThisGame: json['shapesDestroyedThisGame'] as int? ?? 0,
+      highLevelMergesThisGame: json['highLevelMergesThisGame'] as int? ?? 0,
+      boardClearsThisGame: json['boardClearsThisGame'] as int? ?? 0,
+      wildcardMergesThisGame: json['wildcardMergesThisGame'] as int? ?? 0,
       gameActive: true,
     );
   }

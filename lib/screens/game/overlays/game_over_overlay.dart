@@ -1,37 +1,48 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/widgets/google_sign_in_button.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
+// ═══════════════════════════════════════════════════════════════
+// Game Over Overlay — 2-step monetization flow
+//
+// Step 1: First game over → "Continue for free" (rewarded ad)
+// Step 2: Second game over → "Save my game"     (rescue pack IAP)
+// ═══════════════════════════════════════════════════════════════
+
 class GameOverOverlay extends ConsumerStatefulWidget {
   final int score;
   final int mergeCount;
-  final bool isVictory;
   final bool isNewRecord;
   final bool isSignedIn;
-  final VoidCallback onReplay;
-  final VoidCallback onSignIn;
+
+  /// true = Step 1 (free continue via ad), false = Step 2 (rescue pack purchase)
+  final bool canFreeContinue;
+
+  final VoidCallback onFreeContinue;
+  final VoidCallback onSaveWithPack;
+  final VoidCallback onNewGame;
 
   const GameOverOverlay({
     super.key,
     required this.score,
     required this.mergeCount,
-    required this.isVictory,
     required this.isNewRecord,
     required this.isSignedIn,
-    required this.onReplay,
-    required this.onSignIn,
+    required this.canFreeContinue,
+    required this.onFreeContinue,
+    required this.onSaveWithPack,
+    required this.onNewGame,
   });
 
   @override
@@ -52,7 +63,11 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
-    AudioService.instance.playGameOver();
+    if (widget.isNewRecord) {
+      AudioService.instance.playNewRecord();
+    } else {
+      AudioService.instance.playGameOver();
+    }
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -75,11 +90,15 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final title = widget.isVictory ? l10n.victory : l10n.gameOver;
     final badgeEmoji = widget.isNewRecord ? '🏆' : '💀';
     final badgeColors = widget.isNewRecord
         ? const [AppTheme.victoryBadgeTop, AppTheme.victoryBadgeBot]
         : const [AppTheme.deathBadgeTop, AppTheme.deathBadgeBot];
+
+    // Title: Step 1 = dynamic (record or no moves), Step 2 = "blocked again"
+    final title = widget.canFreeContinue
+        ? (widget.isNewRecord ? '${l10n.newRecord} 🎉' : l10n.noMoreMoves)
+        : l10n.blockedAgain;
 
     return AnimatedBuilder(
       animation: _entranceCtrl,
@@ -118,122 +137,18 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
                           _PulsingBadge(pulse: _pulseCtrl, emoji: badgeEmoji, colors: badgeColors),
                           const SizedBox(height: 10),
 
-                          Text(title.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH1b), textAlign: TextAlign.center),
+                          Text(title.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH2), textAlign: TextAlign.center),
                           const SizedBox(height: 14),
 
                           // Score panel
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppTheme.panelBg,
-                              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                              border: Border.all(color: AppTheme.panelBorder, width: 3),
-                              boxShadow: const [
-                                BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 6)),
-                                BoxShadow(color: Colors.black54, offset: Offset(0, 10), blurRadius: 14),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                Text(l10n.scoreLabel, style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: AppTheme.blueLabel, letterSpacing: 2)),
-                                const SizedBox(height: 4),
-                                TweenAnimationBuilder<int>(
-                                  tween: IntTween(begin: 0, end: widget.score),
-                                  duration: const Duration(milliseconds: 1200),
-                                  curve: Curves.easeOut,
-                                  builder: (context, val, _) => Text(
-                                    '$val',
-                                    style: GoogleFonts.fredoka(fontSize: AppTheme.fontXXL, fontWeight: FontWeight.w900, color: widget.isNewRecord ? AppTheme.victoryBadgeTop : AppTheme.gold,
-                                        shadows: [
-                                          const Shadow(color: Colors.black38, offset: Offset(0, 3)),
-                                          if (widget.isNewRecord) Shadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.4), blurRadius: 12),
-                                        ]),
-                                  ),
-                                ),
-                                if (widget.isNewRecord) ...[
-                                  const SizedBox(height: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(colors: [AppTheme.victoryBadgeTop, AppTheme.victoryBadgeBot]),
-                                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                                      border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
-                                      boxShadow: [
-                                        BoxShadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.5), blurRadius: 16, spreadRadius: 2),
-                                        BoxShadow(color: AppTheme.victoryBadgeBot.withValues(alpha: 0.3), blurRadius: 24, spreadRadius: 4),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Text('🏆', style: TextStyle(fontSize: 20)),
-                                        const SizedBox(width: 8),
-                                        Text(l10n.newRecord.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
-                                        const SizedBox(width: 8),
-                                        const Text('🏆', style: TextStyle(fontSize: 20)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                                // ── XP + Objectifs — résumé rétention ──
-                                const _XpAndObjectivesSummary(),
-                              ],
-                            ),
-                          ),
+                          _buildScorePanel(l10n),
                           const SizedBox(height: 20),
 
-                          // Sign in
-                          if (!widget.isSignedIn) ...[
-                            GoogleSignInButton(
-                              onPressed: widget.onSignIn,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(l10n.signInToSave, style: GoogleFonts.nunito(fontSize: AppTheme.fontMini, fontWeight: FontWeight.w600, color: AppTheme.blueLabel), textAlign: TextAlign.center),
-                            const SizedBox(height: 14),
-                          ],
-
-                          // Buttons
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Button3D.green(
-                                  expand: true,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  onPressed: () {
-                                    widget.onReplay();
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      PremiumIcon.replay(size: 28),
-                                      const SizedBox(width: 10),
-                                      Text(l10n.replay.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Button3D.red(
-                                  expand: true,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  onPressed: () {
-                                    context.pop();
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      PremiumIcon.home(size: 28),
-                                      const SizedBox(width: 10),
-                                      Text(l10n.menu.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          // Action buttons — Step 1 or Step 2
+                          if (widget.canFreeContinue)
+                            _buildStep1Buttons(l10n)
+                          else
+                            _buildStep2Buttons(l10n),
                         ],
                       ),
                     ),
@@ -244,6 +159,160 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
           ),
         );
       },
+    );
+  }
+
+  // ── Score panel ──────────────────────────────────────────
+  Widget _buildScorePanel(AppLocalizations l10n) {
+    return SizedBox(
+      width: double.infinity,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppTheme.panelBg,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          border: Border.all(color: AppTheme.panelBorder, width: 3),
+          boxShadow: const [
+            BoxShadow(color: AppTheme.shadowDeep, offset: Offset(0, 6)),
+            BoxShadow(color: Colors.black54, offset: Offset(0, 10), blurRadius: 14),
+          ],
+        ),
+        child: Column(
+          children: [
+            Text(l10n.scoreLabel, style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w900, color: AppTheme.blueLabel, letterSpacing: 2)),
+            const SizedBox(height: 4),
+            TweenAnimationBuilder<int>(
+              tween: IntTween(begin: 0, end: widget.score),
+              duration: const Duration(milliseconds: 1200),
+              curve: Curves.easeOut,
+              builder: (context, val, _) => Text(
+                '$val',
+                style: GoogleFonts.fredoka(
+                  fontSize: AppTheme.fontXXL,
+                  fontWeight: FontWeight.w900,
+                  color: widget.isNewRecord ? AppTheme.victoryBadgeTop : AppTheme.gold,
+                  shadows: [
+                    const Shadow(color: Colors.black38, offset: Offset(0, 3)),
+                    if (widget.isNewRecord) Shadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.4), blurRadius: 12),
+                  ],
+                ),
+              ),
+            ),
+            if (widget.isNewRecord) ...[
+              const SizedBox(height: 12),
+              Text(
+                '🏆 ${l10n.newRecord.toUpperCase()} 🏆',
+                style: GoogleFonts.fredoka(
+                  fontSize: AppTheme.fontH3,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.victoryBadgeTop,
+                  letterSpacing: 1.5,
+                  shadows: [
+                    Shadow(color: AppTheme.victoryBadgeTop.withValues(alpha: 0.6), blurRadius: 12),
+                    Shadow(color: AppTheme.victoryBadgeBot.withValues(alpha: 0.4), blurRadius: 20),
+                    const Shadow(color: Colors.black38, offset: Offset(0, 2), blurRadius: 4),
+                  ],
+                ),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scaleXY(begin: 1.0, end: 1.06, duration: 1200.ms, curve: Curves.easeInOut),
+            ],
+            const _XpAndObjectivesSummary(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Step 1: Free continue (rewarded ad) ─────────────────
+  Widget _buildStep1Buttons(AppLocalizations l10n) {
+    return Column(
+      children: [
+        Button3D.green(
+          expand: true,
+          borderRadius: 14,
+          depth: 7,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          onPressed: widget.onFreeContinue,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('assets/images/pub.webp', width: 44, height: 44),
+              const SizedBox(width: 8),
+              Text(
+                l10n.reviveAd.toUpperCase(),
+                style: AppTheme.titleStyle(AppTheme.fontH3),
+              ),
+            ],
+          ),
+        )
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .scaleXY(begin: 1.0, end: 1.04, duration: 800.ms, curve: Curves.easeInOut),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: Button3D.orange(
+            expand: true,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            onPressed: widget.onNewGame,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PremiumIcon.replay(size: 28),
+                const SizedBox(width: 10),
+                Text(l10n.newGame.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Step 2: Save with rescue pack (IAP) ─────────────────
+  Widget _buildStep2Buttons(AppLocalizations l10n) {
+    return Column(
+      children: [
+        Button3D.green(
+          expand: true,
+          borderRadius: 14,
+          depth: 7,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          onPressed: widget.onSaveWithPack,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('🛟', style: TextStyle(fontSize: 32)),
+              const SizedBox(width: 8),
+              Text(
+                l10n.saveMyGame.toUpperCase(),
+                style: AppTheme.titleStyle(AppTheme.fontH3),
+              ),
+            ],
+          ),
+        )
+            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .scaleXY(begin: 1.0, end: 1.04, duration: 800.ms, curve: Curves.easeInOut),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: Button3D.orange(
+            expand: true,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            onPressed: widget.onNewGame,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PremiumIcon.replay(size: 28),
+                const SizedBox(width: 10),
+                Text(l10n.newGame.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontBody)),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -264,6 +333,8 @@ class _GameOverOverlayState extends ConsumerState<GameOverOverlay>
   }
 }
 
+// ── Reusable sub-widgets ──────────────────────────────────
+
 class _ConfettiPiece {
   final double x, speed, drift, rotation, rotSpeed, width, height, phase;
   final Color color;
@@ -283,9 +354,7 @@ class _ConfettiRainPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final c in pieces) {
-      // Each piece has its own phase offset → continuous loop, no cut
       final t = (progress * (0.3 + c.speed * 0.7) + c.phase) % 1.0;
-
       final px = c.x * size.width + sin(t * pi * 2) * c.drift * size.width;
       final py = -10 + t * (size.height + 20);
       final rot = c.rotation + t * c.rotSpeed;
@@ -342,7 +411,6 @@ class _PulsingBadge extends StatelessWidget {
   }
 }
 
-/// XP gain + daily objectives summary shown in GameOverOverlay.
 class _XpAndObjectivesSummary extends ConsumerWidget {
   const _XpAndObjectivesSummary();
 
@@ -361,13 +429,13 @@ class _XpAndObjectivesSummary extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(RetentionUI.xpIcon, color: RetentionUI.levelColor, size: 14),
+                const Icon(RetentionUI.xpIcon, color: RetentionUI.xpColor, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  '+${progression.xpGained} XP',
+                  l10n.xpGained(progression.xpGained),
                   style: GoogleFonts.nunito(
                       fontSize: AppTheme.fontXSmall,
-                      color: RetentionUI.levelColor,
+                      color: RetentionUI.xpColor,
                       fontWeight: FontWeight.w800),
                 ),
               ],

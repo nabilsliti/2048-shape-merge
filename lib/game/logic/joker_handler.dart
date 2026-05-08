@@ -4,7 +4,6 @@ import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
-import 'merge_detector.dart';
 import 'spawn_manager.dart';
 
 class JokerHandler {
@@ -20,8 +19,16 @@ class JokerHandler {
       return (shapes: shapes, inventory: inventory, scoreBonus: 0);
     }
 
-    final matching = MergeDetector.findMatchingShapes(target, shapes);
-    final toRemove = {target.id, ...matching.map((s) => s.id)};
+    // Destroy all shapes with same shape + color, regardless of level.
+    final toRemove = shapes
+        .where((s) =>
+            s.id == target.id ||
+            (!s.isWildcard &&
+                !target.isWildcard &&
+                s.type == target.type &&
+                s.color == target.color))
+        .map((s) => s.id)
+        .toSet();
     final remaining = shapes.where((s) => !toRemove.contains(s.id)).toList();
     final bonus = toRemove.length * JokerBonusTuning.bombBonusPerShape;
 

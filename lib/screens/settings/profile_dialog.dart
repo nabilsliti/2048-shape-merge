@@ -34,6 +34,10 @@ Future<void> showProfileDialog(BuildContext context, WidgetRef ref) async {
     initialAvatar = localStorage?.guestAvatar;
   }
 
+  final playerLevel = isSignedIn
+      ? (player?.level ?? localStorage?.playerLevel ?? 1)
+      : (localStorage?.playerLevel ?? 1);
+
   final result = await showDialog<_ProfileResult>(
     context: context,
     builder: (ctx) => _ProfileEditDialog(
@@ -41,6 +45,7 @@ Future<void> showProfileDialog(BuildContext context, WidgetRef ref) async {
       initialAvatarId: initialAvatar,
       isSignedIn: isSignedIn,
       email: user?.email,
+      playerLevel: playerLevel,
     ),
   );
 
@@ -185,12 +190,14 @@ class _ProfileEditDialog extends StatefulWidget {
   final String? initialAvatarId;
   final bool isSignedIn;
   final String? email;
+  final int playerLevel;
 
   const _ProfileEditDialog({
     required this.initialName,
     this.initialAvatarId,
     required this.isSignedIn,
     this.email,
+    required this.playerLevel,
   });
 
   @override
@@ -281,7 +288,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.check_circle, color: AppTheme.greenTop, size: 14),
+                  const Icon(Icons.check_circle_rounded, color: AppTheme.greenTop, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     widget.email!,
@@ -335,6 +342,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
               child: SingleChildScrollView(
                 child: AvatarPickerGrid(
                   selectedAvatarId: _selectedAvatarId,
+                  playerLevel: widget.playerLevel,
                   onAvatarSelected: (id) {
                     FocusScope.of(context).unfocus();
                     setState(() => _selectedAvatarId = id);

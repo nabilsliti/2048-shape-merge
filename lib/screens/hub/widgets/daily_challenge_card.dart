@@ -8,7 +8,9 @@ import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
+import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
+import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:vibration/vibration.dart';
 
 class DailyChallengeCard extends ConsumerWidget {
@@ -91,6 +93,8 @@ class DailyChallengeCard extends ConsumerWidget {
                       challenge: c,
                       onCollect: () => ref.read(dailyChallengeProvider.notifier)
                           .collectReward(c.id),
+                      onCollectX2: () => ref.read(dailyChallengeProvider.notifier)
+                          .collectRewardX2(c.id),
                     ),
                   ),
                 ],
@@ -108,22 +112,25 @@ class DailyChallengeCard extends ConsumerWidget {
 // Row per challenge
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ChallengeRow extends StatefulWidget {
+class _ChallengeRow extends ConsumerStatefulWidget {
   const _ChallengeRow({
     required this.challenge,
     required this.onCollect,
+    required this.onCollectX2,
   });
 
   final DailyChallenge challenge;
   final VoidCallback onCollect;
+  final VoidCallback onCollectX2;
 
   @override
-  State<_ChallengeRow> createState() => _ChallengeRowState();
+  ConsumerState<_ChallengeRow> createState() => _ChallengeRowState();
 }
 
-class _ChallengeRowState extends State<_ChallengeRow>
+class _ChallengeRowState extends ConsumerState<_ChallengeRow>
     with TickerProviderStateMixin {
   bool _showCollectAnim = false;
+  bool _isX2 = false;
   late final AnimationController _bounceCtrl;
   late final AnimationController _plusOneCtrl;
   late final AnimationController _sparkleCtrl;
@@ -142,6 +149,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
     if (oldWidget.challenge.id != widget.challenge.id ||
         widget.challenge.rewardCollected != oldWidget.challenge.rewardCollected) {
       _showCollectAnim = false;
+      _isX2 = false;
       _bounceCtrl.reset();
       _plusOneCtrl.reset();
       _sparkleCtrl.reset();
@@ -157,16 +165,36 @@ class _ChallengeRowState extends State<_ChallengeRow>
   }
 
   void _onCollectTap() {
-    setState(() => _showCollectAnim = true);
+    setState(() {
+      _showCollectAnim = true;
+      _isX2 = false;
+    });
     if (Button3D.vibrationEnabled) Vibration.vibrate(duration: 100);
     _bounceCtrl.forward(from: 0);
     _plusOneCtrl.forward(from: 0);
     _sparkleCtrl.forward(from: 0);
 
-    // Delay actual collect so the animation plays first;
-    // sound is played by collectReward() in sync with the actual delivery.
     Future.delayed(const Duration(milliseconds: 900), () {
       if (mounted) widget.onCollect();
+    });
+  }
+
+  void _onCollectX2Tap() async {
+    final adsService = ref.read(adsServiceProvider);
+    final rewarded = await adsService.showRewardedAd(onRewarded: () {});
+    if (!rewarded || !mounted) return;
+
+    setState(() {
+      _showCollectAnim = true;
+      _isX2 = true;
+    });
+    if (Button3D.vibrationEnabled) Vibration.vibrate(duration: 100);
+    _bounceCtrl.forward(from: 0);
+    _plusOneCtrl.forward(from: 0);
+    _sparkleCtrl.forward(from: 0);
+
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) widget.onCollectX2();
     });
   }
 
@@ -235,9 +263,10 @@ class _ChallengeRowState extends State<_ChallengeRow>
       JokerReward(:final joker) => JokerUI.icon(joker, size: 22),
       XpReward() => const Icon(Icons.star_rounded, color: AppTheme.gold, size: 22),
     };
+    final l10nLocal = AppLocalizations.of(context)!;
     final rewardLabel = switch (challenge.reward) {
-      JokerReward() => '+1',
-      XpReward(:final xp) => '+$xp',
+      JokerReward() => l10nLocal.rewardPlusN(_isX2 ? 2 : 1),
+      XpReward(:final xp) => l10nLocal.rewardPlusN(_isX2 ? xp * 2 : xp),
     };
 
     return AnimatedBuilder(
@@ -326,7 +355,7 @@ class _ChallengeRowState extends State<_ChallengeRow>
                         ),
                         if (challenge.reward is XpReward)
                           Text(
-                            ' XP',
+                            ' ${AppLocalizations.of(context)!.xpLabel}',
                             style: GoogleFonts.fredoka(
                               fontSize: AppTheme.fontTiny,
                               fontWeight: FontWeight.w700,
@@ -345,16 +374,29 @@ class _ChallengeRowState extends State<_ChallengeRow>
   }
 
   Widget _collectButton(DailyChallenge challenge) {
-    final l10n = AppLocalizations.of(context)!;
     final active = challenge.canCollect;
+    final noAds = ref.watch(noAdsPurchasedProvider);
 
+    final l10n = AppLocalizations.of(context)!;
     final Widget rewardWidget = switch (challenge.reward) {
       JokerReward(:final joker) => Opacity(
           opacity: active ? 1.0 : 0.3,
-          child: JokerUI.icon(joker, size: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.rewardPlusJoker,
+                style: GoogleFonts.fredoka(
+                  fontSize: AppTheme.fontMini,
+                  color: active ? Colors.white : Colors.white38,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              JokerUI.icon(joker, size: 14),
+            ],
+          ),
         ),
       XpReward(:final xp) => Text(
-          '+$xp XP',
+          l10n.xpGained(xp),
           style: GoogleFonts.fredoka(
               fontSize: AppTheme.fontMini,
               color: active ? Colors.white70 : Colors.white24,
@@ -362,68 +404,108 @@ class _ChallengeRowState extends State<_ChallengeRow>
         ),
     };
 
-    final content = SizedBox(
-      width: 80,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.collectReward,
-              style: GoogleFonts.fredoka(
-                  fontSize: AppTheme.fontTiny,
-                  color: active ? Colors.white : Colors.white38,
-                  fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(width: 4),
-            rewardWidget,
-          ],
-        ),
-      ),
-    );
-    if (active) {
-      final btn = Button3D.green(
-        onPressed: _onCollectTap,
+    final content = rewardWidget;
+
+    if (!active) {
+      return Button3D.gray(
+        onPressed: null,
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         borderRadius: 8,
         depth: 3,
         child: content,
       );
-      return btn
-          .animate(onPlay: (c) => c.repeat(reverse: true))
-          .scaleXY(
-            begin: 1.0,
-            end: 1.10,
-            duration: 700.ms,
-            curve: Curves.easeInOut,
-          );
     }
-    return Button3D.gray(
-      onPressed: null,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      borderRadius: 8,
-      depth: 3,
-      child: content,
+
+    // x2 reward label
+    final Widget x2RewardWidget = switch (challenge.reward) {
+      JokerReward(:final joker) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            JokerUI.icon(joker, size: 14),
+            Text(l10n.rewardX2,
+              style: GoogleFonts.fredoka(
+                fontSize: AppTheme.fontMini,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      XpReward(:final xp) => Text(
+          l10n.xpGained(xp * 2),
+          style: GoogleFonts.fredoka(
+              fontSize: AppTheme.fontMini,
+              color: Colors.white,
+              fontWeight: FontWeight.w700),
+        ),
+    };
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // x2 with ad button (hide for no-ads users)
+        if (!noAds)
+          Button3D.green(
+            onPressed: _onCollectX2Tap,
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+            borderRadius: 8,
+            depth: 3,
+            child: SizedBox(
+              width: 72,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('assets/images/pub.webp', width: 18, height: 18),
+                    const SizedBox(width: 3),
+                    x2RewardWidget,
+                  ],
+                ),
+              ),
+            ),
+          )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scaleXY(begin: 1.0, end: 1.08, duration: 700.ms, curve: Curves.easeInOut),
+        if (!noAds) const SizedBox(width: 4),
+        // Normal collect button
+        Button3D.gold(
+          onPressed: _onCollectTap,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          borderRadius: 8,
+          depth: 3,
+          child: content,
+        ),
+      ],
     );
   }
 
   IconData _iconFor(ChallengeType type) => switch (type) {
-    ChallengeType.fusions    => RetentionUI.fusionIcon,
-    ChallengeType.score      => RetentionUI.scoreIcon,
-    ChallengeType.parties    => RetentionUI.gamesIcon,
-    ChallengeType.formeMax   => RetentionUI.levelUpIcon,
-    ChallengeType.jokersUses => Icons.auto_fix_high_rounded,
+    ChallengeType.fusions         => RetentionUI.fusionIcon,
+    ChallengeType.score           => RetentionUI.scoreIcon,
+    ChallengeType.parties         => RetentionUI.gamesIcon,
+    ChallengeType.formeMax        => RetentionUI.levelUpIcon,
+    ChallengeType.jokersUses      => Icons.auto_fix_high_rounded,
+    ChallengeType.shapesDestroyed => Icons.local_fire_department_rounded,
+    ChallengeType.wildcardMerges  => Icons.style_rounded,
+    ChallengeType.highLevelMerges => Icons.upgrade_rounded,
+    ChallengeType.boardClears     => Icons.cleaning_services_rounded,
+    ChallengeType.maxCombo        => Icons.bolt_rounded,
   };
 
   String _labelFor(DailyChallenge c) {
     final l10n = AppLocalizations.of(context)!;
     return switch (c.type) {
-      ChallengeType.fusions    => l10n.objectiveFusions(c.target),
-      ChallengeType.score      => l10n.objectiveScore(c.target),
-      ChallengeType.parties    => l10n.objectiveParties(c.target),
-      ChallengeType.formeMax   => l10n.objectiveFormeMax(c.target),
-      ChallengeType.jokersUses => l10n.objectiveJokersUses(c.target),
+      ChallengeType.fusions         => l10n.objectiveFusions(c.target),
+      ChallengeType.score           => l10n.objectiveScore(c.target),
+      ChallengeType.parties         => l10n.objectiveParties(c.target),
+      ChallengeType.formeMax        => l10n.objectiveFormeMax(c.target),
+      ChallengeType.jokersUses      => l10n.objectiveJokersUses(c.target),
+      ChallengeType.shapesDestroyed => l10n.objectiveShapesDestroyed(c.target),
+      ChallengeType.wildcardMerges  => l10n.objectiveWildcardMerges(c.target),
+      ChallengeType.highLevelMerges => l10n.objectiveHighLevelMerges(c.target),
+      ChallengeType.boardClears     => l10n.objectiveBoardClears(c.target),
+      ChallengeType.maxCombo        => l10n.objectiveMaxCombo(c.target),
     };
   }
 }

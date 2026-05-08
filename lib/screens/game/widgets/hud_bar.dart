@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -37,8 +38,10 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
   late final AnimationController _celebCtrl;
   late final AnimationController _confettiCtrl;
   late final AnimationController _glowCtrl;
+  late final AnimationController _dangerPulseCtrl;
   late final List<_Confetti> _confettiPieces;
   bool _celebrationPlayed = false;
+  bool _isDangerAnimating = false;
   /// The bestScore captured at the start of each game.
   /// This is the threshold the player must beat.
   int _recordAtGameStart = 0;
@@ -49,6 +52,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
     _celebCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 3500));
     _confettiCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000));
     _glowCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _dangerPulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _confettiPieces = _generateConfetti();
     // Capture initial best score when HUD is first created
     _recordAtGameStart = widget.bestScore;
@@ -63,6 +67,18 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
       _celebrationPlayed = false;
       _recordAtGameStart = widget.bestScore;
       _glowCtrl.reset();
+      _dangerPulseCtrl.reset();
+      _isDangerAnimating = false;
+    }
+    // Start/stop danger pulse when entering/leaving danger zone
+    final inDanger = widget.shapeCount >= 25;
+    final wasInDanger = oldWidget.shapeCount >= 25;
+    if (inDanger && !wasInDanger) {
+      _isDangerAnimating = true;
+      _dangerPulseCtrl.repeat(reverse: true);
+    } else if (!inDanger && wasInDanger) {
+      _isDangerAnimating = false;
+      _dangerPulseCtrl.reset();
     }
     // Play celebration exactly once per game when STRICTLY beating the record
     final isNewBest = widget.score > 0 && widget.score > _recordAtGameStart;
@@ -80,6 +96,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
     _celebCtrl.dispose();
     _confettiCtrl.dispose();
     _glowCtrl.dispose();
+    _dangerPulseCtrl.dispose();
     super.dispose();
   }
 
@@ -185,10 +202,10 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
                                       ],
                                     )
                                   : null,
-                              child: SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CustomPaint(painter: _StarPainter(glow: isNewBest)),
+                              child: Icon(
+                                Icons.emoji_events,
+                                color: isNewBest ? AppTheme.gold : AppTheme.goldAntique,
+                                size: 22,
                               ),
                             ),
                           );
@@ -302,7 +319,22 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
           // ── Capacity ──────────────────────────────
           Expanded(
             flex: 2,
-            child: KeyedSubtree(
+            child: AnimatedBuilder(
+              animation: _dangerPulseCtrl,
+              builder: (context, child) {
+                if (!_isDangerAnimating) return child!;
+                final t = _dangerPulseCtrl.value;
+                final scale = 1.0 + t * 0.08;
+                final shake = sin(t * pi * 2) * 1.5;
+                return Transform.translate(
+                  offset: Offset(shake, 0),
+                  child: Transform.scale(
+                    scale: scale,
+                    child: child,
+                  ),
+                );
+              },
+              child: KeyedSubtree(
               key: CoachKeys.hudCapacity,
               child: _StatColumn(
               icon: SizedBox(
@@ -318,6 +350,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
               valueColor: shapeCount >= 25 ? AppTheme.capDanger : null,
             ),
             ),
+            ),
           ),
 
           _divider(),
@@ -328,10 +361,10 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
             child: KeyedSubtree(
               key: CoachKeys.hudMerges,
               child: _StatColumn(
-              icon: SizedBox(
-                width: 18,
-                height: 18,
-                child: CustomPaint(painter: _BoltPainter()),
+              icon: const Icon(
+                RetentionUI.fusionIcon,
+                size: 18,
+                color: AppTheme.statMerge,
               ),
               value: '$mergeCount',
               color: AppTheme.statMerge,
@@ -369,7 +402,7 @@ class _HudBarState extends ConsumerState<HudBar> with TickerProviderStateMixin {
             onPressed: () {
               widget.onPause?.call();
             },
-            child: const Icon(Icons.pause, color: Colors.white, size: 24),
+            child: const Icon(Icons.pause_rounded, color: Colors.white, size: 24),
           ),
         ],
       ),

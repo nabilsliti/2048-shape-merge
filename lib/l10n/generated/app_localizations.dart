@@ -257,7 +257,7 @@ abstract class AppLocalizations {
   /// No description provided for @jokerBombDesc.
   ///
   /// In en, this message translates to:
-  /// **'Targets a shape and destroys all shapes of the same type and color'**
+  /// **'Destroys all matching pieces (same shape and color), regardless of level'**
   String get jokerBombDesc;
 
   /// No description provided for @jokerWildcard.
@@ -269,7 +269,7 @@ abstract class AppLocalizations {
   /// No description provided for @jokerWildcardDesc.
   ///
   /// In en, this message translates to:
-  /// **'Spawns a special shape that merges with any shape of the same level'**
+  /// **'Spawns a special shape that merges with any shape of the same level, regardless of shape or color'**
   String get jokerWildcardDesc;
 
   /// No description provided for @jokerReducer.
@@ -293,7 +293,7 @@ abstract class AppLocalizations {
   /// No description provided for @jokerRadarDesc.
   ///
   /// In en, this message translates to:
-  /// **'Reveals all possible merges for 5 seconds'**
+  /// **'Reveals all mergeable groups (same shape, color and level) for 5 seconds'**
   String get jokerRadarDesc;
 
   /// No description provided for @jokerEvolution.
@@ -317,7 +317,7 @@ abstract class AppLocalizations {
   /// No description provided for @jokerMegaBombDesc.
   ///
   /// In en, this message translates to:
-  /// **'Destroys all shapes of the same level, regardless of type'**
+  /// **'Destroys all pieces of the same level, regardless of shape or color'**
   String get jokerMegaBombDesc;
 
   /// No description provided for @onboardingTitle1.
@@ -635,7 +635,7 @@ abstract class AppLocalizations {
   /// No description provided for @objectiveParties.
   ///
   /// In en, this message translates to:
-  /// **'{n, plural, =1{Play 1 game} other{Play {n} games}}'**
+  /// **'{n, plural, =1{Finish 1 game} other{Finish {n} games}}'**
   String objectiveParties(int n);
 
   /// No description provided for @objectiveFormeMax.
@@ -649,6 +649,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{n, plural, =1{Use 1 joker} other{Use {n} jokers}}'**
   String objectiveJokersUses(int n);
+
+  /// No description provided for @objectiveShapesDestroyed.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Destroy 1 shape with a bomb} other{Destroy {n} shapes with bombs}}'**
+  String objectiveShapesDestroyed(int n);
+
+  /// No description provided for @objectiveWildcardMerges.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Do 1 merge with a wildcard} other{Do {n} merges with a wildcard}}'**
+  String objectiveWildcardMerges(int n);
+
+  /// No description provided for @objectiveHighLevelMerges.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Create 1 shape of rank 6+} other{Create {n} shapes of rank 6+}}'**
+  String objectiveHighLevelMerges(int n);
+
+  /// No description provided for @objectiveBoardClears.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Clear the board 1 time} other{Clear the board {n} times}}'**
+  String objectiveBoardClears(int n);
+
+  /// No description provided for @objectiveMaxCombo.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach a combo of {n}'**
+  String objectiveMaxCombo(int n);
 
   /// No description provided for @objectiveBonusAll.
   ///
@@ -842,11 +872,23 @@ abstract class AppLocalizations {
   /// **'Star Pack'**
   String get packStarName;
 
+  /// No description provided for @packRescueName.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescue Pack'**
+  String get packRescueName;
+
   /// No description provided for @packCometName.
   ///
   /// In en, this message translates to:
   /// **'Comet Pack'**
   String get packCometName;
+
+  /// No description provided for @packBoostName.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost Pack'**
+  String get packBoostName;
 
   /// No description provided for @packDiamondName.
   ///
@@ -860,16 +902,28 @@ abstract class AppLocalizations {
   /// **'STARTER'**
   String get badgeStarter;
 
+  /// No description provided for @badgeRescue.
+  ///
+  /// In en, this message translates to:
+  /// **'SURVIVAL'**
+  String get badgeRescue;
+
   /// No description provided for @badgePopular.
   ///
   /// In en, this message translates to:
-  /// **'POPULAR'**
+  /// **'BEST VALUE'**
   String get badgePopular;
+
+  /// No description provided for @badgeBoost.
+  ///
+  /// In en, this message translates to:
+  /// **'PREMIUM'**
+  String get badgeBoost;
 
   /// No description provided for @badgeBestValue.
   ///
   /// In en, this message translates to:
-  /// **'BEST VALUE'**
+  /// **'MAX'**
   String get badgeBestValue;
 
   /// No description provided for @purchaseSuccess.
@@ -917,7 +971,7 @@ abstract class AppLocalizations {
   /// No description provided for @badgeOneTimePurchase.
   ///
   /// In en, this message translates to:
-  /// **'✨ ONE-TIME PURCHASE'**
+  /// **'ONE-TIME PURCHASE'**
   String get badgeOneTimePurchase;
 
   /// No description provided for @noAdsDescription.
@@ -1127,7 +1181,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachWelcome.
   ///
   /// In en, this message translates to:
-  /// **'Welcome! 🎮'**
+  /// **'Welcome!'**
   String get coachWelcome;
 
   /// No description provided for @coachWelcomeDesc.
@@ -1139,7 +1193,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachWaitMerge.
   ///
   /// In en, this message translates to:
-  /// **'Your turn! 🧩'**
+  /// **'Your turn!'**
   String get coachWaitMerge;
 
   /// No description provided for @coachWaitMergeDesc.
@@ -1151,7 +1205,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachMergeDone.
   ///
   /// In en, this message translates to:
-  /// **'Well done! 🎉'**
+  /// **'Well done!'**
   String get coachMergeDone;
 
   /// No description provided for @coachMergeDoneDesc.
@@ -1163,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachJokers.
   ///
   /// In en, this message translates to:
-  /// **'Your Jokers 🃏'**
+  /// **'Your Jokers'**
   String get coachJokers;
 
   /// No description provided for @coachJokersDesc.
@@ -1175,7 +1229,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachWaitJokerLongPress.
   ///
   /// In en, this message translates to:
-  /// **'Try it! 👇'**
+  /// **'Try it!'**
   String get coachWaitJokerLongPress;
 
   /// No description provided for @coachWaitJokerLongPressDesc.
@@ -1187,7 +1241,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachJokerDone.
   ///
   /// In en, this message translates to:
-  /// **'Perfect! 👏'**
+  /// **'Perfect!'**
   String get coachJokerDone;
 
   /// No description provided for @coachJokerDoneDesc.
@@ -1199,7 +1253,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachJokerUse.
   ///
   /// In en, this message translates to:
-  /// **'Using a Joker 🎯'**
+  /// **'Using a Joker'**
   String get coachJokerUse;
 
   /// No description provided for @coachJokerUseDesc.
@@ -1211,7 +1265,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachScore.
   ///
   /// In en, this message translates to:
-  /// **'Score ⭐'**
+  /// **'Score'**
   String get coachScore;
 
   /// No description provided for @coachScoreDesc.
@@ -1223,7 +1277,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachCapacity.
   ///
   /// In en, this message translates to:
-  /// **'Capacity ⭕'**
+  /// **'Capacity'**
   String get coachCapacity;
 
   /// No description provided for @coachCapacityDesc.
@@ -1235,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachMerges.
   ///
   /// In en, this message translates to:
-  /// **'Merges ⚡'**
+  /// **'Merges'**
   String get coachMerges;
 
   /// No description provided for @coachMergesDesc.
@@ -1247,7 +1301,7 @@ abstract class AppLocalizations {
   /// No description provided for @coachComplete.
   ///
   /// In en, this message translates to:
-  /// **'Let\'s go! 🚀'**
+  /// **'Let\'s go!'**
   String get coachComplete;
 
   /// No description provided for @coachCompleteDesc.
@@ -1393,6 +1447,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Score not synced. Check your connection.'**
   String get scoreSubmitError;
+
+  /// No description provided for @reviveAd.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue for free'**
+  String get reviveAd;
+
+  /// No description provided for @blockedAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked again 😬'**
+  String get blockedAgain;
+
+  /// No description provided for @noMoreMoves.
+  ///
+  /// In en, this message translates to:
+  /// **'No more moves 😱'**
+  String get noMoreMoves;
+
+  /// No description provided for @saveMyGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Save my game'**
+  String get saveMyGame;
+
+  /// No description provided for @newGame.
+  ///
+  /// In en, this message translates to:
+  /// **'New game'**
+  String get newGame;
+
+  /// No description provided for @pageNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found: {uri}'**
+  String pageNotFound(String uri);
+
+  /// No description provided for @xpAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} XP'**
+  String xpAmount(int n);
+
+  /// No description provided for @adLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AD'**
+  String get adLabel;
+
+  /// No description provided for @rewardPlusJoker.
+  ///
+  /// In en, this message translates to:
+  /// **'+1 '**
+  String get rewardPlusJoker;
+
+  /// No description provided for @rewardX2.
+  ///
+  /// In en, this message translates to:
+  /// **' x2'**
+  String get rewardX2;
+
+  /// No description provided for @quantityFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'×{count}'**
+  String quantityFormat(int count);
+
+  /// No description provided for @premiumStarLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'★ PREMIUM'**
+  String get premiumStarLabel;
+
+  /// No description provided for @rewardPlusN.
+  ///
+  /// In en, this message translates to:
+  /// **'+{n}'**
+  String rewardPlusN(int n);
+
+  /// No description provided for @bonusStars.
+  ///
+  /// In en, this message translates to:
+  /// **'★ BONUS ★'**
+  String get bonusStars;
+
+  /// No description provided for @shapePackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shape pack'**
+  String get shapePackLabel;
+
+  /// No description provided for @shapePackClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get shapePackClassic;
+
+  /// No description provided for @shapePackEmoji.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji'**
+  String get shapePackEmoji;
+
+  /// No description provided for @packEmojiPackName.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji Pack'**
+  String get packEmojiPackName;
+
+  /// No description provided for @emojiPackDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'6 emojis to replace your shapes'**
+  String get emojiPackDesc;
+
+  /// No description provided for @badgeEmojiPack.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get badgeEmojiPack;
+
+  /// No description provided for @bestChoice.
+  ///
+  /// In en, this message translates to:
+  /// **'BEST CHOICE'**
+  String get bestChoice;
+
+  /// No description provided for @rescueHeroDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your game and continue your best run'**
+  String get rescueHeroDesc;
+
+  /// No description provided for @rescueCtaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save my game 🔥'**
+  String get rescueCtaLabel;
+
+  /// No description provided for @freeJokerShort.
+  ///
+  /// In en, this message translates to:
+  /// **'+1 joker of your choice'**
+  String get freeJokerShort;
+
+  /// No description provided for @sectionMoreOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'MORE OFFERS'**
+  String get sectionMoreOffers;
 }
 
 class _AppLocalizationsDelegate

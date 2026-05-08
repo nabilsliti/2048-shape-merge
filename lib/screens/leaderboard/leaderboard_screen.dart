@@ -352,6 +352,20 @@ class _MedalPainter extends CustomPainter {
 
   _MedalPainter({required this.rank});
 
+  static final _glowPaint = Paint()
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+  static final _shadowPaint = Paint()
+    ..color = Colors.black.withValues(alpha: 0.45)
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+  static final _fillPaint = Paint();
+  static final _strokePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  static final _innerRingPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.6;
+  static final _shinePaint = Paint();
+
   static const _configs = [
     // Gold
     (g1: AppTheme.medalGold1, g2: AppTheme.medalGold2, g3: AppTheme.medalGold3, glow: AppTheme.medalGoldGlow, text: AppTheme.medalGoldText, shine: AppTheme.medalGoldShine),
@@ -369,9 +383,7 @@ class _MedalPainter extends CustomPainter {
     final r = size.width * 0.44;
 
     // ── Glow ──
-    canvas.drawCircle(Offset(cx, cy), r * 1.3, Paint()
-      ..color = c.glow
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
+    canvas.drawCircle(Offset(cx, cy), r * 1.3, _glowPaint..color = c.glow);
 
     // ── Hexagon path ──
     Path hex(double radius, [double offsetY = 0]) {
@@ -391,14 +403,12 @@ class _MedalPainter extends CustomPainter {
     }
 
     // ── Shadow ──
-    canvas.drawPath(hex(r, 2), Paint()
-      ..color = Colors.black.withValues(alpha: 0.45)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
+    canvas.drawPath(hex(r, 2), _shadowPaint);
 
     // ── Main hexagon fill ──
     final hexPath = hex(r);
     final hexRect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
-    canvas.drawPath(hexPath, Paint()
+    canvas.drawPath(hexPath, _fillPaint
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -407,9 +417,7 @@ class _MedalPainter extends CustomPainter {
       ).createShader(hexRect));
 
     // ── Bevel stroke ──
-    canvas.drawPath(hexPath, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
+    canvas.drawPath(hexPath, _strokePaint
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -417,9 +425,7 @@ class _MedalPainter extends CustomPainter {
       ).createShader(hexRect));
 
     // ── Inner hex ring ──
-    canvas.drawPath(hex(r * 0.7), Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.6
+    canvas.drawPath(hex(r * 0.7), _innerRingPaint
       ..color = c.shine.withValues(alpha: 0.2));
 
     // ── Number ──
@@ -439,11 +445,12 @@ class _MedalPainter extends CustomPainter {
     tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2));
 
     // ── Specular shine ──
+    final shineRect = Rect.fromCenter(center: Offset(cx - r * 0.15, cy - r * 0.22), width: r * 0.45, height: r * 0.2);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - r * 0.15, cy - r * 0.22), width: r * 0.45, height: r * 0.2),
-      Paint()..shader = RadialGradient(
+      shineRect,
+      _shinePaint..shader = RadialGradient(
         colors: [Colors.white.withValues(alpha: 0.4), Colors.white.withValues(alpha: 0.0)],
-      ).createShader(Rect.fromCenter(center: Offset(cx - r * 0.15, cy - r * 0.22), width: r * 0.45, height: r * 0.2)),
+      ).createShader(shineRect),
     );
   }
 

@@ -19,6 +19,7 @@ class Player {
   final int totalXP;
   final List<String> unlockedRewards;
   final bool noAdsPurchased;
+  final bool emojiPackPurchased;
   final String? rewardClaimedDate;
 
   const Player({
@@ -39,6 +40,7 @@ class Player {
     this.totalXP = 0,
     this.unlockedRewards = const [],
     this.noAdsPurchased = false,
+    this.emojiPackPurchased = false,
     this.rewardClaimedDate,
   });
 
@@ -59,6 +61,7 @@ class Player {
     int? totalXP,
     List<String>? unlockedRewards,
     bool? noAdsPurchased,
+    bool? emojiPackPurchased,
     String? rewardClaimedDate,
   }) {
     return Player(
@@ -79,6 +82,7 @@ class Player {
       totalXP: totalXP ?? this.totalXP,
       unlockedRewards: unlockedRewards ?? this.unlockedRewards,
       noAdsPurchased: noAdsPurchased ?? this.noAdsPurchased,
+      emojiPackPurchased: emojiPackPurchased ?? this.emojiPackPurchased,
       rewardClaimedDate: rewardClaimedDate ?? this.rewardClaimedDate,
     );
   }
@@ -93,6 +97,7 @@ class Player {
       'gamesPlayed': gamesPlayed,
       'jokerInventory': jokerInventory.toMap(),
       'noAdsPurchased': noAdsPurchased,
+      'emojiPackPurchased': emojiPackPurchased,
       'rewardClaimedDate': rewardClaimedDate,
       'currentStreak': currentStreak,
       'longestStreak': longestStreak,
@@ -128,6 +133,7 @@ class Player {
       totalXP: data['totalXP'] as int? ?? 0,
       unlockedRewards: (data['unlockedRewards'] as List<Object?>?)?.cast<String>() ?? [],
       noAdsPurchased: data['noAdsPurchased'] as bool? ?? false,
+      emojiPackPurchased: data['emojiPackPurchased'] as bool? ?? false,
       rewardClaimedDate: data['rewardClaimedDate'] as String?,
     );
   }

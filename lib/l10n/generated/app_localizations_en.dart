@@ -89,14 +89,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jokerBombDesc =>
-      'Targets a shape and destroys all shapes of the same type and color';
+      'Destroys all matching pieces (same shape and color), regardless of level';
 
   @override
   String get jokerWildcard => 'Wildcard';
 
   @override
   String get jokerWildcardDesc =>
-      'Spawns a special shape that merges with any shape of the same level';
+      'Spawns a special shape that merges with any shape of the same level, regardless of shape or color';
 
   @override
   String get jokerReducer => 'Reducer';
@@ -109,7 +109,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jokerRadar => 'Radar';
 
   @override
-  String get jokerRadarDesc => 'Reveals all possible merges for 5 seconds';
+  String get jokerRadarDesc =>
+      'Reveals all mergeable groups (same shape, color and level) for 5 seconds';
 
   @override
   String get jokerEvolution => 'Evolution';
@@ -123,7 +124,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get jokerMegaBombDesc =>
-      'Destroys all shapes of the same level, regardless of type';
+      'Destroys all pieces of the same level, regardless of shape or color';
 
   @override
   String get onboardingTitle1 => 'How to Play';
@@ -303,8 +304,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       n,
       locale: localeName,
-      other: 'Play $n games',
-      one: 'Play 1 game',
+      other: 'Finish $n games',
+      one: 'Finish 1 game',
     );
     return '$_temp0';
   }
@@ -323,6 +324,55 @@ class AppLocalizationsEn extends AppLocalizations {
       one: 'Use 1 joker',
     );
     return '$_temp0';
+  }
+
+  @override
+  String objectiveShapesDestroyed(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Destroy $n shapes with bombs',
+      one: 'Destroy 1 shape with a bomb',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveWildcardMerges(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Do $n merges with a wildcard',
+      one: 'Do 1 merge with a wildcard',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveHighLevelMerges(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Create $n shapes of rank 6+',
+      one: 'Create 1 shape of rank 6+',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveBoardClears(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Clear the board $n times',
+      one: 'Clear the board 1 time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveMaxCombo(int n) {
+    return 'Reach a combo of $n';
   }
 
   @override
@@ -435,7 +485,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get packStarName => 'Star Pack';
 
   @override
+  String get packRescueName => 'Rescue Pack';
+
+  @override
   String get packCometName => 'Comet Pack';
+
+  @override
+  String get packBoostName => 'Boost Pack';
 
   @override
   String get packDiamondName => 'Diamond Pack';
@@ -444,10 +500,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get badgeStarter => 'STARTER';
 
   @override
-  String get badgePopular => 'POPULAR';
+  String get badgeRescue => 'SURVIVAL';
 
   @override
-  String get badgeBestValue => 'BEST VALUE';
+  String get badgePopular => 'BEST VALUE';
+
+  @override
+  String get badgeBoost => 'PREMIUM';
+
+  @override
+  String get badgeBestValue => 'MAX';
 
   @override
   String get purchaseSuccess => 'Purchase successful!';
@@ -471,7 +533,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noAdsTitle => 'NO ADS + JOKERS';
 
   @override
-  String get badgeOneTimePurchase => '✨ ONE-TIME PURCHASE';
+  String get badgeOneTimePurchase => 'ONE-TIME PURCHASE';
 
   @override
   String get noAdsDescription => 'Remove all ads!';
@@ -580,74 +642,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jokerSuggestUse => 'Use';
 
   @override
-  String get coachWelcome => 'Welcome! 🎮';
+  String get coachWelcome => 'Welcome!';
 
   @override
   String get coachWelcomeDesc => 'Let\'s learn the basics together!';
 
   @override
-  String get coachWaitMerge => 'Your turn! 🧩';
+  String get coachWaitMerge => 'Your turn!';
 
   @override
   String get coachWaitMergeDesc =>
       'Drag a shape onto an identical one (same shape, same color, same level) to merge!';
 
   @override
-  String get coachMergeDone => 'Well done! 🎉';
+  String get coachMergeDone => 'Well done!';
 
   @override
   String get coachMergeDoneDesc =>
       'You\'ve mastered merging! Each merge increases your score.';
 
   @override
-  String get coachJokers => 'Your Jokers 🃏';
+  String get coachJokers => 'Your Jokers';
 
   @override
   String get coachJokersDesc =>
       'Here are your jokers! Each has a unique power.';
 
   @override
-  String get coachWaitJokerLongPress => 'Try it! 👇';
+  String get coachWaitJokerLongPress => 'Try it!';
 
   @override
   String get coachWaitJokerLongPressDesc =>
       'Long-press a joker to see its description.';
 
   @override
-  String get coachJokerDone => 'Perfect! 👏';
+  String get coachJokerDone => 'Perfect!';
 
   @override
   String get coachJokerDoneDesc =>
       'You can check any joker\'s description anytime.';
 
   @override
-  String get coachJokerUse => 'Using a Joker 🎯';
+  String get coachJokerUse => 'Using a Joker';
 
   @override
   String get coachJokerUseDesc =>
       'Tap a joker to activate it, then tap a shape on the grid to apply its power.';
 
   @override
-  String get coachScore => 'Score ⭐';
+  String get coachScore => 'Score';
 
   @override
   String get coachScoreDesc => 'Your current score. Each merge earns points.';
 
   @override
-  String get coachCapacity => 'Capacity ⭕';
+  String get coachCapacity => 'Capacity';
 
   @override
   String get coachCapacityDesc =>
       'Shapes on the grid. When it\'s full and no merge is possible, the game is over!';
 
   @override
-  String get coachMerges => 'Merges ⚡';
+  String get coachMerges => 'Merges';
 
   @override
   String get coachMergesDesc => 'Total merges performed in this game.';
 
   @override
-  String get coachComplete => 'Let\'s go! 🚀';
+  String get coachComplete => 'Let\'s go!';
 
   @override
   String get coachCompleteDesc =>
@@ -721,4 +783,87 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scoreSubmitError => 'Score not synced. Check your connection.';
+
+  @override
+  String get reviveAd => 'Continue for free';
+
+  @override
+  String get blockedAgain => 'Blocked again 😬';
+
+  @override
+  String get noMoreMoves => 'No more moves 😱';
+
+  @override
+  String get saveMyGame => 'Save my game';
+
+  @override
+  String get newGame => 'New game';
+
+  @override
+  String pageNotFound(String uri) {
+    return 'Page not found: $uri';
+  }
+
+  @override
+  String xpAmount(int n) {
+    return '$n XP';
+  }
+
+  @override
+  String get adLabel => 'AD';
+
+  @override
+  String get rewardPlusJoker => '+1 ';
+
+  @override
+  String get rewardX2 => ' x2';
+
+  @override
+  String quantityFormat(int count) {
+    return '×$count';
+  }
+
+  @override
+  String get premiumStarLabel => '★ PREMIUM';
+
+  @override
+  String rewardPlusN(int n) {
+    return '+$n';
+  }
+
+  @override
+  String get bonusStars => '★ BONUS ★';
+
+  @override
+  String get shapePackLabel => 'Shape pack';
+
+  @override
+  String get shapePackClassic => 'Classic';
+
+  @override
+  String get shapePackEmoji => 'Emoji';
+
+  @override
+  String get packEmojiPackName => 'Emoji Pack';
+
+  @override
+  String get emojiPackDesc => '6 emojis to replace your shapes';
+
+  @override
+  String get badgeEmojiPack => 'NEW';
+
+  @override
+  String get bestChoice => 'BEST CHOICE';
+
+  @override
+  String get rescueHeroDesc => 'Save your game and continue your best run';
+
+  @override
+  String get rescueCtaLabel => 'Save my game 🔥';
+
+  @override
+  String get freeJokerShort => '+1 joker of your choice';
+
+  @override
+  String get sectionMoreOffers => 'MORE OFFERS';
 }

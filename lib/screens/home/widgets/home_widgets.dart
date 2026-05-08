@@ -133,7 +133,11 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
       children: [
         AnimatedBuilder(
           animation: Listenable.merge([_pulse, _celebCtrl]),
-          builder: (context, _) {
+          child: Image.asset(
+            'assets/images/trophy.png',
+            fit: BoxFit.contain,
+          ),
+          builder: (context, trophyImage) {
             final p = _pulse.value;
 
             // Trophy bounce
@@ -182,10 +186,7 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
                           ),
                         ],
                       ),
-                      child: Image.asset(
-                        'assets/images/trophy.png',
-                        fit: BoxFit.contain,
-                      ),
+                      child: trophyImage!,
                     ),
                   ),
                 ),
@@ -264,6 +265,11 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
     );
   }
 
+  static final _scoreForeground = Paint()
+    ..shader = const LinearGradient(
+      colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
+    ).createShader(const Rect.fromLTWH(0, 0, 200, 50));
+
   Widget _scoreText(double p, double glowAlpha, double glowBlur) {
     final hasGlow = glowAlpha > 0;
     return Text(
@@ -271,10 +277,7 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
       style: GoogleFonts.fredoka(
         fontSize: AppTheme.fontDisplay,
         fontWeight: FontWeight.w900,
-        foreground: Paint()
-          ..shader = const LinearGradient(
-            colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
-          ).createShader(const Rect.fromLTWH(0, 0, 200, 50)),
+        foreground: _scoreForeground,
         shadows: [
           Shadow(
             color: AppTheme.gold.withValues(alpha: hasGlow ? glowAlpha : 0.3 + p * 0.2),
@@ -307,6 +310,8 @@ class _HomeConfettiPainter extends CustomPainter {
   final double progress;
   _HomeConfettiPainter({required this.pieces, required this.progress});
 
+  static final _paint = Paint();
+
   @override
   void paint(Canvas canvas, Size size) {
     for (final c in pieces) {
@@ -320,7 +325,7 @@ class _HomeConfettiPainter extends CustomPainter {
       canvas.rotate(rot);
       canvas.drawRect(
         Rect.fromCenter(center: Offset.zero, width: c.width, height: c.height),
-        Paint()..color = c.color.withValues(alpha: opacity),
+        _paint..color = c.color.withValues(alpha: opacity),
       );
       canvas.restore();
     }
@@ -347,6 +352,10 @@ class _FloatingTitleState extends State<_FloatingTitle>
   static const _line1 = 'SHAPE MERGE';
   static const _line2 = '2048';
 
+  // Pre-built text widgets — only Transform wrappers change each frame
+  late final List<Widget?> _line1Texts;
+  late final List<Widget> _line2Texts;
+
   @override
   void initState() {
     super.initState();
@@ -354,6 +363,25 @@ class _FloatingTitleState extends State<_FloatingTitle>
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     )..repeat();
+
+    _line1Texts = List.generate(_line1.length, (i) {
+      final letter = _line1[i];
+      if (letter == ' ') return null;
+      final isMerge = i >= 6;
+      return Text(
+        letter,
+        style: isMerge
+            ? AppTheme.titleStyle(AppTheme.fontXL)
+                .copyWith(color: AppTheme.orangeTop)
+            : AppTheme.titleStyle(AppTheme.fontXL),
+      );
+    });
+
+    _line2Texts = List.generate(_line2.length, (i) => Text(
+      _line2[i],
+      style: AppTheme.titleStyle(AppTheme.fontXXL)
+          .copyWith(color: AppTheme.orangeTop),
+    ));
   }
 
   @override
@@ -375,20 +403,12 @@ class _FloatingTitleState extends State<_FloatingTitle>
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: List.generate(_line1.length, (i) {
+                if (_line1Texts[i] == null) return const SizedBox(width: 10);
                 final phase = _ctrl.value * 2 * math.pi - (i * 0.55);
                 final dy = math.sin(phase).clamp(0.0, 1.0) * -12;
-                final isMerge = i >= 6; // "MERGE" starts at index 6
-                final letter = _line1[i];
-                if (letter == ' ') return const SizedBox(width: 10);
                 return Transform.translate(
                   offset: Offset(0, dy),
-                  child: Text(
-                    letter,
-                    style: isMerge
-                        ? AppTheme.titleStyle(AppTheme.fontXL)
-                            .copyWith(color: AppTheme.orangeTop)
-                        : AppTheme.titleStyle(AppTheme.fontXL),
-                  ),
+                  child: _line1Texts[i],
                 );
               }),
             ),
@@ -401,11 +421,7 @@ class _FloatingTitleState extends State<_FloatingTitle>
                 final dy = math.sin(phase).clamp(0.0, 1.0) * -12;
                 return Transform.translate(
                   offset: Offset(0, dy),
-                  child: Text(
-                    _line2[i],
-                    style: AppTheme.titleStyle(AppTheme.fontXXL)
-                        .copyWith(color: AppTheme.orangeTop),
-                  ),
+                  child: _line2Texts[i],
                 );
               }),
             ),

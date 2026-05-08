@@ -4,11 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
-import 'package:shape_merge/providers/leaderboard_provider.dart';
-import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -48,36 +45,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final storage = await LocalStorageService.create();
     if (!mounted) return;
 
-    final notifier = ref.read(gameStateProvider.notifier);
-    notifier.setStorage(storage);
-    notifier.setRadarHighlightNotifier(ref.read(radarHighlightProvider.notifier));
-
-    // If signed in, load jokers from Firestore; otherwise from localStorage
-    final user = ref.read(authStateProvider).valueOrNull;
-    if (user != null) {
-      final firestoreService = ref.read(firestoreServiceProvider);
-      notifier.setSignedIn(user.uid, firestoreService);
-      final player = await ref.read(playerProvider.future);
-      notifier.loadSavedState(
-        bestScore: player?.bestScore ?? storage.bestScore,
-        jokers: player?.jokerInventory ?? storage.jokerInventory,
-      );
-    } else {
-      notifier.loadSavedState(
-        bestScore: storage.bestScore,
-        jokers: storage.jokerInventory,
-      );
-    }
-
-    // Check streak on every launch — delivers reward and updates state for popup
-    await ref.read(streakProvider.notifier).checkAndUpdate();
-    // Load or generate today's daily challenges
-    await ref.read(dailyChallengeProvider.notifier).checkRenewal();
-
-    await Future<void>.delayed(const Duration(seconds: 2));
+    // Run init work concurrently with the minimum splash animation
+    await Future.wait([
+      _initProviders(storage),
+      Future<void>.delayed(const Duration(milliseconds: 1500)),
+    ]);
     if (!mounted) return;
 
     context.go(AppRoutes.home);
+  }
+
+  Future<void> _initProviders(LocalStorageService storage) async {
+    final notifier = ref.read(gameStateProvider.notifier);
+    notifier.setStorage(storage);
+    notifier.setRadarHighlightNotifier(ref.read(radarHighlightProvider.notifier));
+    notifier.loadSavedState(
+      bestScore: storage.bestScore,
+      jokers: storage.jokerInventory,
+    );
+    await ref.read(streakProvider.notifier).checkAndUpdate();
+    await ref.read(dailyChallengeProvider.notifier).checkRenewal();
   }
 
   @override

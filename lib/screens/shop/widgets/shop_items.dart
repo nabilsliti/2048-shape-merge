@@ -86,58 +86,12 @@ class _InventoryCard extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// No-Ads icon: red circle with "AD" crossed out
-// ═══════════════════════════════════════════════════════════════
-class _NoAdsIcon extends StatelessWidget {
-  final double size;
-  const _NoAdsIcon({this.size = 22});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(width: size, height: size, child: CustomPaint(painter: _NoAdsIconPainter()));
-  }
-}
-
-class _NoAdsIconPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 1;
-
-    canvas.drawCircle(center, radius, Paint()
-      ..color = AppTheme.shopNoAdsRed
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5);
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: 'AD',
-        style: TextStyle(color: Colors.white, fontSize: size.width * 0.38, fontWeight: FontWeight.w900, letterSpacing: 0.5),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    textPainter.paint(canvas, Offset(center.dx - textPainter.width / 2, center.dy - textPainter.height / 2));
-
-    final offset = radius * 0.7;
-    canvas.drawLine(
-      Offset(center.dx - offset, center.dy + offset),
-      Offset(center.dx + offset, center.dy - offset),
-      Paint()..color = AppTheme.shopNoAdsRed..style = PaintingStyle.stroke..strokeWidth = 2.5..strokeCap = StrokeCap.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ═══════════════════════════════════════════════════════════════
 // Section header (title + animated divider, no card background)
 // ═══════════════════════════════════════════════════════════════
 class _SectionHeader extends StatefulWidget {
   final String title;
-  final Widget? leading;
   final Color gradStart, gradEnd;
-  const _SectionHeader({required this.title, this.leading, required this.gradStart, required this.gradEnd});
+  const _SectionHeader({required this.title, required this.gradStart, required this.gradEnd});
 
   @override
   State<_SectionHeader> createState() => _SectionHeaderState();
@@ -167,10 +121,6 @@ class _SectionHeaderState extends State<_SectionHeader> with SingleTickerProvide
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (widget.leading != null) ...[
-                    widget.leading!,
-                    const SizedBox(width: 8),
-                  ],
                   ShaderMask(
                     shaderCallback: (bounds) {
                       final offset = _shimmer.value * bounds.width * 2 - bounds.width * 0.5;
@@ -222,168 +172,534 @@ class _NoAdsCard extends StatefulWidget {
   State<_NoAdsCard> createState() => _NoAdsCardState();
 }
 
-class _NoAdsCardState extends State<_NoAdsCard> with TickerProviderStateMixin {
-  late final AnimationController _shimmer;
+class _NoAdsCardState extends State<_NoAdsCard> with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
-  late final AnimationController _stars;
 
   @override
   void initState() {
     super.initState();
-    _shimmer = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500))..repeat();
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
-    _stars = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000))..repeat();
   }
 
   @override
   void dispose() {
-    _shimmer.dispose();
     _pulse.dispose();
-    _stars.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return AnimatedBuilder(
-      animation: Listenable.merge([_shimmer, _pulse]),
-      builder: (context, child) {
-        final glowAlpha = 0.25 + _pulse.value * 0.2;
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            boxShadow: [
-              BoxShadow(color: AppTheme.gold.withValues(alpha: glowAlpha), blurRadius: 24, spreadRadius: 2),
-              BoxShadow(color: AppTheme.shopSectionPurple.withValues(alpha: glowAlpha * 0.5), blurRadius: 32, spreadRadius: -4),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            child: Stack(
-              children: [
-                // Background gradient
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppTheme.shopDarkCard1, AppTheme.shopDarkCard2, AppTheme.shopDarkCard3],
-                    ),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                    border: Border.all(width: 2, color: AppTheme.gold),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildShield(),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildContent()),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '10,99 €',
-                            style: GoogleFonts.nunito(
-                              fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w700, color: Colors.white38,
-                              decoration: TextDecoration.lineThrough,
-                              decorationColor: AppTheme.shopStrikeRed, decorationThickness: 2,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          _AnimatedPriceButton(price: widget.price, large: true, onTap: widget.onBuy),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Shimmer
-                Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _ShimmerPainter(_shimmer.value)))),
-                // Sparkle particles
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _stars,
-                      builder: (context, _) => CustomPaint(painter: _SparkleParticlesPainter(_stars.value)),
-                    ),
-                  ),
-                ),
-                // ACHAT UNIQUE badge
-                Positioned(
-                  top: 2,
-                  right: 2,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(colors: [AppTheme.gold, AppTheme.goldAntique]),
-                      borderRadius: BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusMedium)),
-                    ),
-                    child: Text(l10n.badgeOneTimePurchase, style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
-                  ),
-                ),
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _pulse,
+        child: _buildCardBody(l10n),
+        builder: (context, cardBody) {
+          final glowAlpha = 0.15 + _pulse.value * 0.1;
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              boxShadow: [
+                BoxShadow(color: AppTheme.gold.withValues(alpha: glowAlpha), blurRadius: 16, spreadRadius: 1),
+                BoxShadow(color: AppTheme.shopSectionPurple.withValues(alpha: glowAlpha * 0.3), blurRadius: 20, spreadRadius: -4),
               ],
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildShield() {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, child) {
-        final scale = 1.0 + _pulse.value * 0.08;
-        final glow = 0.3 + _pulse.value * 0.4;
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            width: 72,
-            height: 80,
-            decoration: BoxDecoration(
-              boxShadow: [BoxShadow(color: AppTheme.gold.withValues(alpha: glow), blurRadius: 16)],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              child: cardBody!,
             ),
-            child: CustomPaint(painter: _ShieldNoPainter()),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildContent() {
-    final l10n = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+  Widget _buildCardBody(AppLocalizations l10n) {
+    return Stack(
       children: [
-        const SizedBox(height: 2),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [AppTheme.gold, AppTheme.goldShimmer, AppTheme.gold],
-          ).createShader(bounds),
-          child: Text(l10n.noAdsTitle, style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w900, color: Colors.white)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppTheme.shopDarkCard1, AppTheme.shopDarkCard2, AppTheme.shopDarkCard3],
+            ),
+            borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+            border: Border.all(width: 1.5, color: AppTheme.gold.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Top: icon + title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Text('PUB', style: GoogleFonts.fredoka(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.7))),
+                      const Text('🚫', style: TextStyle(fontSize: 22)),
+                    ],
+                  ),
+                  const SizedBox(width: 6),
+                  Text(l10n.noAdsTitle, style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w800, color: Colors.white)),
+                ],
+              ),
+              Text(l10n.noAdsDescription, style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w600, color: Colors.white54)),
+              const SizedBox(height: 10),
+              // Middle: joker orbs (same style as packs)
+              _buildNoAdsJokers(),
+              const SizedBox(height: 10),
+              // Bottom: price button
+              _AnimatedPriceButton(price: widget.price, large: false, onTap: widget.onBuy),
+            ],
+          ),
         ),
-        const SizedBox(height: 5),
-        Text(
-          l10n.noAdsDescription,
-          style: GoogleFonts.nunito(fontSize: AppTheme.fontTiny, fontWeight: FontWeight.w700, color: Colors.white54, height: 1.3),
+        // ACHAT UNIQUE badge
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [AppTheme.gold, AppTheme.goldAntique]),
+              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(AppTheme.radiusTiny), topRight: Radius.circular(AppTheme.radiusTiny)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
+            ),
+            child: Text(l10n.badgeOneTimePurchase, style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w800, color: Colors.white)),
+          ),
         ),
-        const SizedBox(height: 6),
-        Row(
+      ],
+    );
+  }
+
+  Widget _buildNoAdsJokers() {
+    Widget orb(JokerType type, int count, {double size = 18}) {
+      final color = JokerUI.glowColor(type);
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                center: const Alignment(-0.3, -0.3),
+                colors: [color.withValues(alpha: 0.15), AppTheme.cardBg, AppTheme.jokerOrbBgDark],
+              ),
+              border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
+            ),
+            child: Center(child: JokerUI.icon(type, size: size)),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            AppLocalizations.of(context)!.quantityFormat(count),
+            style: GoogleFonts.fredoka(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.gold),
+          ),
+        ],
+      );
+    }
+
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          orb(JokerType.bomb, 10),
+          const SizedBox(width: 6),
+          orb(JokerType.wildcard, 10),
+          const SizedBox(width: 6),
+          orb(JokerType.reducer, 10, size: 16),
+          const SizedBox(width: 6),
+          // ── séparateur premium ──
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 1, height: 14, color: AppTheme.gold.withValues(alpha: 0.5)),
+              const SizedBox(height: 2),
+              Text('★', style: TextStyle(fontSize: AppTheme.fontMicro, color: AppTheme.gold.withValues(alpha: 0.8))),
+              const SizedBox(height: 2),
+              Container(width: 1, height: 14, color: AppTheme.gold.withValues(alpha: 0.5)),
+            ],
+          ),
+          const SizedBox(width: 6),
+          orb(JokerType.radar, 3, size: 16),
+          const SizedBox(width: 6),
+          orb(JokerType.evolution, 2, size: 16),
+          const SizedBox(width: 6),
+          orb(JokerType.megaBomb, 2, size: 16),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMOJI PACK card — holographic card (same style as JokerPackCard)
+// ═══════════════════════════════════════════════════════════════
+class _EmojiPackCard extends StatefulWidget {
+  final String price;
+  final VoidCallback? onBuy;
+  const _EmojiPackCard({required this.price, this.onBuy});
+
+  @override
+  State<_EmojiPackCard> createState() => _EmojiPackCardState();
+}
+
+class _EmojiPackCardState extends State<_EmojiPackCard> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  static const _gradStart = Color(0xFFF48FB1);
+  static const _gradEnd = Color(0xFFCE93D8);
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _pulse,
+        child: _buildCardBody(),
+        builder: (context, cardBody) {
+          final glowAlpha = 0.15 + _pulse.value * 0.1;
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              boxShadow: [
+                BoxShadow(color: _gradStart.withValues(alpha: glowAlpha), blurRadius: 16, spreadRadius: 1),
+                BoxShadow(color: _gradEnd.withValues(alpha: glowAlpha * 0.3), blurRadius: 20, spreadRadius: -4),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              child: cardBody!,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCardBody() {
+    final l10n = AppLocalizations.of(context)!;
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0x66F48FB1), // gradStart @ 0.4
+                AppTheme.sectionBg,
+                Color(0x59CE93D8), // gradEnd @ 0.35
+              ],
+            ),
+            borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+            border: Border.all(width: 1.5, color: _gradStart.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Top: emoji + title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('✨', style: TextStyle(fontSize: 22)),
+                  const SizedBox(width: 8),
+                  Text(l10n.packEmojiPackName.toUpperCase(), style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w800, color: Colors.white)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(l10n.emojiPackDesc, style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w600, color: Colors.white54)),
+              const SizedBox(height: 10),
+              // Middle: emoji orbs preview
+              _buildEmojiOrbs(),
+              const SizedBox(height: 10),
+              // Bottom: price button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _AnimatedPriceButton(price: widget.price, large: false, onTap: widget.onBuy),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmojiOrbs() {
+    Widget emojiOrb(String asset, Color color) {
+      return SvgPicture.asset(asset, width: 24, height: 24, colorFilter: ColorFilter.mode(color, BlendMode.srcIn));
+    }
+
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          emojiOrb('assets/shapes/emoji/heart.svg', const Color(0xFFFF1744)),
+          const SizedBox(width: 6),
+          emojiOrb('assets/shapes/emoji/bolt.svg', const Color(0xFFFFEA00)),
+          const SizedBox(width: 6),
+          emojiOrb('assets/shapes/emoji/moon.svg', const Color(0xFFE040FB)),
+          const SizedBox(width: 6),
+          emojiOrb('assets/shapes/emoji/flame.svg', const Color(0xFFFF6D00)),
+          const SizedBox(width: 6),
+          emojiOrb('assets/shapes/emoji/clover.svg', const Color(0xFF00E676)),
+          const SizedBox(width: 6),
+          emojiOrb('assets/shapes/emoji/cloud.svg', const Color(0xFF40C4FF)),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Free Joker Slot — compact row for Watch Ad
+// ═══════════════════════════════════════════════════════════════
+class _FreeJokerSlot extends StatefulWidget {
+  final VoidCallback onTap;
+  final String label;
+  const _FreeJokerSlot({required this.onTap, required this.label});
+
+  @override
+  State<_FreeJokerSlot> createState() => _FreeJokerSlotState();
+}
+
+class _FreeJokerSlotState extends State<_FreeJokerSlot> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() { _pulse.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppTheme.orangeTop.withValues(alpha: 0.3), AppTheme.sectionBg],
+          ),
+          borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+          border: Border.all(color: AppTheme.orangeTop.withValues(alpha: 0.4), width: 1.5),
+        ),
+        child: Row(
           children: [
-            JokerUI.icon(JokerType.bomb, size: 20),
-            const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.bomb))),
-            const SizedBox(width: 10),
-            JokerUI.icon(JokerType.wildcard, size: 20),
-            const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.wildcard))),
-            const SizedBox(width: 10),
-            JokerUI.icon(JokerType.reducer, size: 16),
-            const SizedBox(width: 3),
-            Text('×10', style: GoogleFonts.fredoka(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w800, color: JokerUI.color(JokerType.reducer))),
+            Image.asset('assets/images/pub.webp', width: 40, height: 40),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.watchAd.toUpperCase(),
+                      style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w800, color: Colors.white)),
+                  Text(widget.label,
+                      style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w600, color: Colors.white54)),
+                ],
+              ),
+            ),
+            _AdGratuitButton(pulse: _pulse),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Hero Pack Card — dominant CTA for the main product (Pack Rescue)
+// ═══════════════════════════════════════════════════════════════
+class _HeroPackCard extends StatefulWidget {
+  final String emoji, name, price;
+  final String? originalPrice, badge, description;
+  final Widget contentsWidget;
+  final Color gradStart, gradEnd;
+  final VoidCallback? onBuy;
+  const _HeroPackCard({
+    required this.emoji,
+    required this.name,
+    required this.contentsWidget,
+    required this.price,
+    this.originalPrice,
+    this.badge,
+    this.description,
+    required this.gradStart,
+    required this.gradEnd,
+    this.onBuy,
+  });
+
+  @override
+  State<_HeroPackCard> createState() => _HeroPackCardState();
+}
+
+class _HeroPackCardState extends State<_HeroPackCard> with TickerProviderStateMixin {
+  late final AnimationController _shimmer;
+  late final AnimationController _pulse;
+  late final AnimationController _badgePulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmer = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500))..repeat();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
+    _badgePulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _shimmer.dispose();
+    _pulse.dispose();
+    _badgePulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_shimmer, _pulse]),
+        child: _buildCardBody(),
+        builder: (context, cardBody) {
+          final glowAlpha = 0.2 + _pulse.value * 0.12;
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              boxShadow: [
+                BoxShadow(color: widget.gradStart.withValues(alpha: glowAlpha), blurRadius: 20, spreadRadius: 2),
+                BoxShadow(color: widget.gradEnd.withValues(alpha: glowAlpha * 0.4), blurRadius: 24, spreadRadius: -2),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              child: cardBody!,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCardBody() {
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                widget.gradStart.withValues(alpha: 0.45),
+                AppTheme.sectionBg,
+                widget.gradEnd.withValues(alpha: 0.4),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+            border: Border.all(width: 1.5, color: widget.gradStart.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Top: emoji + title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(widget.emoji, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 8),
+                  Text(widget.name, style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w800, color: Colors.white)),
+                ],
+              ),
+              if (widget.description != null) ...[
+                const SizedBox(height: 2),
+                Text(widget.description!, style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w600, color: Colors.white54)),
+              ],
+              const SizedBox(height: 10),
+              // Middle: joker orbs
+              widget.contentsWidget,
+              const SizedBox(height: 10),
+              // Bottom: price button
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.originalPrice != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        widget.originalPrice!,
+                        style: GoogleFonts.fredoka(
+                          fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w700, color: Colors.white38,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: AppTheme.shopStrikeRed, decorationThickness: 2,
+                        ),
+                      ),
+                    ),
+                  _AnimatedPriceButton(price: widget.price, large: false, onTap: widget.onBuy),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // Badge "MEILLEUR CHOIX" (animated, red)
+        if (widget.badge != null)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: AnimatedBuilder(
+              animation: _badgePulse,
+              builder: (context, child) {
+                final scale = 1.0 + _badgePulse.value * 0.12;
+                final glowAlpha = 0.4 + _badgePulse.value * 0.4;
+                return Transform.scale(
+                  scale: scale,
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [AppTheme.deathBadgeTop, AppTheme.shopNoAdsRed]),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(AppTheme.radiusTiny),
+                        topRight: Radius.circular(AppTheme.radiusTiny),
+                      ),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(color: AppTheme.shopNoAdsRed.withValues(alpha: glowAlpha), blurRadius: 12, spreadRadius: 1),
+                      ],
+                    ),
+                    child: child,
+                  ),
+                );
+              },
+              child: Text(widget.badge!,
+                  style: GoogleFonts.fredoka(fontSize: AppTheme.fontPico, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
+            ),
+          ),
       ],
     );
   }

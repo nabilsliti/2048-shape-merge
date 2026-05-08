@@ -371,10 +371,21 @@ class _JokerInfoPopup extends StatelessWidget {
                 child: Center(child: JokerUI.icon(type, size: 28)),
               ),
               const SizedBox(height: 12),
-              // Name
-              Text(
-                name,
-                style: AppTheme.titleStyle(AppTheme.fontBody).copyWith(color: color),
+              // Name with info icon
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: AppTheme.fontSmall,
+                    color: AppTheme.orbCyan.withValues(alpha: 0.9),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    name,
+                    style: AppTheme.titleStyle(AppTheme.fontBody).copyWith(color: color),
+                  ),
+                ],
               ),
               if (type.isPremium) ...[
                 const SizedBox(height: 4),
@@ -385,7 +396,7 @@ class _JokerInfoPopup extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                     border: Border.all(color: AppTheme.gold.withValues(alpha: 0.4)),
                   ),
-                  child: Text('★ PREMIUM', style: AppTheme.titleStyle(AppTheme.fontMicro).copyWith(color: AppTheme.gold)),
+                  child: Text(AppLocalizations.of(context)!.premiumStarLabel, style: AppTheme.titleStyle(AppTheme.fontMicro).copyWith(color: AppTheme.gold)),
                 ),
               ],
               const SizedBox(height: 12),

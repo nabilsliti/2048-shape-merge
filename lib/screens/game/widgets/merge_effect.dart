@@ -100,6 +100,9 @@ class _MergeParticlePainter extends CustomPainter {
     required this.ringSize,
   });
 
+  static final _fillPaint = Paint();
+  static final _strokePaint = Paint()..style = PaintingStyle.stroke;
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
@@ -108,32 +111,28 @@ class _MergeParticlePainter extends CustomPainter {
     // Inner flash (white core)
     if (progress < 0.3) {
       final flashOpacity = (1.0 - progress / 0.3).clamp(0.0, 1.0);
-      final flashPaint = Paint()
+      _fillPaint
         ..color = Colors.white.withValues(alpha: flashOpacity * 0.9)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-      canvas.drawCircle(center, 15 * (1 + progress * 2), flashPaint);
+      canvas.drawCircle(center, 15 * (1 + progress * 2), _fillPaint);
+      _fillPaint.maskFilter = null;
     }
 
     // Expanding ring
-    final ringPaint = Paint()
+    _strokePaint
       ..color = color.withValues(alpha: opacity * 0.6)
-      ..style = PaintingStyle.stroke
       ..strokeWidth = 3 * (1 - progress)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 + progress * 8);
-    canvas.drawCircle(center, ringSize / 2, ringPaint);
+    canvas.drawCircle(center, ringSize / 2, _strokePaint);
+    _strokePaint.maskFilter = null;
 
     // Second ring (slower, wider)
     if (progress > 0.1) {
       final ring2Progress = ((progress - 0.1) / 0.9).clamp(0.0, 1.0);
-      final ring2Paint = Paint()
+      _strokePaint
         ..color = color.withValues(alpha: (1 - ring2Progress) * 0.3)
-        ..style = PaintingStyle.stroke
         ..strokeWidth = 2 * (1 - ring2Progress);
-      canvas.drawCircle(
-        center,
-        ringSize / 2 + ring2Progress * 20,
-        ring2Paint,
-      );
+      canvas.drawCircle(center, ringSize / 2 + ring2Progress * 20, _strokePaint);
     }
 
     // Particles flying outward
@@ -143,17 +142,15 @@ class _MergeParticlePainter extends CustomPainter {
       final py = center.dy + sin(p.angle) * dist;
       final pSize = p.size * (1 - progress * 0.5);
 
-      final pPaint = Paint()
+      _fillPaint
         ..color = color.withValues(alpha: opacity * 0.8)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, pSize * 0.5);
-      canvas.drawCircle(Offset(px, py), pSize, pPaint);
+      canvas.drawCircle(Offset(px, py), pSize, _fillPaint);
+      _fillPaint.maskFilter = null;
 
       // Bright core
-      canvas.drawCircle(
-        Offset(px, py),
-        pSize * 0.4,
-        Paint()..color = Colors.white.withValues(alpha: opacity * 0.6),
-      );
+      _fillPaint.color = Colors.white.withValues(alpha: opacity * 0.6);
+      canvas.drawCircle(Offset(px, py), pSize * 0.4, _fillPaint);
     }
   }
 

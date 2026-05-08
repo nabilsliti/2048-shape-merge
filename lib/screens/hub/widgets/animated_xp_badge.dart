@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
@@ -156,7 +157,7 @@ class _AnimatedXpBadgeState extends State<AnimatedXpBadge>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text('⚡', style: TextStyle(fontSize: AppTheme.fontRegular, height: 1)),
+            const Icon(RetentionUI.xpIcon, size: AppTheme.fontRegular, color: RetentionUI.xpColor),
             const SizedBox(width: 6),
             Column(
               mainAxisSize: MainAxisSize.min,
@@ -241,7 +242,7 @@ class _AnimatedXpBadgeState extends State<AnimatedXpBadge>
             child: Opacity(
               opacity: plusOpacity,
               child: Text(
-                '+$_gainedXP XP',
+                AppLocalizations.of(context)!.xpGained(_gainedXP),
                 style: GoogleFonts.fredoka(
                   fontSize: AppTheme.fontBody,
                   fontWeight: FontWeight.w900,

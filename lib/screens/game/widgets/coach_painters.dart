@@ -9,13 +9,26 @@ class _SpotlightPainter extends CustomPainter {
 
   _SpotlightPainter({this.spotlightRect, this.passThrough = false, this.pulse = 0});
 
+  static final _dimPaint = Paint();
+  static final _outerGlowPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 12;
+  static final _innerGlowPaint = Paint()
+    ..style = PaintingStyle.fill;
+  static final _borderPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+  static final _outerBorderPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+
   @override
   void paint(Canvas canvas, Size size) {
     final dimColor = Colors.black.withValues(alpha: passThrough ? 0.45 : 0.70);
     final fullRect = Offset.zero & size;
 
     if (spotlightRect == null) {
-      canvas.drawRect(fullRect, Paint()..color = dimColor);
+      canvas.drawRect(fullRect, _dimPaint..color = dimColor);
       return;
     }
 
@@ -29,45 +42,38 @@ class _SpotlightPainter extends CustomPainter {
       ..addRect(fullRect)
       ..addRRect(rrect);
     path.fillType = PathFillType.evenOdd;
-    canvas.drawPath(path, Paint()..color = dimColor);
+    canvas.drawPath(path, _dimPaint..color = dimColor);
 
     // Pulsing outer glow — cyan/teal neon aura
     final glowAlpha = 0.08 + pulse * 0.12; // 0.08 → 0.20
     final glowSpread = 10.0 + pulse * 6.0; // 10 → 16
     canvas.drawRRect(
       rrect.inflate(glowSpread),
-      Paint()
+      _outerGlowPaint
         ..color = AppTheme.orbCyan.withValues(alpha: glowAlpha)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 12
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowSpread),
     );
 
     // Inner glow — subtle cyan fill inside
     canvas.drawRRect(
       rrect,
-      Paint()
+      _innerGlowPaint
         ..color = AppTheme.orbCyan.withValues(alpha: 0.06 + pulse * 0.04)
-        ..style = PaintingStyle.fill
         ..maskFilter = const MaskFilter.blur(BlurStyle.inner, 16),
     );
 
     // Primary border — bright cyan
     canvas.drawRRect(
       rrect,
-      Paint()
-        ..color = AppTheme.orbCyan.withValues(alpha: 0.7 + pulse * 0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+      _borderPaint
+        ..color = AppTheme.orbCyan.withValues(alpha: 0.7 + pulse * 0.3),
     );
 
     // Secondary outer border — gold highlight
     canvas.drawRRect(
       rrect.inflate(3),
-      Paint()
+      _outerBorderPaint
         ..color = AppTheme.gold.withValues(alpha: 0.15 + pulse * 0.15)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
     );
   }
@@ -104,6 +110,18 @@ class _BubblePainter extends CustomPainter {
     required this.arrowOffset,
     required this.arrowSize,
   });
+
+  static final _fillPaint = Paint()..style = PaintingStyle.fill;
+  static final _highlightPaint = Paint();
+  static final _cyanBorderPaint = Paint()
+    ..color = AppTheme.orbCyan.withValues(alpha: 0.5)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  static final _glowBorderPaint = Paint()
+    ..color = AppTheme.gold.withValues(alpha: 0.12)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 4
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -171,9 +189,7 @@ class _BubblePainter extends CustomPainter {
     );
     canvas.drawPath(
       path,
-      Paint()
-        ..shader = gradient.createShader(bodyRect)
-        ..style = PaintingStyle.fill,
+      _fillPaint..shader = gradient.createShader(bodyRect),
     );
 
     // Inner top-edge highlight (subtle glass reflection)
@@ -181,7 +197,7 @@ class _BubblePainter extends CustomPainter {
     canvas.clipPath(path);
     canvas.drawRect(
       Rect.fromLTWH(bodyRect.left, bodyRect.top, bodyRect.width, bodyRect.height * 0.35),
-      Paint()
+      _highlightPaint
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -194,23 +210,10 @@ class _BubblePainter extends CustomPainter {
     canvas.restore();
 
     // Cyan neon border
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = AppTheme.orbCyan.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
+    canvas.drawPath(path, _cyanBorderPaint);
 
     // Subtle gold outer glow on border
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = AppTheme.gold.withValues(alpha: 0.12)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
+    canvas.drawPath(path, _glowBorderPaint);
   }
 
   @override

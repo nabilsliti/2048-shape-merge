@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
@@ -14,7 +13,6 @@ import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/ads_provider.dart';
-import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
 import 'package:vibration/vibration.dart';
 
@@ -130,16 +128,10 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
       return;
     }
     if (!mounted) return;
-    // Give bonus jokers (x2 = extra amount) and claim immediately
-    final reward = widget.result.reward;
-    if (reward != null) {
-      final (jType, amount) = reward;
-      ref.read(gameStateProvider.notifier).addJokers(jType, amount);
-    }
-    ref.read(streakProvider.notifier).claimStreakReward();
+    // Claim with x2 multiplier — claimStreakReward handles the doubling
+    ref.read(streakProvider.notifier).claimStreakReward(doubled: true);
     adsService.loadRewardedAd();
     _isX2 = true;
-    // Play animation (reward already claimed above)
     _playCollectAnimation();
   }
 
@@ -472,7 +464,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.check_circle,
+                                  child: const Icon(Icons.check_circle_rounded,
                                       color: AppTheme.goalColor, size: 16),
                                 ),
                               ),
@@ -600,10 +592,23 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
     required AppLocalizations l10n,
   }) {
     final dayStreak = weekStart + index;
-    final (jType, amount) = PlayerStreak.rewardForStreak(dayStreak);
+    final reward = PlayerStreak.rewardForStreak(dayStreak);
     final isToday = index == todaySlot;
     final isPast = index < todaySlot;
     final isCollectedToday = isToday && _collected;
+
+    final Widget rewardIcon;
+    final String rewardLabel;
+    switch (reward) {
+      case StreakJokerReward(:final type, :final amount):
+        rewardIcon = JokerUI.icon(type, size: 44);
+        rewardLabel = l10n.rewardPlusN(amount);
+      case StreakXpReward(:final xp):
+        rewardIcon = const Icon(RetentionUI.xpIcon, color: RetentionUI.xpColor, size: 44);
+        rewardLabel = l10n.xpGained(xp);
+    }
+
+    final isFuture = !isToday && !isPast;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -636,7 +641,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
               ? AppTheme.goalColor
               : isPast
                   ? AppTheme.goalColor.withValues(alpha: 0.2)
-                  : AppTheme.panelBorder.withValues(alpha: 0.25),
+                  : AppTheme.panelBorder.withValues(alpha: 0.15),
           width: isToday ? 2 : 1,
         ),
         boxShadow: isToday
@@ -661,7 +666,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                   ? AppTheme.goalColor
                   : isPast
                       ? AppTheme.muted.withValues(alpha: 0.5)
-                      : AppTheme.muted,
+                      : AppTheme.muted.withValues(alpha: 0.4),
               letterSpacing: 0.5,
             ),
           ),
@@ -669,42 +674,46 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
           SizedBox(
             width: 50,
             height: 50,
-            child: Stack(
-              children: [
-                Center(
-                  child: (isPast || isCollectedToday)
-                      ? ColorFiltered(
-                          colorFilter: const ColorFilter.mode(
-                              Colors.white24, BlendMode.modulate),
-                          child: JokerUI.icon(jType, size: 44),
-                        )
-                      : JokerUI.icon(jType, size: 44),
-                ),
-                if (isPast || isCollectedToday)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.panelBg,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.goalColor.withValues(alpha: 0.5),
-                            blurRadius: 4,
-                          ),
-                        ],
+            child: isFuture
+                ? const Center(
+                    child: Icon(Icons.lock_rounded, color: Colors.white24, size: 28),
+                  )
+                : Stack(
+                    children: [
+                      Center(
+                        child: (isPast || isCollectedToday)
+                            ? ColorFiltered(
+                                colorFilter: const ColorFilter.mode(
+                                    Colors.white24, BlendMode.modulate),
+                                child: rewardIcon,
+                              )
+                            : rewardIcon,
                       ),
-                      child: const Icon(Icons.check_circle,
-                          color: AppTheme.goalColor, size: 16),
-                    ),
+                      if (isPast || isCollectedToday)
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.panelBg,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.goalColor.withValues(alpha: 0.5),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.check_circle_rounded,
+                                color: AppTheme.goalColor, size: 16),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           const SizedBox(height: 2),
           Text(
-            '+$amount',
+            isFuture ? '???' : rewardLabel,
             style: GoogleFonts.fredoka(
               fontSize: AppTheme.fontSmall,
               fontWeight: FontWeight.w700,
@@ -784,7 +793,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                 ),
               ),
               Text(
-                '\u2605 BONUS \u2605',
+                AppLocalizations.of(context)!.bonusStars,
                 style: GoogleFonts.fredoka(
                   fontSize: AppTheme.fontPico,
                   fontWeight: FontWeight.w600,
@@ -822,7 +831,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                   ),
                 ],
               ),
-              child: const Icon(Icons.check_circle,
+              child: const Icon(Icons.check_circle_rounded,
                   color: AppTheme.goalColor, size: 22),
             ),
           ],
@@ -866,7 +875,29 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
   // COLLECT BUTTON
   // ────────────────────────────────────────────────────────────────
   Widget _buildCollectButton(
-      AppLocalizations l10n, (JokerType, int) reward) {
+      AppLocalizations l10n, StreakReward reward) {
+    final canDouble = reward.canDoubleWithAd;
+
+    if (!canDouble) {
+      // Premium reward — single collect button only, no x2
+      return SizedBox(
+        height: 56,
+        width: double.infinity,
+        child: Button3D.green(
+          onPressed: _onCollect,
+          borderRadius: 14,
+          expand: true,
+          child: Text(
+            l10n.collectReward,
+            style: GoogleFonts.fredoka(
+              fontSize: AppTheme.fontBody,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Row(
       children: [
         // x2 button (ad) — first position
@@ -885,7 +916,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                   Image.asset('assets/images/pub.webp', width: 40, height: 40),
                   const SizedBox(width: 6),
                   Text(
-                    '${l10n.collectReward} x2',
+                    '${l10n.collectReward}${l10n.rewardX2}',
                     style: GoogleFonts.fredoka(
                       fontSize: AppTheme.fontBody,
                       fontWeight: FontWeight.w700,
@@ -908,14 +939,14 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
           flex: 1,
           child: SizedBox(
             height: 56,
-            child: Button3D.red(
+            child: Button3D.gold(
               onPressed: _onCollect,
               borderRadius: 14,
               expand: true,
               child: Text(
                 l10n.collectReward,
                 style: GoogleFonts.fredoka(
-                  fontSize: AppTheme.fontSmall,
+                  fontSize: AppTheme.fontBody,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -962,11 +993,25 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
   // ────────────────────────────────────────────────────────────────
   // COLLECT ANIMATION
   // ────────────────────────────────────────────────────────────────
-  Widget _buildCollectAnimation((JokerType, int) reward) {
-    final (jType, baseAmount) = reward;
-    final amount = _isX2 ? baseAmount * 2 : baseAmount;
-    final color = JokerUI.color(jType);
-    final icon = JokerUI.icon(jType, size: 28);
+  Widget _buildCollectAnimation(StreakReward reward) {
+    final Color color;
+    final Widget icon;
+    final String label;
+
+    final l10n = AppLocalizations.of(context)!;
+
+    switch (reward) {
+      case StreakJokerReward(:final type, :final amount):
+        color = JokerUI.color(type);
+        icon = JokerUI.icon(type, size: 28);
+        final displayAmount = _isX2 ? amount * 2 : amount;
+        label = l10n.rewardPlusN(displayAmount);
+      case StreakXpReward(:final xp):
+        color = RetentionUI.xpColor;
+        icon = const Icon(RetentionUI.xpIcon, color: RetentionUI.xpColor, size: 28);
+        final displayXp = _isX2 ? xp * 2 : xp;
+        label = l10n.xpGained(displayXp);
+    }
 
     return SizedBox(
       height: 56,
@@ -1053,7 +1098,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '+$amount',
+                          label,
                           style: GoogleFonts.fredoka(
                             fontSize: AppTheme.fontH3,
                             fontWeight: FontWeight.w900,

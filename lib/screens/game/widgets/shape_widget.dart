@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/constants/shape_pack.dart';
 import 'package:shape_merge/core/constants/shape_types.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
@@ -12,6 +14,7 @@ class ShapeWidget extends StatefulWidget {
   final bool isRadarHighlighted;
   final int radarGroupIndex;
   final bool isMergeResult;
+  final ShapePack shapePack;
 
   const ShapeWidget({
     super.key,
@@ -21,6 +24,7 @@ class ShapeWidget extends StatefulWidget {
     this.isRadarHighlighted = false,
     this.radarGroupIndex = -1,
     this.isMergeResult = false,
+    this.shapePack = ShapePack.classic,
   });
 
   @override
@@ -99,12 +103,17 @@ class _ShapeWidgetState extends State<ShapeWidget>
             ? -8.0
             : (eT >= 1.0 ? sin(_floatController.value * pi) * 3.0 : 0.0);
 
+        final scaled = Transform.scale(
+            scale: scale * entranceScale,
+            child: child,
+          );
+        final withOpacity = entranceOpacity < 1.0
+            ? Opacity(opacity: entranceOpacity, child: scaled)
+            : scaled;
+
         return Transform.translate(
           offset: Offset(0, floatOffset),
-          child: Transform.scale(
-            scale: scale * entranceScale,
-            child: Opacity(opacity: entranceOpacity, child: child),
-          ),
+          child: withOpacity,
         );
       },
       child: SizedBox(
@@ -133,30 +142,114 @@ class _ShapeWidgetState extends State<ShapeWidget>
               ),
             ),
             // Shape itself
-            CustomPaint(
-              size: Size(size, size),
-              painter: _ShapePainter(
-                shape: widget.shape,
-                isDragging: widget.isDragging,
-                isHighlighted: widget.isHighlighted,
-                isRadarHighlighted: widget.isRadarHighlighted,
-                radarGroupIndex: widget.radarGroupIndex,
-              ),
-              child: Center(
-                child: Text(
-                  '${widget.shape.value}',
-                  style: AppTheme.titleStyle(
-                    size * _fontScale(widget.shape.value),
-                  ).copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+            _buildShapeBody(size),
           ],
         ),
       ),
     ),
+    );
+  }
+
+  Widget _buildShapeBody(double size) {
+    final svgAsset = ShapePackAssets.svgAsset(widget.shapePack, widget.shape.type);
+    if (svgAsset != null) {
+      return _buildSvgShape(size, svgAsset);
+    }
+    // Classic: procedural Canvas rendering
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _ShapePainter(
+        shape: widget.shape,
+        isDragging: widget.isDragging,
+        isHighlighted: widget.isHighlighted,
+        isRadarHighlighted: widget.isRadarHighlighted,
+        radarGroupIndex: widget.radarGroupIndex,
+      ),
+      child: Center(
+        child: Text(
+          '${widget.shape.value}',
+          style: AppTheme.titleStyle(
+            size * _fontScale(widget.shape.value),
+          ).copyWith(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSvgShape(double size, String svgAsset) {
+    final color = widget.shape.isWildcard ? AppTheme.blueTop : widget.shape.color;
+    final isDragging = widget.isDragging;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        children: [
+          // Glow behind the SVG
+          Center(
+            child: Container(
+              width: size * 0.85,
+              height: size * 0.85,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: isDragging ? 0.5 : 0.3),
+                    blurRadius: size * 0.3,
+                    spreadRadius: size * 0.05,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // SVG shape, tinted with level color
+          Center(
+            child: SizedBox(
+              width: size * 0.78,
+              height: size * 0.78,
+              child: widget.shape.isWildcard
+                  ? ShaderMask(
+                      shaderCallback: (bounds) => const SweepGradient(
+                        colors: [
+                          AppTheme.blueTop,
+                          AppTheme.greenTop,
+                          AppTheme.orangeTop,
+                          AppTheme.redTop,
+                          AppTheme.purpleTop,
+                          AppTheme.blueTop,
+                        ],
+                      ).createShader(bounds),
+                      blendMode: BlendMode.srcIn,
+                      child: SvgPicture.asset(svgAsset),
+                    )
+                  : SvgPicture.asset(
+                      svgAsset,
+                      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                    ),
+            ),
+          ),
+          // Highlight/radar ring overlay
+          if (widget.isHighlighted || widget.isRadarHighlighted)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _HighlightRingPainter(
+                  isHighlighted: widget.isHighlighted,
+                  isRadarHighlighted: widget.isRadarHighlighted,
+                  radarGroupIndex: widget.radarGroupIndex,
+                ),
+              ),
+            ),
+          // Level number
+          Center(
+            child: Text(
+              '${widget.shape.value}',
+              style: AppTheme.titleStyle(
+                size * _fontScale(widget.shape.value),
+              ).copyWith(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -374,6 +467,60 @@ class _ShapePainter extends CustomPainter {
       oldDelegate.isDragging != isDragging ||
       oldDelegate.isRadarHighlighted != isRadarHighlighted ||
       oldDelegate.radarGroupIndex != radarGroupIndex;
+}
+
+// ─── Highlight ring painter (reused for SVG shapes) ──────────────────
+
+class _HighlightRingPainter extends CustomPainter {
+  final bool isHighlighted;
+  final bool isRadarHighlighted;
+  final int radarGroupIndex;
+
+  static const _radarGroupColors = [
+    ...AppTheme.radarHighlightColors,
+    AppTheme.greenTop,
+    AppTheme.radarExtraBlue,
+  ];
+
+  _HighlightRingPainter({
+    required this.isHighlighted,
+    required this.isRadarHighlighted,
+    this.radarGroupIndex = -1,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2;
+
+    if (isHighlighted) {
+      _drawRing(canvas, center, radius, Colors.white);
+    }
+    if (isRadarHighlighted) {
+      final color = radarGroupIndex >= 0
+          ? _radarGroupColors[radarGroupIndex % _radarGroupColors.length]
+          : AppTheme.radarColor;
+      _drawRing(canvas, center, radius, color);
+    }
+  }
+
+  void _drawRing(Canvas canvas, Offset center, double radius, Color color) {
+    final ringPaint = Paint()
+      ..color = color.withValues(alpha: 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+    canvas.drawCircle(center, radius + 5, ringPaint);
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(center, radius + 5, glowPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HighlightRingPainter old) =>
+      old.isHighlighted != isHighlighted ||
+      old.isRadarHighlighted != isRadarHighlighted ||
+      old.radarGroupIndex != radarGroupIndex;
 }
 
 // ─── Spawn entrance effect ───────────────────────────────────────────

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
 import 'package:shape_merge/core/widgets/joker_choice_dialog.dart';
 import 'package:shape_merge/providers/ads_provider.dart';
@@ -134,7 +135,7 @@ class _TopHud extends ConsumerWidget {
     final topPad = MediaQuery.of(context).padding.top;
 
     return Padding(
-      padding: EdgeInsets.only(top: topPad + 4, left: 10, right: 10),
+      padding: EdgeInsets.only(top: topPad + 4, left: 24, right: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -142,15 +143,14 @@ class _TopHud extends ConsumerWidget {
           Row(
             children: [
               _HudChip(
-                icon: '⭐',
+                icon: const Icon(RetentionUI.levelIcon, size: 14, color: RetentionUI.levelColor),
                 label: l10n.levelShortLabel,
                 value: '$level',
               ),
               const Spacer(),
-              _HudChip(
-                icon: '⚡',
-                label: 'XP',
-                value: '$currentXP/$xpNeeded',
+              _AnimatedXpChip(
+                currentXP: currentXP,
+                xpNeeded: xpNeeded,
               ),
             ],
           ),
@@ -224,7 +224,7 @@ class _HudChip extends StatelessWidget {
     required this.value,
   });
 
-  final String icon;
+  final Widget icon;
   final String label;
   final String value;
 
@@ -243,7 +243,7 @@ class _HudChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 14, height: 1)),
+          icon,
           const SizedBox(width: 5),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -275,6 +275,202 @@ class _HudChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Animated XP chip — same visual as _HudChip + bounce, rolling
+// counter, and floating "+N XP" label on XP gain.
+// ═══════════════════════════════════════════════════════════════
+class _AnimatedXpChip extends StatefulWidget {
+  const _AnimatedXpChip({required this.currentXP, required this.xpNeeded});
+
+  final int currentXP;
+  final int xpNeeded;
+
+  @override
+  State<_AnimatedXpChip> createState() => _AnimatedXpChipState();
+}
+
+class _AnimatedXpChipState extends State<_AnimatedXpChip>
+    with TickerProviderStateMixin {
+  late final AnimationController _bounce;
+  late final AnimationController _counterRoll;
+  late final AnimationController _plusFloat;
+  late final Listenable _allAnimations;
+
+  int _displayXP = 0;
+  int _prevXP = 0;
+  int _gainedXP = 0;
+  bool _isRolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayXP = widget.currentXP;
+    _prevXP = widget.currentXP;
+
+    _bounce = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _counterRoll = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..addStatusListener((s) {
+        if (s == AnimationStatus.completed) {
+          _isRolling = false;
+          _displayXP = widget.currentXP;
+        }
+      });
+    _plusFloat = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1400));
+    _allAnimations = Listenable.merge([_bounce, _counterRoll, _plusFloat]);
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedXpChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentXP == oldWidget.currentXP) return;
+
+    _bounce.forward(from: 0);
+
+    if (widget.currentXP > oldWidget.currentXP) {
+      _prevXP = oldWidget.currentXP;
+      _gainedXP = widget.currentXP - oldWidget.currentXP;
+      _isRolling = true;
+      _counterRoll.forward(from: 0);
+      _plusFloat.forward(from: 0);
+    } else {
+      _isRolling = false;
+      _displayXP = widget.currentXP;
+    }
+  }
+
+  @override
+  void dispose() {
+    _bounce.dispose();
+    _counterRoll.dispose();
+    _plusFloat.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _allAnimations,
+      builder: (context, _) {
+        // Bounce: elastic scale 1 → 1.3 → 0.92 → 1
+        final double bounceScale;
+        if (_bounce.value < 0.3) {
+          bounceScale = 1.0 + (_bounce.value / 0.3) * 0.30;
+        } else if (_bounce.value < 0.6) {
+          bounceScale = 1.30 - ((_bounce.value - 0.3) / 0.3) * 0.38;
+        } else {
+          bounceScale = 0.92 + ((_bounce.value - 0.6) / 0.4) * 0.08;
+        }
+
+        // Rolling counter
+        final counterShown = _isRolling
+            ? (_prevXP +
+                    (widget.currentXP - _prevXP) *
+                        Curves.easeInOut.transform(_counterRoll.value))
+                .round()
+                .clamp(0, widget.xpNeeded)
+            : _displayXP;
+
+        // Floating +N XP
+        final plusT = Curves.easeOutCubic.transform(_plusFloat.value);
+        final plusOpacity = (1.0 - _plusFloat.value * 1.2).clamp(0.0, 1.0);
+        final plusDy = 40.0 * plusT;
+        final plusScale = _plusFloat.value < 0.15
+            ? _plusFloat.value / 0.15 * 1.3
+            : 1.3 - (_plusFloat.value - 0.15) * 0.35;
+
+        return SizedBox(
+          height: 30,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              // ── The chip ──
+              Transform.scale(
+                scale: _bounce.isAnimating ? bounceScale : 1.0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(RetentionUI.xpIcon, size: 14, color: RetentionUI.xpColor),
+                      const SizedBox(width: 5),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.xpLabel,
+                            style: GoogleFonts.fredoka(
+                              fontSize: 8,
+                              color: AppTheme.goldLabel,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.8,
+                              height: 1,
+                            ),
+                          ),
+                          Text(
+                            '$counterShown/${widget.xpNeeded}',
+                            style: GoogleFonts.fredoka(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              shadows: const [
+                                Shadow(color: Colors.black54, blurRadius: 3),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Floating "+N XP" ──
+              if (_plusFloat.isAnimating && _gainedXP > 0)
+                Positioned(
+                  bottom: 26 + plusDy,
+                  child: Transform.scale(
+                    scale: plusScale.clamp(0.5, 1.5),
+                    child: Opacity(
+                      opacity: plusOpacity,
+                      child: Text(
+                        AppLocalizations.of(context)!.xpGained(_gainedXP),
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.gold,
+                          shadows: [
+                            Shadow(
+                                color: AppTheme.gold.withValues(alpha: 0.8),
+                                blurRadius: 10),
+                            const Shadow(color: Colors.black87, blurRadius: 6),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

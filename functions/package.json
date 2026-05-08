@@ -1,0 +1,22 @@
+{
+  "name": "shape-merge-functions",
+  "version": "1.0.0",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Cloud Functions for Shape Merge 2048",
+  "dependencies": {
+    "firebase-admin": "^13.8.0",
+    "firebase-functions": "^7.2.5",
+    "googleapis": "^171.4.0"
+  }
+}

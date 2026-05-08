@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
 class ScorePopup extends StatefulWidget {
   final int points;
@@ -130,7 +131,7 @@ class _ScorePopupState extends State<ScorePopup>
                       ),
                     ),
                   Text(
-                    '+${widget.points}',
+                    AppLocalizations.of(context)!.rewardPlusN(widget.points),
                     style: AppTheme.scoreStyle.copyWith(
                       fontSize: hasCombo ? AppTheme.fontCombo : AppTheme.fontH1b,
                       color: AppTheme.gold,

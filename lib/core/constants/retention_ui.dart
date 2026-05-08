@@ -9,11 +9,15 @@ class RetentionUI {
   RetentionUI._();
 
   // ── Color aliases (delegate to AppTheme) ──────────────────────
-  static const Color streakColor = AppTheme.streakColor;
-  static const Color levelColor  = AppTheme.purpleTop;
-  static const Color goalColor   = AppTheme.goalColor;
-  static const Color dangerColor = AppTheme.dangerColor;
-  static const Color cardBg      = AppTheme.cardBg;
+  static const Color streakColor  = AppTheme.streakColor;
+  static const Color levelColor   = AppTheme.purpleTop;
+  static const Color goalColor    = AppTheme.goalColor;
+  static const Color dangerColor  = AppTheme.dangerColor;
+  static const Color cardBg       = AppTheme.cardBg;
+  static const Color scoreColor   = AppTheme.orangeTop;
+  static const Color fusionColor  = AppTheme.statMerge;
+  static const Color gamesColor   = AppTheme.greenTop;
+  static const Color xpColor      = AppTheme.xpBadgeBot;
 
   // ── Icons ─────────────────────────────────────────────────────
   static const IconData streakIcon  = Icons.local_fire_department_rounded;
@@ -22,7 +26,7 @@ class RetentionUI {
   static const IconData fusionIcon  = Icons.merge_type_rounded;
   static const IconData scoreIcon   = Icons.emoji_events_rounded;
   static const IconData gamesIcon   = Icons.sports_esports_rounded;
-  static const IconData xpIcon      = Icons.auto_awesome_rounded;
+  static const IconData xpIcon      = Icons.electric_bolt_rounded;
   static const IconData rewardIcon  = Icons.card_giftcard_rounded;
   static const IconData levelUpIcon = Icons.arrow_upward_rounded;
   static const IconData checkIcon   = Icons.check_circle_rounded;
@@ -94,7 +98,7 @@ class RetentionUI {
 
   // ── xpBadge ───────────────────────────────────────────────────
 
-  static Widget xpBadge({required int currentXP, required int xpNeeded, String xpLabel = 'XP', bool expand = false, VoidCallback? onTap}) {
+  static Widget xpBadge({required int currentXP, required int xpNeeded, required String xpLabel, bool expand = false, VoidCallback? onTap}) {
     const color = AppTheme.xpBadgeBot;
     final w = Container(
       constraints: const BoxConstraints(minWidth: 80, minHeight: 46),
@@ -117,7 +121,7 @@ class RetentionUI {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text('⚡', style: TextStyle(fontSize: AppTheme.fontRegular, height: 1)),
+          const Icon(xpIcon, size: AppTheme.fontRegular, color: xpColor),
           const SizedBox(width: 6),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -147,7 +151,7 @@ class RetentionUI {
 
   // ── streakBadge ───────────────────────────────────────────────
 
-  static Widget streakBadge({required int count, String dayLabel = 'DAY', bool expand = false, VoidCallback? onTap}) {
+  static Widget streakBadge({required int count, required String dayLabel, bool expand = false, VoidCallback? onTap}) {
     final w = Container(
       constraints: const BoxConstraints(minWidth: 80, minHeight: 46),
       padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
@@ -206,7 +210,7 @@ class RetentionUI {
 
   // ── levelBadge ────────────────────────────────────────────────
 
-  static Widget levelBadge({required int level, String levelShortLabel = 'NIV', bool expand = false, VoidCallback? onTap}) {
+  static Widget levelBadge({required int level, required String levelShortLabel, bool expand = false, VoidCallback? onTap}) {
     final w = Container(
       constraints: const BoxConstraints(minWidth: 80, minHeight: 46),
       padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
@@ -228,7 +232,7 @@ class RetentionUI {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text('⭐', style: TextStyle(fontSize: AppTheme.fontRegular, height: 1)),
+          const Icon(levelIcon, size: AppTheme.fontRegular, color: levelColor),
           const SizedBox(width: 6),
           Column(
             mainAxisSize: MainAxisSize.min,

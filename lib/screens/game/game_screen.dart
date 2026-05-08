@@ -6,17 +6,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
+import 'package:shape_merge/core/config/shop_catalog.dart';
+import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/analytics_service.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/game/logic/game_engine.dart';
 import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
+import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/daily_challenge_provider.dart';
+import 'package:shape_merge/core/services/iap_service.dart';
+import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
@@ -32,8 +37,10 @@ import 'package:shape_merge/screens/game/widgets/joker_effect.dart';
 import 'package:shape_merge/screens/game/widgets/joker_hint_banner.dart';
 import 'package:shape_merge/screens/game/widgets/joker_suggestion_tooltip.dart';
 import 'package:shape_merge/screens/game/widgets/merge_effect.dart';
+import 'package:shape_merge/screens/game/widgets/objective_toast.dart';
 import 'package:shape_merge/screens/game/widgets/score_popup.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
+import 'package:shape_merge/core/services/review_service.dart';
 import 'package:shape_merge/core/widgets/game_panel.dart';
 import 'package:shape_merge/core/widgets/offline_banner.dart';
 
@@ -54,14 +61,22 @@ class GameScreen extends ConsumerStatefulWidget {
 
 class _GameScreenState extends ConsumerState<GameScreen>
     with WidgetsBindingObserver {
+  static const _maxConcurrentEffects = 8;
+
   final List<Widget> _effects = [];
   bool _initialized = false;
   late bool _showTutorial = !GameScreen.tutorialSeen;
   bool _scoreSubmitted = false;
+  bool _reviveUsed = false;
+  bool _waitingForRescuePurchase = false;
+  int _gameOverCount = 0;
   static const _tutorialSeenKey = 'tutorial_seen';
 
   int _lastPersistedBest = 0;
   ProviderSubscription<int>? _bestScoreListener;
+  ProviderSubscription<GameState>? _liveObjectiveListener;
+  ProviderSubscription<IapResult?>? _iapListener;
+  final List<Widget> _toasts = [];
 
   @override
   void initState() {
@@ -99,6 +114,36 @@ class _GameScreenState extends ConsumerState<GameScreen>
         // from Firestore for signed-in users) as single source of truth.
         _lastPersistedBest = ref.read(gameStateProvider).bestScore;
 
+        // Listen for IAP purchase results (rescue pack → revive)
+        _iapListener = ref.listenManual<IapResult?>(
+          lastPurchaseResultProvider,
+          (prev, next) {
+            if (!_waitingForRescuePurchase || next == null) return;
+            // Trigger revive for any pack that contains jokers (excludes pack_emoji
+            // and any future cosmetic-only packs). User intent on the rescue button
+            // = save the run, regardless of which pack they end up buying.
+            final productId = next.productId;
+            if (productId == null) return;
+            final pack = ShopCatalog.byId(productId);
+            final hasJokers = pack != null &&
+                (pack.freeJokers + pack.radar + pack.evolution + pack.megaBomb) > 0;
+            if (!hasJokers) return;
+            if (next.status == IapStatus.purchased) {
+              _waitingForRescuePurchase = false;
+              _scoreSubmitted = false;
+              ref.read(gameStateProvider.notifier).revive();
+              if (AudioService.instance.musicEnabled) {
+                AudioService.instance.playGameMusic();
+              }
+              // Bring user back to the game screen automatically.
+              if (mounted) context.go(AppRoutes.game);
+            } else if (next.status == IapStatus.error) {
+              _waitingForRescuePurchase = false;
+            }
+            ref.read(lastPurchaseResultProvider.notifier).state = null;
+          },
+        );
+
         // Listen for best score changes and persist immediately
         _bestScoreListener = ref.listenManual(
           gameStateProvider.select((s) => s.bestScore),
@@ -122,10 +167,47 @@ class _GameScreenState extends ConsumerState<GameScreen>
           },
         );
 
+        // Live objective sync — check after each meaningful game state change
+        _liveObjectiveListener = ref.listenManual(
+          gameStateProvider,
+          (previous, next) {
+            if (!next.gameActive || next.isPaused) return;
+            if (previous == null) return;
+            // Only sync when stats actually changed
+            if (next.mergeCount == previous.mergeCount &&
+                next.score == previous.score &&
+                next.jokersUsedThisGame == previous.jokersUsedThisGame &&
+                next.maxLevelReached == previous.maxLevelReached &&
+                next.shapesDestroyedThisGame == previous.shapesDestroyedThisGame &&
+                next.wildcardMergesThisGame == previous.wildcardMergesThisGame &&
+                next.highLevelMergesThisGame == previous.highLevelMergesThisGame &&
+                next.boardClearsThisGame == previous.boardClearsThisGame &&
+                next.maxComboReached == previous.maxComboReached) {
+              return;
+            }
+            final newlyCompleted = ref.read(dailyChallengeProvider.notifier)
+                .syncLiveProgress(
+              fusionsSoFar: next.mergeCount,
+              scoreSoFar: next.score,
+              jokersUsedSoFar: next.jokersUsedThisGame,
+              maxLevelSoFar: next.maxLevelReached,
+              shapesDestroyedSoFar: next.shapesDestroyedThisGame,
+              wildcardMergesSoFar: next.wildcardMergesThisGame,
+              highLevelMergesSoFar: next.highLevelMergesThisGame,
+              boardClearsSoFar: next.boardClearsThisGame,
+              maxComboSoFar: next.maxComboReached,
+            );
+            for (final challenge in newlyCompleted) {
+              _showObjectiveToast(challenge);
+            }
+          },
+        );
+
         if (!mounted) return;
         // Start the game once board is laid out (setBoardSize called in GameBoard.build)
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
+          ref.read(dailyChallengeProvider.notifier).captureBaseline();
           final notifier = ref.read(gameStateProvider.notifier);
           // Try to restore a game interrupted by a crash or kill
           if (!notifier.tryRestoreCheckpoint()) {
@@ -142,7 +224,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   @override
   void dispose() {
+    _iapListener?.close();
     _bestScoreListener?.close();
+    _liveObjectiveListener?.close();
     WidgetsBinding.instance.removeObserver(this);
     AudioService.instance.stopGameMusic();
     super.dispose();
@@ -155,6 +239,40 @@ class _GameScreenState extends ConsumerState<GameScreen>
     if (!mounted) return;
     setState(() => _showTutorial = false);
     _lastPersistedBest = ref.read(gameStateProvider).bestScore;
+  }
+
+  void _showObjectiveToast(DailyChallenge challenge) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    final label = _objectiveLabel(l10n, challenge);
+    setState(() {
+      final key = UniqueKey();
+      _toasts.add(
+        ObjectiveToast(
+          key: key,
+          label: label,
+          onDismissed: () {
+            if (mounted) setState(() => _toasts.removeWhere((t) => t.key == key));
+          },
+        ),
+      );
+    });
+    AudioService.instance.playReward();
+  }
+
+  static String _objectiveLabel(AppLocalizations l10n, DailyChallenge c) {
+    return switch (c.type) {
+      ChallengeType.fusions         => l10n.objectiveFusions(c.target),
+      ChallengeType.score           => l10n.objectiveScore(c.target),
+      ChallengeType.parties         => l10n.objectiveParties(c.target),
+      ChallengeType.formeMax        => l10n.objectiveFormeMax(c.target),
+      ChallengeType.jokersUses      => l10n.objectiveJokersUses(c.target),
+      ChallengeType.shapesDestroyed => l10n.objectiveShapesDestroyed(c.target),
+      ChallengeType.wildcardMerges  => l10n.objectiveWildcardMerges(c.target),
+      ChallengeType.highLevelMerges => l10n.objectiveHighLevelMerges(c.target),
+      ChallengeType.boardClears     => l10n.objectiveBoardClears(c.target),
+      ChallengeType.maxCombo        => l10n.objectiveMaxCombo(c.target),
+    };
   }
 
   void _submitScore(User user, GameState gameState) {
@@ -216,6 +334,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
     // Auto-submit score to leaderboard when game ends
     if (!gameState.gameActive && !_scoreSubmitted) {
       _scoreSubmitted = true;
+      _gameOverCount++;
+      AudioService.instance.pauseGameMusic();
       // Clear checkpoint — game is over, no need to restore
       ref.read(localStorageProvider).whenData((s) => s.clearGameCheckpoint());
       unawaited(AnalyticsService.instance.logGameOver(
@@ -231,18 +351,18 @@ class _GameScreenState extends ConsumerState<GameScreen>
         } else {
           _updateLocalStats(gameState.mergeCount);
         }
-        // Sync daily challenge progress
-        ref.read(dailyChallengeProvider.notifier).syncGameResult(
-          fusionsThisGame: gameState.mergeCount,
-          scoreThisGame: gameState.score,
-          jokersUsedThisGame: gameState.jokersUsedThisGame,
-          maxLevelReached: gameState.maxLevelReached,
-        );
-        // Process XP gain
+        // Capture completed count BEFORE syncing to compute delta for XP
+        final completedBefore = ref.read(dailyChallengeProvider)?.completedCount ?? 0;
+        // Sync `parties` objective — other objectives were already synced live
+        ref.read(dailyChallengeProvider.notifier).syncGameEnd();
+        final completedAfter = ref.read(dailyChallengeProvider)?.completedCount ?? 0;
+        final newlyCompleted = completedAfter - completedBefore;
+        // Process XP gain — use delta of newly completed objectives, not total
         ref.read(progressionProvider.notifier).processGameEnd(
           score: gameState.score,
           mergeCount: gameState.mergeCount,
           maxLevelReached: gameState.maxLevelReached,
+          completedObjectivesDelta: newlyCompleted,
         );
         // User just played — cancel the streak-danger reminder and reschedule
         // for 23 h from now so the reminder fires tomorrow if they don't play.
@@ -250,6 +370,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
             .scheduleStreakReminder(
           streakDays: ref.read(streakProvider)?.streak.currentStreak ?? 0,
         );
+        // Maybe request in-app review after a good session
+        unawaited(ReviewService.instance.maybeRequestReview(
+          gamesPlayed: isSignedIn
+              ? (ref.read(playerProvider).valueOrNull?.gamesPlayed ?? 0)
+              : (ref.read(localStorageProvider).valueOrNull?.gamesPlayed ?? 0),
+          bestScore: gameState.bestScore,
+        ));
       });
     }
 
@@ -356,6 +483,19 @@ class _GameScreenState extends ConsumerState<GameScreen>
           // Overlays
           if (!_showTutorial) const JokerHintBanner(),
           if (!_showTutorial) const JokerSuggestionTooltip(),
+          // Objective completion toasts — top-center, safe area
+          if (_toasts.isNotEmpty)
+            Positioned(
+              top: MediaQuery.of(context).viewPadding.top + 8,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: _toasts,
+                ),
+              ),
+            ),
           if (_showTutorial)
             CoachOverlay(onComplete: _dismissTutorial),
           if (!_showTutorial && gameState.isPaused)
@@ -375,17 +515,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                 } else {
                   _updateLocalStats(gs.mergeCount);
                 }
-                ref.read(dailyChallengeProvider.notifier).syncGameResult(
-                  fusionsThisGame: gs.mergeCount,
-                  scoreThisGame: gs.score,
-                  jokersUsedThisGame: gs.jokersUsedThisGame,
-                  maxLevelReached: gs.maxLevelReached,
-                );
-                ref.read(progressionProvider.notifier).processGameEnd(
-                  score: gs.score,
-                  mergeCount: gs.mergeCount,
-                  maxLevelReached: gs.maxLevelReached,
-                );
+                // No XP and no challenge progress on quit — only on game over.
                 // Unpause first so the PauseOverlay is removed from the
                 // widget tree before the pop transition animation starts.
                 ref.read(gameStateProvider.notifier).togglePause();
@@ -396,23 +526,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
             GameOverOverlay(
               score: gameState.score,
               mergeCount: gameState.mergeCount,
-              isVictory: GameEngine.isVictory(gameState),
               isNewRecord: gameState.score > 0 && gameState.score > _lastPersistedBest,
               isSignedIn: isSignedIn,
-              onReplay: () {
-                _scoreSubmitted = false;
-                _lastPersistedBest = ref.read(gameStateProvider).bestScore;
-                ref.read(gameStateProvider.notifier).startNewGame();
-              },
-              onSignIn: () async {
-                await ref.read(authServiceProvider).signInWithGoogle();
-                final signedUser = ref.read(authStateProvider).valueOrNull;
-                if (signedUser != null && !_scoreSubmitted) {
-                  _scoreSubmitted = true;
-                  // Read fresh gameState (bestScore may have been updated by auth listener)
-                  _submitScore(signedUser, ref.read(gameStateProvider));
-                }
-              },
+              canFreeContinue: !_reviveUsed,
+              onFreeContinue: () => _handleFreeContinue(),
+              onSaveWithPack: () => _handleSaveWithPack(),
+              onNewGame: () => _handleNewGame(),
             ),
         ],
       ),
@@ -420,10 +539,64 @@ class _GameScreenState extends ConsumerState<GameScreen>
     );
   }
 
+  // ── Step 1: Free continue via rewarded ad ──
+  void _handleFreeContinue() {
+    final ads = ref.read(adsServiceProvider);
+    ads.showRewardedAd(onRewarded: () {
+      if (!mounted) return;
+      _reviveUsed = true;
+      _scoreSubmitted = false;
+      ref.read(gameStateProvider.notifier).revive();
+      if (AudioService.instance.musicEnabled) {
+        AudioService.instance.playGameMusic();
+      }
+      unawaited(AnalyticsService.instance.logReviveWatched());
+    });
+  }
+
+  // ── Step 2: Save with rescue pack — navigate to shop tab ──
+  void _handleSaveWithPack() {
+    // Arm the IAP listener: if user buys any pack with jokers in the shop,
+    // revive on return. Use `go` (not push) so the bottom nav highlights
+    // the shop tab. The home branch (with game_screen) is preserved by the
+    // StatefulShellRoute indexed stack, so this listener stays alive.
+    _waitingForRescuePurchase = true;
+    context.go(AppRoutes.shop);
+  }
+
+  // ── New game (from both steps) ──
+  void _handleNewGame() {
+    _scoreSubmitted = false;
+    _reviveUsed = false;
+    _lastPersistedBest = ref.read(gameStateProvider).bestScore;
+    ref.read(dailyChallengeProvider.notifier).captureBaseline();
+    _maybeShowInterstitial(() {
+      ref.read(gameStateProvider.notifier).startNewGame();
+      if (AudioService.instance.musicEnabled) {
+        AudioService.instance.playGameMusic();
+      }
+    });
+  }
+
+  void _maybeShowInterstitial(VoidCallback then) {
+    final noAds = ref.read(noAdsPurchasedProvider);
+    if (noAds || _gameOverCount % InterstitialTuning.showEveryNGameOvers != 0) {
+      then();
+      return;
+    }
+    final ads = ref.read(adsServiceProvider);
+    ads.showInterstitialAd(onDismissed: then);
+  }
+
   void _addMergeEffect(Offset position, Color color, int points, int comboCount) {
     setState(() {
       final effectKey = UniqueKey();
       final popupKey = UniqueKey();
+
+      // Cap concurrent effects to avoid frame drops during fast combos.
+      while (_effects.length >= _maxConcurrentEffects - 1) {
+        _effects.removeAt(0);
+      }
 
       _effects.add(
         MergeEffect(
@@ -453,6 +626,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
   void _addJokerEffect(Offset position, JokerType jokerType) {
     setState(() {
       final effectKey = UniqueKey();
+      // Cap concurrent effects to avoid frame drops during fast combos.
+      while (_effects.length >= _maxConcurrentEffects) {
+        _effects.removeAt(0);
+      }
       _effects.add(
         JokerEffect(
           key: effectKey,

@@ -26,6 +26,11 @@ abstract final class ChallengeTargets {
     'parties': {'easy': 1, 'medium': 2, 'hard': 3},
     'formeMax': {'easy': 5, 'medium': 8, 'hard': 12},
     'jokersUses': {'easy': 2, 'medium': 5, 'hard': 8},
+    'shapesDestroyed': {'easy': 5, 'medium': 15, 'hard': 30},
+    'wildcardMerges': {'easy': 2, 'medium': 4, 'hard': 7},
+    'highLevelMerges': {'easy': 2, 'medium': 5, 'hard': 10},
+    'boardClears': {'easy': 1, 'medium': 2, 'hard': 3},
+    'maxCombo': {'easy': 3, 'medium': 5, 'hard': 8},
   };
 
   /// Lookup target for a type name and difficulty name.
@@ -36,9 +41,9 @@ abstract final class ChallengeTargets {
 /// XP rewards by difficulty.
 abstract final class ChallengeRewards {
   static const Map<String, int> xp = {
-    'easy': 15,
-    'medium': 30,
-    'hard': 50,
+    'easy': 10,
+    'medium': 15,
+    'hard': 20,
   };
 
   /// Joker reward type by difficulty.

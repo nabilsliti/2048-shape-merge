@@ -61,7 +61,12 @@ class GameEngine {
         updatedShapes.add(newShape);
       }
 
-      final newState = state.copyWith(shapes: updatedShapes, recentAttempts: attempts, comboCount: 0);
+      final newState = state.copyWith(
+        shapes: updatedShapes,
+        recentAttempts: attempts,
+        comboCount: 0,
+        lastMergedShapeId: null,
+      );
       return (
         state: _checkGameState(newState, boardSize),
         mergedShape: null,
@@ -76,7 +81,10 @@ class GameEngine {
     final isChain = state.lastMergedShapeId != null &&
         (dragged.id == state.lastMergedShapeId || target.id == state.lastMergedShapeId);
     final newCombo = isChain ? state.comboCount + 1 : 0;
+    final newMaxCombo = newCombo > state.maxComboReached ? newCombo : state.maxComboReached;
     final newLevel = target.level + 1;
+    final isWildcardMerge = dragged.isWildcard || target.isWildcard;
+    final isHighLevelMerge = newLevel >= 6;
     final midX = target.x;
     final midY = target.y;
     final basePoints = Scoring.forMerge(newLevel);
@@ -123,6 +131,13 @@ class GameEngine {
       recentAttempts: attempts,
       comboCount: newCombo,
       lastMergedShapeId: merged.id,
+      maxComboReached: newMaxCombo,
+      wildcardMergesThisGame: isWildcardMerge
+          ? state.wildcardMergesThisGame + 1
+          : state.wildcardMergesThisGame,
+      highLevelMergesThisGame: isHighLevelMerge
+          ? state.highLevelMergesThisGame + 1
+          : state.highLevelMergesThisGame,
     );
 
     return (
@@ -164,7 +179,10 @@ class GameEngine {
         shapes.add(SpawnManager.spawnShape(shapes, boardSize, mergeRate: state.recentMergeRate, totalMerges: state.mergeCount));
         attempts++;
       }
-      return state.copyWith(shapes: shapes);
+      return state.copyWith(
+        shapes: shapes,
+        boardClearsThisGame: state.boardClearsThisGame + 1,
+      );
     }
 
     if (state.shapes.length >= BoardTuning.maxShapes) {

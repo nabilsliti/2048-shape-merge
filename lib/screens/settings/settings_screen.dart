@@ -108,8 +108,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               // Vibration toggle
               _SettingsTile(
-                icon: ref.watch(vibrationProvider) ? Icons.vibration : Icons.phone_android,
+                icon: Icons.vibration,
                 label: l10n.vibrationSettings,
+                iconStrikethrough: !ref.watch(vibrationProvider),
                 trailing: Switch(
                   value: ref.watch(vibrationProvider),
                   activeThumbColor: AppTheme.greenTop,
@@ -119,13 +120,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
 
+
               const SizedBox(height: 24),
-              const Divider(color: Colors.white12),
               const SizedBox(height: 16),
 
               // Version info
               _SettingsTile(
-                icon: Icons.info_outline,
+                icon: Icons.info_outline_rounded,
                 label: l10n.version,
                 trailing: Text(
                   _version,
@@ -156,11 +157,13 @@ class _SettingsTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.trailing,
+    this.iconStrikethrough = false,
   });
 
   final IconData icon;
   final String label;
   final Widget trailing;
+  final bool iconStrikethrough;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +177,20 @@ class _SettingsTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white70, size: 24),
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Stack(
+              children: [
+                Icon(icon, color: Colors.white70, size: 24),
+                if (iconStrikethrough)
+                  CustomPaint(
+                    size: const Size(24, 24),
+                    painter: _StrikethroughPainter(),
+                  ),
+              ],
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -192,3 +208,24 @@ class _SettingsTile extends StatelessWidget {
     );
   }
 }
+
+class _StrikethroughPainter extends CustomPainter {
+  static final _paint = Paint()
+    ..color = Colors.white70
+    ..strokeWidth = 1.8
+    ..strokeCap = StrokeCap.round;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawLine(
+      Offset(size.width * 0.1, size.height * 0.1),
+      Offset(size.width * 0.9, size.height * 0.9),
+      _paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+

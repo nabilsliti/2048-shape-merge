@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:shape_merge/core/config/firestore_keys.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
@@ -12,6 +15,28 @@ const _log = AppLogger('Firestore');
 class FirestoreService {
   final _firestore = FirebaseFirestore.instance;
 
+  /// Retries a Firestore write up to [maxRetries] times with exponential backoff.
+  Future<void> _withRetry(
+    Future<void> Function() action, {
+    int maxRetries = 2,
+    String label = 'write',
+  }) async {
+    for (var attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        await action();
+        return;
+      } catch (e) {
+        if (attempt == maxRetries) {
+          _log.error('$label failed after ${maxRetries + 1} attempts', error: e);
+          rethrow;
+        }
+        final delay = Duration(milliseconds: 500 * (1 << attempt));
+        _log.warning('$label attempt ${attempt + 1} failed, retrying in ${delay.inMilliseconds}ms');
+        await Future<void>.delayed(delay);
+      }
+    }
+  }
+
   CollectionReference<Map<String, Object?>> get _leaderboardRef =>
       _firestore.collection(FirestoreKeys.leaderboard);
 
@@ -19,22 +44,20 @@ class FirestoreService {
       _firestore.collection(FirestoreKeys.players).doc(uid);
 
   Future<void> submitScore(LeaderboardEntry entry) async {
-    try {
-      final docRef = _leaderboardRef.doc(entry.uid);
-      await _firestore.runTransaction((tx) async {
-        final doc = await tx.get(docRef);
-        final existing = (doc.data()?['score'] as num?)?.toInt() ?? 0;
-        if (!doc.exists || existing < entry.score) {
-          tx.set(docRef, entry.toFirestore());
-          _log.info('Score submitted: ${entry.score} for ${entry.uid}');
-        } else {
-          _log.debug('Score ${entry.score} not higher than existing $existing');
-        }
+    await _withRetry(() async {
+      final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+          .httpsCallable('submitScore');
+      await callable.call<Map<String, dynamic>>({
+        'score': entry.score,
+        'mergeCount': entry.mergeCount,
+        'maxLevel': entry.maxLevel,
+        'displayName': entry.displayName,
+        'photoUrl': entry.photoUrl,
+        'avatarId': entry.avatarId,
+        'weekKey': entry.weekKey,
       });
-    } catch (e) {
-      _log.error('Score submission failed', error: e);
-      rethrow;
-    }
+      _log.info('Score submitted via function: ${entry.score} for ${entry.uid}');
+    }, label: 'submitScore');
   }
 
   Stream<List<LeaderboardEntry>> leaderboardStream({int limit = 50}) {
@@ -60,7 +83,9 @@ class FirestoreService {
   }
 
   Future<void> savePlayer(Player player) async {
-    await _playerRef(player.uid).set(player.toFirestore(), SetOptions(merge: true));
+    await _withRetry(() async {
+      await _playerRef(player.uid).set(player.toFirestore(), SetOptions(merge: true));
+    }, label: 'savePlayer');
   }
 
   Future<Player?> getPlayer(String uid) async {
@@ -71,32 +96,30 @@ class FirestoreService {
 
   // Bug B2 fix: increment gamesPlayed and totalMerges (were never called before)
   Future<void> incrementPlayerStats(String uid, {required int mergesThisGame}) async {
-    try {
+    await _withRetry(() async {
       await _playerRef(uid).set({
         'gamesPlayed': FieldValue.increment(1),
         'totalMerges': FieldValue.increment(mergesThisGame),
       }, SetOptions(merge: true));
-    } catch (e) {
-      _log.error('incrementPlayerStats failed', error: e);
-    }
+    }, label: 'incrementPlayerStats');
   }
 
   Future<void> updateXP(String uid, {required int level, required int currentXP, required int totalXP}) async {
-    await _playerRef(uid).set({
-      'level': level,
-      'currentXP': currentXP,
-      'totalXP': totalXP,
-    }, SetOptions(merge: true));
+    await _withRetry(() async {
+      await _playerRef(uid).set({
+        'level': level,
+        'currentXP': currentXP,
+        'totalXP': totalXP,
+      }, SetOptions(merge: true));
+    }, label: 'updateXP');
   }
 
   Future<void> updateBestScore(String uid, int bestScore) async {
-    try {
+    await _withRetry(() async {
       await _playerRef(uid).set({
         'bestScore': bestScore,
       }, SetOptions(merge: true));
-    } catch (e) {
-      _log.error('updateBestScore failed', error: e);
-    }
+    }, label: 'updateBestScore');
   }
 
   Future<int> getLeaderboardScore(String uid) async {
@@ -112,12 +135,14 @@ class FirestoreService {
   }
 
   Future<void> updateStreak(String uid, PlayerStreak streak) async {
-    await _playerRef(uid).set({
-      'currentStreak': streak.currentStreak,
-      'longestStreak': streak.longestStreak,
-      'lastLoginDate': streak.lastLoginDate,
-      'nextRewardIndex': streak.nextRewardIndex,
-    }, SetOptions(merge: true));
+    await _withRetry(() async {
+      await _playerRef(uid).set({
+        'currentStreak': streak.currentStreak,
+        'longestStreak': streak.longestStreak,
+        'lastLoginDate': streak.lastLoginDate,
+        'nextRewardIndex': streak.nextRewardIndex,
+      }, SetOptions(merge: true));
+    }, label: 'updateStreak');
   }
 
   DocumentReference<Map<String, Object?>> _dailyChallengesRef(String uid) =>
@@ -134,11 +159,9 @@ class FirestoreService {
   }
 
   Future<void> saveDailyChallenges(String uid, DailyChallengeState state) async {
-    try {
+    await _withRetry(() async {
       await _dailyChallengesRef(uid).set(state.toMap().cast<String, Object?>());
-    } catch (e) {
-      _log.error('saveDailyChallenges failed', error: e);
-    }
+    }, label: 'saveDailyChallenges');
   }
 
   /// Deletes all server-side data for [uid] atomically.
@@ -156,21 +179,35 @@ class FirestoreService {
   }
 
   Future<void> updateJokerInventory(String uid, JokerInventory inventory) async {
-    await _playerRef(uid).set({
-      'jokerInventory': inventory.toMap(),
-    }, SetOptions(merge: true));
+    await _withRetry(() async {
+      await _playerRef(uid).set({
+        'jokerInventory': inventory.toMap(),
+      }, SetOptions(merge: true));
+    }, label: 'updateJokerInventory');
   }
 
   Future<void> updateRewardClaimedDate(String uid, String date) async {
-    await _playerRef(uid).set({
-      'rewardClaimedDate': date,
-    }, SetOptions(merge: true));
+    await _withRetry(() async {
+      await _playerRef(uid).set({
+        'rewardClaimedDate': date,
+      }, SetOptions(merge: true));
+    }, label: 'updateRewardClaimedDate');
   }
 
   Future<void> updateNoAdsPurchased(String uid, {required bool value}) async {
-    await _playerRef(uid).set({
-      'noAdsPurchased': value,
-    }, SetOptions(merge: true));
+    await _withRetry(() async {
+      await _playerRef(uid).set({
+        'noAdsPurchased': value,
+      }, SetOptions(merge: true));
+    }, label: 'updateNoAdsPurchased');
+  }
+
+  Future<void> updateEmojiPackPurchased(String uid, {required bool value}) async {
+    await _withRetry(() async {
+      await _playerRef(uid).set({
+        'emojiPackPurchased': value,
+      }, SetOptions(merge: true));
+    }, label: 'updateEmojiPackPurchased');
   }
 
   Future<void> updateProfile(String uid, {String? displayName, String? avatarId}) async {
@@ -178,15 +215,11 @@ class FirestoreService {
     if (displayName != null) data['displayName'] = displayName;
     if (avatarId != null) data['avatarId'] = avatarId;
     if (data.isNotEmpty) {
-      await _playerRef(uid).set(data, SetOptions(merge: true));
-      try {
-        final doc = await _leaderboardRef.doc(uid).get();
-        if (doc.exists) {
-          await _leaderboardRef.doc(uid).update(data);
-        }
-      } catch (e) {
-        _log.warning('Leaderboard profile sync failed', error: e);
-      }
+      await _withRetry(() async {
+        await _playerRef(uid).set(data, SetOptions(merge: true));
+      }, label: 'updateProfile');
+      // Leaderboard displayName/avatar will be updated on next score submit
+      // (via Cloud Function submitScore)
     }
   }
 }

@@ -89,14 +89,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get jokerBombDesc =>
-      'Cible une forme et détruit toutes les formes de même type et couleur';
+      'Détruit toutes les pièces identiques (même forme et couleur), quel que soit leur niveau';
 
   @override
   String get jokerWildcard => 'Wildcard';
 
   @override
   String get jokerWildcardDesc =>
-      'Invoque une forme spéciale qui fusionne avec n\'importe quelle forme du même niveau';
+      'Invoque une forme spéciale qui fusionne avec n\'importe quelle forme du même niveau, peu importe sa forme ou couleur';
 
   @override
   String get jokerReducer => 'Réducteur';
@@ -110,7 +110,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get jokerRadarDesc =>
-      'Révèle toutes les fusions possibles pendant 5 secondes';
+      'Révèle tous les groupes de formes fusionnables (même forme, couleur et niveau) pendant 5 secondes';
 
   @override
   String get jokerEvolution => 'Évolution';
@@ -124,7 +124,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get jokerMegaBombDesc =>
-      'Détruit toutes les formes du même niveau, peu importe leur type';
+      'Détruit toutes les pièces du même niveau, peu importe leur forme ou couleur';
 
   @override
   String get onboardingTitle1 => 'Comment jouer';
@@ -307,8 +307,8 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       n,
       locale: localeName,
-      other: 'Jouer $n parties',
-      one: 'Jouer 1 partie',
+      other: 'Terminer $n parties',
+      one: 'Terminer 1 partie',
     );
     return '$_temp0';
   }
@@ -327,6 +327,55 @@ class AppLocalizationsFr extends AppLocalizations {
       one: 'Utiliser 1 joker',
     );
     return '$_temp0';
+  }
+
+  @override
+  String objectiveShapesDestroyed(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Détruire $n formes avec des bombes',
+      one: 'Détruire 1 forme avec une bombe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveWildcardMerges(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Faire $n fusions avec un wildcard',
+      one: 'Faire 1 fusion avec un wildcard',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveHighLevelMerges(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Créer $n formes de rang 6+',
+      one: 'Créer 1 forme de rang 6+',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveBoardClears(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Vider le plateau $n fois',
+      one: 'Vider le plateau 1 fois',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String objectiveMaxCombo(int n) {
+    return 'Atteindre un combo de $n';
   }
 
   @override
@@ -439,7 +488,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get packStarName => 'Pack Étoile';
 
   @override
+  String get packRescueName => 'Pack Sauvetage';
+
+  @override
   String get packCometName => 'Pack Comète';
+
+  @override
+  String get packBoostName => 'Pack Boost';
 
   @override
   String get packDiamondName => 'Pack Diamant';
@@ -448,10 +503,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get badgeStarter => 'STARTER';
 
   @override
-  String get badgePopular => 'POPULAIRE';
+  String get badgeRescue => 'SURVIE';
 
   @override
-  String get badgeBestValue => 'MEILLEUR CHOIX';
+  String get badgePopular => 'MEILLEUR RAPPORT';
+
+  @override
+  String get badgeBoost => 'PREMIUM';
+
+  @override
+  String get badgeBestValue => 'MAX';
 
   @override
   String get purchaseSuccess => 'Achat réussi !';
@@ -475,7 +536,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noAdsTitle => 'ZÉRO PUB + JOKERS';
 
   @override
-  String get badgeOneTimePurchase => '✨ ACHAT UNIQUE';
+  String get badgeOneTimePurchase => 'ACHAT UNIQUE';
 
   @override
   String get noAdsDescription => 'Supprime toutes les pubs !';
@@ -587,76 +648,76 @@ class AppLocalizationsFr extends AppLocalizations {
   String get jokerSuggestUse => 'Utiliser';
 
   @override
-  String get coachWelcome => 'Bienvenue ! 🎮';
+  String get coachWelcome => 'Bienvenue !';
 
   @override
   String get coachWelcomeDesc => 'On va apprendre les bases ensemble !';
 
   @override
-  String get coachWaitMerge => 'À toi ! 🧩';
+  String get coachWaitMerge => 'À toi !';
 
   @override
   String get coachWaitMergeDesc =>
       'Glisse une forme sur une forme identique (même forme, même couleur, même niveau) pour fusionner !';
 
   @override
-  String get coachMergeDone => 'Bravo ! 🎉';
+  String get coachMergeDone => 'Bravo !';
 
   @override
   String get coachMergeDoneDesc =>
       'Tu maîtrises la fusion ! Chaque fusion augmente ton score.';
 
   @override
-  String get coachJokers => 'Tes Jokers 🃏';
+  String get coachJokers => 'Tes Jokers';
 
   @override
   String get coachJokersDesc =>
       'Voici tes jokers ! Chacun a un pouvoir unique.';
 
   @override
-  String get coachWaitJokerLongPress => 'Essaie ! 👇';
+  String get coachWaitJokerLongPress => 'Essaie !';
 
   @override
   String get coachWaitJokerLongPressDesc =>
       'Fais un appui long sur un joker pour voir sa description.';
 
   @override
-  String get coachJokerDone => 'Parfait ! 👏';
+  String get coachJokerDone => 'Parfait !';
 
   @override
   String get coachJokerDoneDesc =>
       'Tu peux consulter la description de chaque joker à tout moment.';
 
   @override
-  String get coachJokerUse => 'Utiliser un Joker 🎯';
+  String get coachJokerUse => 'Utiliser un Joker';
 
   @override
   String get coachJokerUseDesc =>
       'Touche un joker pour l\'activer, puis touche une forme sur la grille pour appliquer son pouvoir.';
 
   @override
-  String get coachScore => 'Score ⭐';
+  String get coachScore => 'Score';
 
   @override
   String get coachScoreDesc =>
       'Ton score actuel. Chaque fusion rapporte des points.';
 
   @override
-  String get coachCapacity => 'Capacité ⭕';
+  String get coachCapacity => 'Capacité';
 
   @override
   String get coachCapacityDesc =>
       'Nombre de formes sur la grille. Quand c\'est plein et qu\'il n\'y a plus de fusion possible, la partie est finie !';
 
   @override
-  String get coachMerges => 'Fusions ⚡';
+  String get coachMerges => 'Fusions';
 
   @override
   String get coachMergesDesc =>
       'Nombre total de fusions réalisées dans cette partie.';
 
   @override
-  String get coachComplete => 'C\'est parti ! 🚀';
+  String get coachComplete => 'C\'est parti !';
 
   @override
   String get coachCompleteDesc =>
@@ -730,4 +791,87 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get scoreSubmitError => 'Score non synchronisé. Vérifie ta connexion.';
+
+  @override
+  String get reviveAd => 'Continuer gratuitement';
+
+  @override
+  String get blockedAgain => 'Bloqué à nouveau 😬';
+
+  @override
+  String get noMoreMoves => 'Plus de mouvements 😱';
+
+  @override
+  String get saveMyGame => 'Sauver ma partie';
+
+  @override
+  String get newGame => 'Nouvelle partie';
+
+  @override
+  String pageNotFound(String uri) {
+    return 'Page introuvable : $uri';
+  }
+
+  @override
+  String xpAmount(int n) {
+    return '$n XP';
+  }
+
+  @override
+  String get adLabel => 'PUB';
+
+  @override
+  String get rewardPlusJoker => '+1 ';
+
+  @override
+  String get rewardX2 => ' x2';
+
+  @override
+  String quantityFormat(int count) {
+    return '×$count';
+  }
+
+  @override
+  String get premiumStarLabel => '★ PREMIUM';
+
+  @override
+  String rewardPlusN(int n) {
+    return '+$n';
+  }
+
+  @override
+  String get bonusStars => '★ BONUS ★';
+
+  @override
+  String get shapePackLabel => 'Pack de formes';
+
+  @override
+  String get shapePackClassic => 'Classique';
+
+  @override
+  String get shapePackEmoji => 'Emoji';
+
+  @override
+  String get packEmojiPackName => 'Pack Emoji';
+
+  @override
+  String get emojiPackDesc => '6 emojis pour remplacer vos formes';
+
+  @override
+  String get badgeEmojiPack => 'NOUVEAU';
+
+  @override
+  String get bestChoice => 'MEILLEUR CHOIX';
+
+  @override
+  String get rescueHeroDesc => 'Sauve ta partie et continue ton meilleur run';
+
+  @override
+  String get rescueCtaLabel => 'Sauver ma partie 🔥';
+
+  @override
+  String get freeJokerShort => '+1 joker au choix';
+
+  @override
+  String get sectionMoreOffers => 'PLUS D\'OFFRES';
 }

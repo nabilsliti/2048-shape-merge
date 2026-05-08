@@ -179,9 +179,9 @@ class _CoachBubble extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.lightbulb_rounded,
+                Icons.info_outline_rounded,
                 size: 14,
-                color: AppTheme.gold.withValues(alpha: 0.9),
+                color: AppTheme.orbCyan.withValues(alpha: 0.9),
               ),
               const SizedBox(width: 4),
               Flexible(
@@ -210,6 +210,18 @@ class _CoachBubblePainter extends CustomPainter {
   final double arrowSize;
 
   _CoachBubblePainter({required this.arrowOffset, required this.arrowSize});
+
+  static final _fillPaint = Paint()..style = PaintingStyle.fill;
+  static final _highlightPaint = Paint();
+  static final _cyanBorderPaint = Paint()
+    ..color = AppTheme.orbCyan.withValues(alpha: 0.5)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  static final _glowBorderPaint = Paint()
+    ..color = AppTheme.gold.withValues(alpha: 0.12)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 4
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -245,19 +257,14 @@ class _CoachBubblePainter extends CustomPainter {
       end: Alignment.bottomRight,
       colors: AppTheme.coachBackdropColors,
     );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..shader = gradient.createShader(bodyRect)
-        ..style = PaintingStyle.fill,
-    );
+    canvas.drawPath(path, _fillPaint..shader = gradient.createShader(bodyRect));
 
     // Inner top-edge highlight (subtle glass reflection)
     canvas.save();
     canvas.clipPath(path);
     canvas.drawRect(
       Rect.fromLTWH(bodyRect.left, bodyRect.top, bodyRect.width, bodyRect.height * 0.35),
-      Paint()
+      _highlightPaint
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -270,23 +277,10 @@ class _CoachBubblePainter extends CustomPainter {
     canvas.restore();
 
     // Cyan neon border
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = AppTheme.orbCyan.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
+    canvas.drawPath(path, _cyanBorderPaint);
 
     // Subtle gold outer glow on border
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = AppTheme.gold.withValues(alpha: 0.12)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
+    canvas.drawPath(path, _glowBorderPaint);
   }
 
   @override

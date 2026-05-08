@@ -27,7 +27,7 @@ class ChallengeService {
     required int playerLevel,
   }) async {
     final json = storage.dailyChallengesJson;
-    if (json != null) {
+    if (json != null && json.isNotEmpty) {
       try {
         final state = DailyChallengeState.fromMap(
             Map<String, Object?>.from(jsonDecode(json) as Map));
@@ -85,6 +85,57 @@ class ChallengeService {
 
   // ── Progress update ────────────────────────────────────────────────────────
 
+  /// Called in real-time during gameplay. Updates all objectives EXCEPT `parties`
+  /// (which requires a completed game). Uses baseline values from game start
+  /// to compute correct progress.
+  DailyChallengeState applyLiveProgress(
+    DailyChallengeState state, {
+    required Map<String, int> baselines,
+    required int fusionsSoFar,
+    required int scoreSoFar,
+    required int jokersUsedSoFar,
+    required int maxLevelSoFar,
+    required int shapesDestroyedSoFar,
+    required int wildcardMergesSoFar,
+    required int highLevelMergesSoFar,
+    required int boardClearsSoFar,
+    required int maxComboSoFar,
+  }) {
+    final updated = state.challenges.map((c) {
+      if (c.rewardCollected || c.type == ChallengeType.parties) return c;
+      final base = baselines[c.id] ?? c.current;
+      int newCurrent = base;
+      switch (c.type) {
+        case ChallengeType.fusions:
+          newCurrent = min(base + fusionsSoFar, c.target);
+        case ChallengeType.score:
+          if (scoreSoFar > newCurrent) newCurrent = min(scoreSoFar, c.target);
+        case ChallengeType.formeMax:
+          if (maxLevelSoFar > newCurrent) newCurrent = min(maxLevelSoFar, c.target);
+        case ChallengeType.jokersUses:
+          newCurrent = min(base + jokersUsedSoFar, c.target);
+        case ChallengeType.shapesDestroyed:
+          newCurrent = min(base + shapesDestroyedSoFar, c.target);
+        case ChallengeType.wildcardMerges:
+          newCurrent = min(base + wildcardMergesSoFar, c.target);
+        case ChallengeType.highLevelMerges:
+          newCurrent = min(base + highLevelMergesSoFar, c.target);
+        case ChallengeType.boardClears:
+          newCurrent = min(base + boardClearsSoFar, c.target);
+        case ChallengeType.maxCombo:
+          if (maxComboSoFar > newCurrent) newCurrent = min(maxComboSoFar, c.target);
+        case ChallengeType.parties:
+          break; // handled only at game over
+      }
+      return c.copyWith(
+        current: newCurrent,
+        completed: newCurrent >= c.target,
+      );
+    }).toList();
+
+    return state.copyWith(challenges: updated);
+  }
+
   /// Called at end of game. Updates current counters and marks completed.
   DailyChallengeState applyGameResult(
     DailyChallengeState state, {
@@ -92,6 +143,11 @@ class ChallengeService {
     required int scoreThisGame,
     required int jokersUsedThisGame,
     required int maxLevelReached,
+    required int shapesDestroyedThisGame,
+    required int wildcardMergesThisGame,
+    required int highLevelMergesThisGame,
+    required int boardClearsThisGame,
+    required int maxComboReached,
   }) {
     final updated = state.challenges.map((c) {
       if (c.rewardCollected) return c;
@@ -108,6 +164,17 @@ class ChallengeService {
           if (maxLevelReached > newCurrent) newCurrent = min(maxLevelReached, c.target);
         case ChallengeType.jokersUses:
           newCurrent = min(c.current + jokersUsedThisGame, c.target);
+        case ChallengeType.shapesDestroyed:
+          newCurrent = min(c.current + shapesDestroyedThisGame, c.target);
+        case ChallengeType.wildcardMerges:
+          newCurrent = min(c.current + wildcardMergesThisGame, c.target);
+        case ChallengeType.highLevelMerges:
+          newCurrent = min(c.current + highLevelMergesThisGame, c.target);
+        case ChallengeType.boardClears:
+          newCurrent = min(c.current + boardClearsThisGame, c.target);
+        case ChallengeType.maxCombo:
+          // Best combo in a single game (not cumulative)
+          if (maxComboReached > newCurrent) newCurrent = min(maxComboReached, c.target);
       }
       return c.copyWith(
         current: newCurrent,
@@ -149,7 +216,8 @@ class ChallengeService {
           : idx == 1
               ? ChallengeDifficulty.medium
               : ChallengeDifficulty.easy;
-      return _buildChallenge(type, diff, rng);
+      // Only the hardest challenge (idx 0) gives a joker, others give XP
+      return _buildChallenge(type, diff, rng, forceXP: idx != 0);
     }).toList();
 
     return DailyChallengeState(date: date, challenges: challenges);
@@ -158,9 +226,10 @@ class ChallengeService {
   DailyChallenge _buildChallenge(
     ChallengeType type,
     ChallengeDifficulty diff,
-    Random rng,
-  ) {
-    final (target, reward) = _targetAndReward(type, diff, rng);
+    Random rng, {
+    bool forceXP = false,
+  }) {
+    final (target, reward) = _targetAndReward(type, diff, rng, forceXP: forceXP);
     return DailyChallenge(
       id: '${type.name}_${diff.name}_${rng.nextInt(9999)}',
       type: type,
@@ -171,21 +240,25 @@ class ChallengeService {
   }
 
   (int, ChallengeReward) _targetAndReward(
-      ChallengeType type, ChallengeDifficulty diff, Random rng) {
-    // 50% chance joker, 50% chance XP
-    final isXP = rng.nextBool();
-
+      ChallengeType type, ChallengeDifficulty diff, Random rng, {
+      bool forceXP = false,
+  }) {
     final int target = switch (type) {
-      ChallengeType.fusions    => ChallengeTargets.target('fusions', diff.name),
-      ChallengeType.score      => ChallengeTargets.target('score', diff.name),
-      ChallengeType.parties    => ChallengeTargets.target('parties', diff.name),
-      ChallengeType.formeMax   => ChallengeTargets.target('formeMax', diff.name),
-      ChallengeType.jokersUses => ChallengeTargets.target('jokersUses', diff.name),
+      ChallengeType.fusions         => ChallengeTargets.target('fusions', diff.name),
+      ChallengeType.score           => ChallengeTargets.target('score', diff.name),
+      ChallengeType.parties         => ChallengeTargets.target('parties', diff.name),
+      ChallengeType.formeMax        => ChallengeTargets.target('formeMax', diff.name),
+      ChallengeType.jokersUses      => ChallengeTargets.target('jokersUses', diff.name),
+      ChallengeType.shapesDestroyed => ChallengeTargets.target('shapesDestroyed', diff.name),
+      ChallengeType.wildcardMerges  => ChallengeTargets.target('wildcardMerges', diff.name),
+      ChallengeType.highLevelMerges => ChallengeTargets.target('highLevelMerges', diff.name),
+      ChallengeType.boardClears     => ChallengeTargets.target('boardClears', diff.name),
+      ChallengeType.maxCombo        => ChallengeTargets.target('maxCombo', diff.name),
     };
 
     final ChallengeReward reward;
-    if (isXP) {
-      reward = XpReward(ChallengeRewards.xp[diff.name] ?? 15);
+    if (forceXP) {
+      reward = XpReward(ChallengeRewards.xp[diff.name] ?? 5);
     } else {
       reward = JokerReward(ChallengeRewards.joker[diff.name] ?? JokerType.bomb);
     }

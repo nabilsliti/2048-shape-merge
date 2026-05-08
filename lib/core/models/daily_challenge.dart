@@ -1,7 +1,18 @@
 import 'package:shape_merge/core/constants/joker_types.dart';
 
 /// Types d'objectifs quotidiens disponibles.
-enum ChallengeType { fusions, score, formeMax, parties, jokersUses }
+enum ChallengeType {
+  fusions,
+  score,
+  formeMax,
+  parties,
+  jokersUses,
+  shapesDestroyed,
+  wildcardMerges,
+  highLevelMerges,
+  boardClears,
+  maxCombo,
+}
 
 /// Difficulté d'un objectif — influence la récompense.
 enum ChallengeDifficulty { easy, medium, hard }

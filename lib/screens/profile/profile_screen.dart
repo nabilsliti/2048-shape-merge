@@ -1,9 +1,15 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
 import 'package:shape_merge/core/config/avatar_catalog.dart';
+import 'package:shape_merge/core/constants/retention_ui.dart';
+import 'package:shape_merge/core/constants/shape_pack.dart';
+import 'package:shape_merge/core/constants/shape_types.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/avatar_picker_grid.dart';
 import 'package:shape_merge/core/widgets/google_sign_in_button.dart';
@@ -11,8 +17,10 @@ import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
+import 'package:shape_merge/providers/shape_pack_provider.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -27,6 +35,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditingName = false;
   late TextEditingController _nameCtrl;
   bool _initialized = false;
+  bool _signingIn = false;
 
   @override
   void initState() {
@@ -232,7 +241,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(width: 8),
                     GestureDetector(
                       onTap: _saveName,
-                      child: const Icon(Icons.check_circle, color: AppTheme.greenTop, size: 28),
+                      child: const Icon(Icons.check_circle_rounded, color: AppTheme.greenTop, size: 28),
                     ),
                   ],
                 )
@@ -271,20 +280,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               if (!isSignedIn) ...[
                 const SizedBox(height: 16),
                 GoogleSignInButton(
-                  onPressed: () async {
-                    final authService = ref.read(authServiceProvider);
-                    final cred = await authService.signInWithGoogle();
-                    if (!context.mounted) return;
-                    if (cred != null) {
-                      ref.invalidate(playerProvider);
-                      setState(() => _initialized = false);
-                    } else if (authService.lastError != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.signInError(authService.lastError!)),
-                          duration: const Duration(seconds: 10),
-                        ),
-                      );
+                  onPressed: _signingIn ? null : () async {
+                    setState(() => _signingIn = true);
+                    try {
+                      final authService = ref.read(authServiceProvider);
+                      final cred = await authService.signInWithGoogle();
+                      if (!context.mounted) return;
+                      if (cred != null) {
+                        ref.invalidate(playerProvider);
+                        setState(() => _initialized = false);
+                      } else if (authService.lastError != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.signInError(authService.lastError!)),
+                            duration: const Duration(seconds: 10),
+                          ),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setState(() => _signingIn = false);
                     }
                   },
                 ),
@@ -297,19 +311,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.emoji_events,
+                      icon: Icons.emoji_events_rounded,
                       label: l10n.bestScore,
                       value: '$bestScore',
-                      color: AppTheme.orangeTop,
+                      color: RetentionUI.scoreColor,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.layers,
+                      icon: Icons.military_tech_rounded,
                       label: l10n.levelLabel,
-                      value: '${gameState.maxLevelReached}',
-                      color: AppTheme.blueTop,
+                      value: '${isSignedIn ? (player?.level ?? localStorage?.playerLevel ?? 1) : (localStorage?.playerLevel ?? 1)}',
+                      color: RetentionUI.levelColor,
                     ),
                   ),
                 ],
@@ -319,19 +333,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.videogame_asset,
+                      icon: Icons.sports_esports_rounded,
                       label: l10n.gamesPlayed,
                       value: '${isSignedIn ? (player?.gamesPlayed ?? 0) : (localStorage?.gamesPlayed ?? 0)}',
-                      color: AppTheme.greenTop,
+                      color: RetentionUI.gamesColor,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.local_fire_department,
+                      icon: Icons.local_fire_department_rounded,
                       label: l10n.bestStreak,
                       value: '${isSignedIn ? (player?.longestStreak ?? 0) : (localStorage?.longestStreak ?? 0)}',
-                      color: AppTheme.redTop,
+                      color: RetentionUI.streakColor,
                     ),
                   ),
                 ],
@@ -361,6 +375,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(height: 8),
                     AvatarPickerGrid(
                       selectedAvatarId: _selectedAvatarId,
+                      playerLevel: isSignedIn
+                          ? (player?.level ?? localStorage?.playerLevel ?? 1)
+                          : (localStorage?.playerLevel ?? 1),
                       onAvatarSelected: _saveAvatar,
                       showCheckmark: true,
                       spacing: 6,
@@ -368,6 +385,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 16),
+
+              // Shape pack picker card
+              _ShapePackPickerCard(),
 
               const SizedBox(height: 24),
 
@@ -457,4 +479,255 @@ class _StatCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ShapePackPickerCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentPack = ref.watch(shapePackProvider);
+    final emojiUnlocked = ref.watch(emojiPackPurchasedProvider);
+
+    return Container(
+      padding: const EdgeInsets.only(left: 12, right: 12, top: 10, bottom: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.panelBg,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        border: Border.all(color: AppTheme.panelBorder, width: 2),
+      ),
+      child: Column(
+        children: [
+          Text(
+            l10n.shapePackLabel.toUpperCase(),
+            style: GoogleFonts.nunito(
+              fontSize: AppTheme.fontTiny,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.muted,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 1.4,
+            ),
+            itemCount: ShapePack.values.length,
+            itemBuilder: (ctx, index) {
+              final pack = ShapePack.values[index];
+              final isSelected = pack == currentPack;
+              final isLocked = pack == ShapePack.emoji && !emojiUnlocked;
+
+              return GestureDetector(
+                key: ValueKey(pack),
+                onTap: () {
+                  if (isLocked) return;
+                  ref.read(shapePackProvider.notifier).select(pack);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppTheme.gold.withValues(alpha: 0.15)
+                        : Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.gold : Colors.white.withValues(alpha: 0.1),
+                      width: isSelected ? 2.5 : 1,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: _previewShapes(pack),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _packLabel(pack, l10n),
+                              style: GoogleFonts.fredoka(
+                                fontSize: AppTheme.fontSmall,
+                                fontWeight: FontWeight.w700,
+                                color: isLocked ? Colors.white38 : Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isSelected)
+                        const Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Icon(
+                            Icons.check_circle_rounded,
+                            color: AppTheme.gold,
+                            size: 18,
+                          ),
+                        ),
+                      if (isLocked)
+                        const Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Icon(
+                            Icons.lock_rounded,
+                            color: Colors.white38,
+                            size: 18,
+                          ),
+                        ),
+
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _packLabel(ShapePack pack, AppLocalizations l10n) => switch (pack) {
+        ShapePack.classic => l10n.shapePackClassic,
+        ShapePack.emoji => l10n.shapePackEmoji,
+      };
+
+  static const _previewTypes = [
+    ShapeType.circle,
+    ShapeType.square,
+    ShapeType.triangle,
+    ShapeType.star,
+  ];
+
+  static const _previewColors = [
+    Color(0xFFFF6B6B),
+    Color(0xFF4ECDC4),
+    Color(0xFFFFE66D),
+    Color(0xFF95E1D3),
+  ];
+
+  List<Widget> _previewShapes(ShapePack pack) {
+    return List.generate(_previewTypes.length, (i) {
+      final type = _previewTypes[i];
+      final color = _previewColors[i];
+      final svgPath = ShapePackAssets.svgAsset(pack, type);
+
+      if (svgPath != null) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: SvgPicture.asset(
+            svgPath,
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+          ),
+        );
+      }
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: _ClassicShapeIcon(type: type, color: color, size: 24),
+      );
+    });
+  }
+}
+
+class _ClassicShapeIcon extends StatelessWidget {
+  const _ClassicShapeIcon({
+    required this.type,
+    required this.color,
+    required this.size,
+  });
+
+  final ShapeType type;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _ClassicShapePainter(type: type, color: color),
+    );
+  }
+}
+
+class _ClassicShapePainter extends CustomPainter {
+  _ClassicShapePainter({required this.type, required this.color});
+
+  final ShapeType type;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width * 0.4;
+
+    switch (type) {
+      case ShapeType.circle:
+        canvas.drawCircle(Offset(cx, cy), r, paint);
+      case ShapeType.square:
+        final rect = Rect.fromCenter(center: Offset(cx, cy), width: r * 1.6, height: r * 1.6);
+        canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(r * 0.15)), paint);
+      case ShapeType.triangle:
+        final path = Path()
+          ..moveTo(cx, cy - r)
+          ..lineTo(cx + r, cy + r * 0.8)
+          ..lineTo(cx - r, cy + r * 0.8)
+          ..close();
+        canvas.drawPath(path, paint);
+      case ShapeType.diamond:
+        final path = Path()
+          ..moveTo(cx, cy - r)
+          ..lineTo(cx + r * 0.7, cy)
+          ..lineTo(cx, cy + r)
+          ..lineTo(cx - r * 0.7, cy)
+          ..close();
+        canvas.drawPath(path, paint);
+      case ShapeType.star:
+        final path = Path();
+        for (int i = 0; i < 5; i++) {
+          final outerAngle = -pi / 2 + (2 * pi / 5) * i;
+          final innerAngle = outerAngle + pi / 5;
+          final outerX = cx + r * cos(outerAngle);
+          final outerY = cy + r * sin(outerAngle);
+          final innerX = cx + r * 0.4 * cos(innerAngle);
+          final innerY = cy + r * 0.4 * sin(innerAngle);
+          if (i == 0) {
+            path.moveTo(outerX, outerY);
+          } else {
+            path.lineTo(outerX, outerY);
+          }
+          path.lineTo(innerX, innerY);
+        }
+        path.close();
+        canvas.drawPath(path, paint);
+      case ShapeType.hexagon:
+        final path = Path();
+        for (int i = 0; i < 6; i++) {
+          final angle = -pi / 2 + (2 * pi / 6) * i;
+          final x = cx + r * cos(angle);
+          final y = cy + r * sin(angle);
+          if (i == 0) {
+            path.moveTo(x, y);
+          } else {
+            path.lineTo(x, y);
+          }
+        }
+        path.close();
+        canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ClassicShapePainter old) => type != old.type || color != old.color;
 }

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
+import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
@@ -139,7 +140,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    final (title, desc, targetKey, passThrough) = _stepContent(l10n);
+    final (title, desc, icon, targetKey, passThrough) = _stepContent(l10n);
 
     // Get spotlight rect for the target key if available
     Rect? spotlightRect;
@@ -176,7 +177,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
               ),
 
               // Floating card with message (Positioned must be direct child of Stack)
-              _buildCard(title, desc, l10n, spotlightRect, stackH),
+              _buildCard(title, desc, icon, l10n, spotlightRect, stackH),
             ],
           );
         },
@@ -187,6 +188,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
   Widget _buildCard(
     String title,
     String desc,
+    IconData icon,
     AppLocalizations l10n,
     Rect? spotlightRect,
     double stackH,
@@ -201,7 +203,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
         left: 24,
         right: 24,
         top: stackH * 0.35,
-        child: _bubble(title, desc, l10n, arrowSide: _ArrowSide.none),
+        child: _bubble(title, desc, icon, l10n, arrowSide: _ArrowSide.none),
       );
     }
 
@@ -214,7 +216,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
         left: freePos.dx,
         top: freePos.dy,
         width: bubbleW,
-        child: _bubble(title, desc, l10n, arrowSide: _ArrowSide.none),
+        child: _bubble(title, desc, icon, l10n, arrowSide: _ArrowSide.none),
       );
     }
 
@@ -235,7 +237,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
         left: left,
         width: bubbleWidth,
         top: spotlightRect.bottom + gap + arrowSize, // just below spotlight
-        child: _bubble(title, desc, l10n,
+        child: _bubble(title, desc, icon, l10n,
             arrowSide: _ArrowSide.top, arrowOffset: arrowDx),
       );
     } else {
@@ -244,7 +246,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
         left: left,
         width: bubbleWidth,
         bottom: stackH - spotlightRect.top + gap + arrowSize,
-        child: _bubble(title, desc, l10n,
+        child: _bubble(title, desc, icon, l10n,
             arrowSide: _ArrowSide.bottom, arrowOffset: arrowDx),
       );
     }
@@ -253,6 +255,7 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
   Widget _bubble(
     String title,
     String desc,
+    IconData icon,
     AppLocalizations l10n, {
     required _ArrowSide arrowSide,
     double arrowOffset = 0,
@@ -295,16 +298,15 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title with gem icon
+                  // Title with info icon
                   Row(
                     children: [
-                      Text(
-                        '◆ ',
-                        style: TextStyle(
-                          fontSize: AppTheme.fontSmall,
-                          color: AppTheme.orbCyan.withValues(alpha: 0.9),
-                        ),
+                      Icon(
+                        icon,
+                        size: AppTheme.fontSmall,
+                        color: AppTheme.orbCyan.withValues(alpha: 0.9),
                       ),
+                      const SizedBox(width: 6),
                       Flexible(
                         child: ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
@@ -434,73 +436,84 @@ class CoachOverlayState extends ConsumerState<CoachOverlay>
     return bestPos;
   }
 
-  (String title, String desc, GlobalKey? targetKey, bool passThrough) _stepContent(
+  (String title, String desc, IconData icon, GlobalKey? targetKey, bool passThrough) _stepContent(
     AppLocalizations l10n,
   ) {
     return switch (_step) {
       CoachStep.welcome => (
           l10n.coachWelcome,
           l10n.coachWelcomeDesc,
+          RetentionUI.gamesIcon,
           null,
           false,
         ),
       CoachStep.waitMerge => (
           l10n.coachWaitMerge,
           l10n.coachWaitMergeDesc,
+          RetentionUI.fusionIcon,
           CoachKeys.board,
-          true, // Let player interact with the board
+          true,
         ),
       CoachStep.mergeDone => (
           l10n.coachMergeDone,
           l10n.coachMergeDoneDesc,
+          RetentionUI.checkIcon,
           null,
           false,
         ),
       CoachStep.jokers => (
           l10n.coachJokers,
           l10n.coachJokersDesc,
+          Icons.auto_awesome_rounded,
           CoachKeys.jokerBar,
           false,
         ),
       CoachStep.waitJokerLongPress => (
           l10n.coachWaitJokerLongPress,
           l10n.coachWaitJokerLongPressDesc,
+          Icons.touch_app_rounded,
           CoachKeys.jokerBar,
-          true, // Let player long-press joker
+          true,
         ),
       CoachStep.jokerDone => (
           l10n.coachJokerDone,
           l10n.coachJokerDoneDesc,
+          RetentionUI.checkIcon,
           null,
           false,
         ),
       CoachStep.jokerUse => (
           l10n.coachJokerUse,
           l10n.coachJokerUseDesc,
+          Icons.ads_click_rounded,
           CoachKeys.jokerBar,
           false,
         ),
       CoachStep.score => (
           l10n.coachScore,
           l10n.coachScoreDesc,
+          RetentionUI.scoreIcon,
           CoachKeys.hudScore,
           false,
         ),
       CoachStep.capacity => (
           l10n.coachCapacity,
           l10n.coachCapacityDesc,
+          Icons.grid_view_rounded,
           CoachKeys.hudCapacity,
           false,
         ),
       CoachStep.merges => (
           l10n.coachMerges,
           l10n.coachMergesDesc,
+          RetentionUI.fusionIcon,
           CoachKeys.hudMerges,
           false,
         ),
       CoachStep.complete => (
           l10n.coachComplete,
           l10n.coachCompleteDesc,
+          Icons.rocket_launch_rounded,
           null,
           false,
         ),

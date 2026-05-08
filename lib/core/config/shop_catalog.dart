@@ -61,37 +61,63 @@ abstract final class ShopCatalog {
     productId: 'pack_star',
     emoji: '⭐',
     freeJokers: 5,
-    radar: 1,
+    radar: 2,
     fallbackPrice: '1,99 €',
-    gradStart: Color(0xFF7C4DFF),
-    gradEnd: Color(0xFF304FFE),
+    gradStart: Color(0xFF8E99A4),
+    gradEnd: Color(0xFF546E7A),
     lKey: 'Star',
   );
 
   static const packComet = ShopPack(
     productId: 'pack_comet',
     emoji: '☄️',
-    freeJokers: 15,
-    radar: 3,
-    evolution: 2,
+    freeJokers: 10,
+    radar: 4,
+    evolution: 3,
     megaBomb: 2,
     fallbackPrice: '4,99 €',
-    gradStart: Color(0xFFAA00FF),
-    gradEnd: Color(0xFF6200EA),
+    gradStart: Color(0xFF9575CD),
+    gradEnd: Color(0xFF5C6BC0),
     lKey: 'Comet',
   );
 
   static const packDiamond = ShopPack(
     productId: 'pack_diamond',
     emoji: '💎',
-    freeJokers: 40,
+    freeJokers: 20,
     radar: 8,
-    evolution: 5,
+    evolution: 6,
     megaBomb: 5,
     fallbackPrice: '9,99 €',
-    gradStart: Color(0xFFFF00FF),
-    gradEnd: Color(0xFF00FFFF),
+    gradStart: Color(0xFF80CBC4),
+    gradEnd: Color(0xFF4DB6AC),
     lKey: 'Diamond',
+  );
+
+  static const packRescue = ShopPack(
+    productId: 'pack_rescue',
+    emoji: '🛟',
+    freeJokers: 6,
+    radar: 0,
+    evolution: 0,
+    megaBomb: 3,
+    fallbackPrice: '2,99 €',
+    gradStart: Color(0xFFFFB74D),
+    gradEnd: Color(0xFFFF8A65),
+    lKey: 'Rescue',
+  );
+
+  static const packBoost = ShopPack(
+    productId: 'pack_boost',
+    emoji: '🚀',
+    freeJokers: 12,
+    radar: 6,
+    evolution: 4,
+    megaBomb: 3,
+    fallbackPrice: '6,99 €',
+    gradStart: Color(0xFF81C784),
+    gradEnd: Color(0xFF4CAF50),
+    lKey: 'Boost',
   );
 
   static const noAds = ShopPack(
@@ -103,16 +129,27 @@ abstract final class ShopCatalog {
     megaBomb: 2,
     isNonConsumable: true,
     fallbackPrice: '5,49 €',
-    gradStart: Color(0xFFFFD700),
-    gradEnd: Color(0xFFFFA000),
+    gradStart: Color(0xFFFFD54F),
+    gradEnd: Color(0xFFFFCA28),
     lKey: 'NoAds',
   );
 
-  /// All purchasable joker packs (in display order).
-  static const List<ShopPack> packs = [packStar, packComet, packDiamond];
+  static const emojiPack = ShopPack(
+    productId: 'pack_emoji',
+    emoji: '❤️',
+    freeJokers: 0,
+    isNonConsumable: true,
+    fallbackPrice: '0,99 €',
+    gradStart: Color(0xFFF48FB1),
+    gradEnd: Color(0xFFCE93D8),
+    lKey: 'EmojiPack',
+  );
 
-  /// All products (including no-ads).
-  static const List<ShopPack> allProducts = [packStar, packComet, packDiamond, noAds];
+  /// All purchasable joker packs (in display order).
+  static const List<ShopPack> packs = [packStar, packRescue, packComet, packBoost, packDiamond];
+
+  /// All products (including no-ads and emoji pack).
+  static const List<ShopPack> allProducts = [packStar, packRescue, packComet, packBoost, packDiamond, noAds, emojiPack];
 
   // ── Derived helpers (used by IapService) ──────────────────
 

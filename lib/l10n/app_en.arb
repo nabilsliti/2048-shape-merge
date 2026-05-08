@@ -26,17 +26,17 @@
   "musicOn": "Music On",
   "musicOff": "Music Off",
   "jokerBomb": "Bomb",
-  "jokerBombDesc": "Targets a shape and destroys all shapes of the same type and color",
+  "jokerBombDesc": "Destroys all matching pieces (same shape and color), regardless of level",
   "jokerWildcard": "Wildcard",
-  "jokerWildcardDesc": "Spawns a special shape that merges with any shape of the same level",
+  "jokerWildcardDesc": "Spawns a special shape that merges with any shape of the same level, regardless of shape or color",
   "jokerReducer": "Reducer",
   "jokerReducerDesc": "Reduces a shape's level by 1. At level 1, it vanishes!",
   "jokerRadar": "Radar",
-  "jokerRadarDesc": "Reveals all possible merges for 5 seconds",
+  "jokerRadarDesc": "Reveals all mergeable groups (same shape, color and level) for 5 seconds",
   "jokerEvolution": "Evolution",
   "jokerEvolutionDesc": "Increases a shape's level by +1 without merging",
   "jokerMegaBomb": "Mega Bomb",
-  "jokerMegaBombDesc": "Destroys all shapes of the same level, regardless of type",
+  "jokerMegaBombDesc": "Destroys all pieces of the same level, regardless of shape or color",
   "onboardingTitle1": "How to Play",
   "onboardingDesc1": "Drag a shape onto an identical one to merge them and score points!",
   "onboardingTitle2": "Your Jokers",
@@ -111,7 +111,7 @@
       "n": {"type": "int"}
     }
   },
-  "objectiveParties": "{n, plural, =1{Play 1 game} other{Play {n} games}}",
+  "objectiveParties": "{n, plural, =1{Finish 1 game} other{Finish {n} games}}",
   "@objectiveParties": {
     "placeholders": {
       "n": {"type": "int"}
@@ -125,6 +125,36 @@
   },
   "objectiveJokersUses": "{n, plural, =1{Use 1 joker} other{Use {n} jokers}}",
   "@objectiveJokersUses": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveShapesDestroyed": "{n, plural, =1{Destroy 1 shape with a bomb} other{Destroy {n} shapes with bombs}}",
+  "@objectiveShapesDestroyed": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveWildcardMerges": "{n, plural, =1{Do 1 merge with a wildcard} other{Do {n} merges with a wildcard}}",
+  "@objectiveWildcardMerges": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveHighLevelMerges": "{n, plural, =1{Create 1 shape of rank 6+} other{Create {n} shapes of rank 6+}}",
+  "@objectiveHighLevelMerges": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveBoardClears": "{n, plural, =1{Clear the board 1 time} other{Clear the board {n} times}}",
+  "@objectiveBoardClears": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "objectiveMaxCombo": "Reach a combo of {n}",
+  "@objectiveMaxCombo": {
     "placeholders": {
       "n": {"type": "int"}
     }
@@ -188,11 +218,15 @@
   "leaderboardYou": "You",
   "leaderboardError": "Error loading leaderboard",
   "packStarName": "Star Pack",
+  "packRescueName": "Rescue Pack",
   "packCometName": "Comet Pack",
+  "packBoostName": "Boost Pack",
   "packDiamondName": "Diamond Pack",
   "badgeStarter": "STARTER",
-  "badgePopular": "POPULAR",
-  "badgeBestValue": "BEST VALUE",
+  "badgeRescue": "SURVIVAL",
+  "badgePopular": "BEST VALUE",
+  "badgeBoost": "PREMIUM",
+  "badgeBestValue": "MAX",
   "purchaseSuccess": "Purchase successful!",
   "purchaseError": "Purchase error",
   "purchasesRestored": "Purchases restored!",
@@ -200,7 +234,7 @@
   "jokerCategoryClassic": "CLASSIC",
   "jokerCategoryPremium": "PREMIUM",
   "noAdsTitle": "NO ADS + JOKERS",
-  "badgeOneTimePurchase": "✨ ONE-TIME PURCHASE",
+  "badgeOneTimePurchase": "ONE-TIME PURCHASE",
   "noAdsDescription": "Remove all ads!",
   "sectionJokerPacks": "JOKER PACKS",
   "sectionFreeJoker": "FREE JOKER",
@@ -246,27 +280,27 @@
   "jokerSuggestReducer": "Reducer to create a pair",
   "jokerSuggestUse": "Use",
 
-  "coachWelcome": "Welcome! 🎮",
+  "coachWelcome": "Welcome!",
   "coachWelcomeDesc": "Let's learn the basics together!",
-  "coachWaitMerge": "Your turn! 🧩",
+  "coachWaitMerge": "Your turn!",
   "coachWaitMergeDesc": "Drag a shape onto an identical one (same shape, same color, same level) to merge!",
-  "coachMergeDone": "Well done! 🎉",
+  "coachMergeDone": "Well done!",
   "coachMergeDoneDesc": "You've mastered merging! Each merge increases your score.",
-  "coachJokers": "Your Jokers 🃏",
+  "coachJokers": "Your Jokers",
   "coachJokersDesc": "Here are your jokers! Each has a unique power.",
-  "coachWaitJokerLongPress": "Try it! 👇",
+  "coachWaitJokerLongPress": "Try it!",
   "coachWaitJokerLongPressDesc": "Long-press a joker to see its description.",
-  "coachJokerDone": "Perfect! 👏",
+  "coachJokerDone": "Perfect!",
   "coachJokerDoneDesc": "You can check any joker's description anytime.",
-  "coachJokerUse": "Using a Joker 🎯",
+  "coachJokerUse": "Using a Joker",
   "coachJokerUseDesc": "Tap a joker to activate it, then tap a shape on the grid to apply its power.",
-  "coachScore": "Score ⭐",
+  "coachScore": "Score",
   "coachScoreDesc": "Your current score. Each merge earns points.",
-  "coachCapacity": "Capacity ⭕",
+  "coachCapacity": "Capacity",
   "coachCapacityDesc": "Shapes on the grid. When it's full and no merge is possible, the game is over!",
-  "coachMerges": "Merges ⚡",
+  "coachMerges": "Merges",
   "coachMergesDesc": "Total merges performed in this game.",
-  "coachComplete": "Let's go! 🚀",
+  "coachComplete": "Let's go!",
   "coachCompleteDesc": "You're ready! Merge, use jokers, and beat your record!",
   "coachTapContinue": "Tap to continue",
   "coachSkip": "Skip",
@@ -292,5 +326,50 @@
   "quitGameConfirmMessage": "Your progress will be lost.",
   "quitGameCancel": "Continue",
   "quitGameConfirm": "Quit",
-  "scoreSubmitError": "Score not synced. Check your connection."
+  "scoreSubmitError": "Score not synced. Check your connection.",
+  "reviveAd": "Continue for free",
+  "blockedAgain": "Blocked again 😬",
+  "noMoreMoves": "No more moves 😱",
+  "saveMyGame": "Save my game",
+  "newGame": "New game",
+  "pageNotFound": "Page not found: {uri}",
+  "@pageNotFound": {
+    "placeholders": {
+      "uri": {"type": "String"}
+    }
+  },
+  "xpAmount": "{n} XP",
+  "@xpAmount": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "adLabel": "AD",
+  "rewardPlusJoker": "+1 ",
+  "rewardX2": " x2",
+  "quantityFormat": "×{count}",
+  "@quantityFormat": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "premiumStarLabel": "★ PREMIUM",
+  "rewardPlusN": "+{n}",
+  "@rewardPlusN": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "bonusStars": "★ BONUS ★",
+  "shapePackLabel": "Shape pack",
+  "shapePackClassic": "Classic",
+  "shapePackEmoji": "Emoji",
+  "packEmojiPackName": "Emoji Pack",
+  "emojiPackDesc": "6 emojis to replace your shapes",
+  "badgeEmojiPack": "NEW",
+  "bestChoice": "BEST CHOICE",
+  "rescueHeroDesc": "Save your game and continue your best run",
+  "rescueCtaLabel": "Save my game \uD83D\uDD25",
+  "freeJokerShort": "+1 joker of your choice",
+  "sectionMoreOffers": "MORE OFFERS"
 }

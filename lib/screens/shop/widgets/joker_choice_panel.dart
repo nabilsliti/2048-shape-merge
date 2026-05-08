@@ -167,7 +167,7 @@ class _JokerChoiceButton extends StatelessWidget {
                             BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8),
                           ],
                         ),
-                        child: const Icon(Icons.check, color: Colors.white, size: 14),
+                        child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
                       ),
                     ),
                 ],

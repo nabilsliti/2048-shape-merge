@@ -15,42 +15,68 @@ service cloud.firestore {
     match /players/{userId} {
       allow read: if isAuth();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
 
-      // Subcollections (e.g. dailyChallenges)
+      function validPlayerUpdate() {
+        let d = request.resource.data;
+        // Joker counts must be non-negative integers, capped at max 99
+        let jokersValid = !('jokerInventory' in d)
+            || (d.jokerInventory is map
+                && (!('bomb' in d.jokerInventory) || (d.jokerInventory.bomb is int && d.jokerInventory.bomb >= 0 && d.jokerInventory.bomb <= 99))
+                && (!('reducer' in d.jokerInventory) || (d.jokerInventory.reducer is int && d.jokerInventory.reducer >= 0 && d.jokerInventory.reducer <= 99))
+                && (!('wildcard' in d.jokerInventory) || (d.jokerInventory.wildcard is int && d.jokerInventory.wildcard >= 0 && d.jokerInventory.wildcard <= 99))
+                && (!('evolution' in d.jokerInventory) || (d.jokerInventory.evolution is int && d.jokerInventory.evolution >= 0 && d.jokerInventory.evolution <= 99))
+                && (!('megaBomb' in d.jokerInventory) || (d.jokerInventory.megaBomb is int && d.jokerInventory.megaBomb >= 0 && d.jokerInventory.megaBomb <= 99))
+                && (!('radar' in d.jokerInventory) || (d.jokerInventory.radar is int && d.jokerInventory.radar >= 0 && d.jokerInventory.radar <= 99))
+               );
+        // Best score cap
+        let scoreValid = !('bestScore' in d) || (d.bestScore is number && d.bestScore >= 0 && d.bestScore <= 999999);
+        return jokersValid && scoreValid;
+      }
+
+      allow update: if isOwner(userId) && validPlayerUpdate();
+
+      // ── Daily challenges progress ───────────────────
+      // Client can update progress (current, completed) but NOT
+      // reward delivery flags (rewardCollected, bonusCollected).
+      // Rewards are distributed by Cloud Function only.
+      match /data/dailyChallenges {
+        allow read: if isOwner(userId);
+
+        // Client can create (first generation of the day)
+        allow create: if isOwner(userId)
+            && !('bonusCollected' in request.resource.data
+                 && request.resource.data.bonusCollected == true);
+
+        // Client can update progress but cannot flip reward flags
+        allow update: if isOwner(userId)
+            && (
+              // bonusCollected cannot be changed to true by client
+              (!('bonusCollected' in request.resource.data)
+               || request.resource.data.bonusCollected == resource.data.bonusCollected)
+            );
+      }
+
+      // Other player subcollection docs (non-challenge)
       match /data/{docId} {
         allow read: if isOwner(userId);
-        allow write: if isOwner(userId);
+        allow write: if isOwner(userId) && docId != 'dailyChallenges';
+      }
+
+      // Purchase receipts — written by Cloud Function only (no client access)
+      match /purchases/{orderId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Cloud Functions use Admin SDK (bypasses rules)
       }
     }
 
     // ── Leaderboard ─────────────────────────────────────
+    // Scores are submitted via Cloud Function (Admin SDK bypasses rules).
+    // Client can only read + delete own entry.
     match /leaderboard/{entryId} {
       allow read: if true;
-
-      function validLeaderboard() {
-        let d = request.resource.data;
-        return d.score is number
-            && d.score >= 0
-            && d.score <= 999999
-            && d.displayName is string
-            && d.displayName.size() <= 50
-            && d.mergeCount is number
-            && d.maxLevel is number;
-      }
-
-      // Rate limit: at most one update per 5 seconds.
-      function notTooFrequent() {
-        return !('timestamp' in resource.data)
-            || request.time > resource.data.timestamp + duration.value(5, 's');
-      }
-
-      allow create: if isAuth() && request.auth.uid == entryId
-        && validLeaderboard();
-      allow update: if isAuth() && request.auth.uid == entryId
-        && validLeaderboard()
-        && notTooFrequent();
+      allow create: if false; // Cloud Function only (Admin SDK)
+      allow update: if false; // Cloud Function only (Admin SDK)
       allow delete: if isAuth() && request.auth.uid == entryId;
     }
   }

@@ -120,26 +120,25 @@ class _IconShapePainter extends CustomPainter {
   final _IconShape shape;
   _IconShapePainter(this.shape);
 
+  static final _borderPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.6)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5
+    ..strokeJoin = StrokeJoin.round;
+  static final _fillPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.2)
+    ..style = PaintingStyle.fill;
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
     final r = size.width / 2 - 2;
 
-    final borderPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeJoin = StrokeJoin.round;
-
-    final fillPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
-      ..style = PaintingStyle.fill;
-
     switch (shape) {
       case _IconShape.circle:
-        canvas.drawCircle(Offset(cx, cy), r, fillPaint);
-        canvas.drawCircle(Offset(cx, cy), r, borderPaint);
+        canvas.drawCircle(Offset(cx, cy), r, _fillPaint);
+        canvas.drawCircle(Offset(cx, cy), r, _borderPaint);
 
       case _IconShape.triangle:
         final tr = r * 1.25;
@@ -156,8 +155,8 @@ class _IconShapePainter extends CustomPainter {
           }
         }
         path.close();
-        canvas.drawPath(path, fillPaint);
-        canvas.drawPath(path, borderPaint);
+        canvas.drawPath(path, _fillPaint);
+        canvas.drawPath(path, _borderPaint);
 
       case _IconShape.square:
         final rect = RRect.fromRectAndRadius(
@@ -165,8 +164,8 @@ class _IconShapePainter extends CustomPainter {
               center: Offset(cx, cy), width: r * 1.8, height: r * 1.8),
           const Radius.circular(6),
         );
-        canvas.drawRRect(rect, fillPaint);
-        canvas.drawRRect(rect, borderPaint);
+        canvas.drawRRect(rect, _fillPaint);
+        canvas.drawRRect(rect, _borderPaint);
 
       case _IconShape.hexagon:
         final path = Path();
@@ -181,8 +180,8 @@ class _IconShapePainter extends CustomPainter {
           }
         }
         path.close();
-        canvas.drawPath(path, fillPaint);
-        canvas.drawPath(path, borderPaint);
+        canvas.drawPath(path, _fillPaint);
+        canvas.drawPath(path, _borderPaint);
     }
   }
 

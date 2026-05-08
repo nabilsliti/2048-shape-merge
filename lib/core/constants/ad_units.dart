@@ -25,4 +25,15 @@ abstract final class AdUnits {
         ? 'ca-app-pub-8640672469603981/2858766113'
         : 'ca-app-pub-3940256099942544/1712485313'; // TODO: replace with real iOS ID
   }
+
+  static String get interstitial {
+    if (kDebugMode) {
+      return Platform.isAndroid
+          ? 'ca-app-pub-3940256099942544/1033173712'
+          : 'ca-app-pub-3940256099942544/4411468910';
+    }
+    return Platform.isAndroid
+        ? 'ca-app-pub-8640672469603981/2375233154'
+        : 'ca-app-pub-3940256099942544/4411468910'; // TODO: replace with real iOS ID
+  }
 }

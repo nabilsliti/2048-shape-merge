@@ -12,8 +12,12 @@ void main() {
       id: 'target', x: 100, y: 100,
       type: ShapeType.circle, color: const Color(0xFF4FC3F7), level: 2,
     );
-    final sameTypeColor = GameShape(
+    final sameTypeColorLevel = GameShape(
       id: 'same', x: 200, y: 200,
+      type: ShapeType.circle, color: const Color(0xFF4FC3F7), level: 2,
+    );
+    final sameTypeColorDiffLevel = GameShape(
+      id: 'samediff', x: 250, y: 250,
       type: ShapeType.circle, color: const Color(0xFF4FC3F7), level: 3,
     );
     final different = GameShape(
@@ -23,8 +27,8 @@ void main() {
     final inventory = const JokerInventory(bomb: 2, wildcard: 2, reducer: 2);
 
     group('bomb', () {
-      test('removes all shapes of same type+color', () {
-        final shapes = [target, sameTypeColor, different];
+      test('removes shapes of same type+color+level', () {
+        final shapes = [target, sameTypeColorLevel, different];
         final result = JokerHandler.useBomb(target, shapes, inventory);
 
         expect(result.shapes.length, 1);
@@ -33,8 +37,17 @@ void main() {
         expect(result.scoreBonus, greaterThan(0));
       });
 
+      test('does not remove same type+color at different level', () {
+        final shapes = [target, sameTypeColorDiffLevel, different];
+        final result = JokerHandler.useBomb(target, shapes, inventory);
+
+        expect(result.shapes.length, 2);
+        expect(result.shapes.any((s) => s.id == 'samediff'), true);
+        expect(result.shapes.any((s) => s.id == 'diff'), true);
+      });
+
       test('does nothing with 0 bombs', () {
-        final shapes = [target, sameTypeColor];
+        final shapes = [target, sameTypeColorLevel];
         const empty = JokerInventory(bomb: 0, wildcard: 0, reducer: 0);
         final result = JokerHandler.useBomb(target, shapes, empty);
 

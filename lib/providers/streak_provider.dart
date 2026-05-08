@@ -6,6 +6,7 @@ import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
+import 'package:shape_merge/providers/progression_provider.dart';
 
 final streakServiceProvider = Provider<StreakService>((_) => const StreakService());
 
@@ -23,7 +24,7 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
   /// Called at app launch (SplashScreen) and on app resume (AppLifecycleState.resumed).
   /// Computes streak but does NOT deliver jokers — call [claimStreakReward] from the popup.
   Future<void> checkAndUpdate() async {
-    if (_isProcessing) return;
+    if (_isProcessing || _isClaiming) return;
     _isProcessing = true;
     try {
     final service = _ref.read(streakServiceProvider);
@@ -54,17 +55,32 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
     }
   }
 
-  /// Delivers the joker reward to the game inventory. Called from the popup collect button.
-  Future<void> claimStreakReward() async {
+  bool _isClaiming = false;
+
+  /// Delivers the reward to the game inventory. Called from the popup collect button.
+  /// [doubled] is true when the user watched a rewarded ad for x2.
+  Future<void> claimStreakReward({bool doubled = false}) async {
+    if (_isClaiming) return;
     if (state == null || state!.rewardClaimed || state!.reward == null) return;
-    final (jokerType, amount) = state!.reward!;
-    _ref.read(gameStateProvider.notifier).addJokers(jokerType, amount);
+    _isClaiming = true;
+    try {
+    // Mark claimed in state FIRST to prevent double-call
+    if (mounted) state = state!.copyWith(rewardClaimed: true);
+    final reward = state!.reward!;
+    final multiplier = doubled ? 2 : 1;
+
+    switch (reward) {
+      case StreakJokerReward(:final type, :final amount):
+        _ref.read(gameStateProvider.notifier).addJokers(type, amount * multiplier);
+      case StreakXpReward(:final xp):
+        await _ref.read(progressionProvider.notifier).addBonusXP(xp * multiplier);
+    }
 
     // Also deliver milestone bonus rewards if any
     final milestone = state!.milestoneReward;
     if (milestone != null) {
-      for (final (mType, mAmount) in milestone) {
-        _ref.read(gameStateProvider.notifier).addJokers(mType, mAmount);
+      for (final m in milestone) {
+        _ref.read(gameStateProvider.notifier).addJokers(m.type, m.amount);
       }
     }
 
@@ -74,13 +90,15 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
     if (user != null) {
       final firestore = _ref.read(firestoreServiceProvider);
       await firestore.updateRewardClaimedDate(user.uid, todayKey);
+      // Invalidate so next checkAndUpdate reads fresh rewardClaimedDate
+      _ref.invalidate(playerProvider);
     } else {
       final storage = await _ref.read(localStorageProvider.future);
       await storage.setRewardClaimedDate(todayKey);
     }
 
-    if (mounted) {
-      state = state!.copyWith(rewardClaimed: true);
+    } finally {
+      _isClaiming = false;
     }
   }
 
@@ -89,9 +107,11 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
 
   /// Call on sign-in to migrate guest streak → Firestore.
   Future<void> migrateAndRefresh(User user) async {
-    // Acquire the processing lock so a concurrent checkAndUpdate (e.g. from
-    // didChangeAppLifecycleState.resumed) cannot run during migration.
-    if (_isProcessing) return;
+    // Wait for any in-flight checkAndUpdate to complete before migrating.
+    // Don't skip migration — it's more important than a routine check.
+    while (_isProcessing) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
     _isProcessing = true;
     try {
       final service = _ref.read(streakServiceProvider);

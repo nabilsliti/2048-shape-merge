@@ -271,7 +271,7 @@ class _JokerChoicePanelState extends State<_JokerChoicePanel>
                   child: Opacity(
                     opacity: plusOpacity,
                     child: Text(
-                      '+1',
+                      AppLocalizations.of(context)!.rewardPlusN(1),
                       style: GoogleFonts.fredoka(
                         fontSize: AppTheme.fontH3,
                         fontWeight: FontWeight.w900,
@@ -350,7 +350,7 @@ class _JokerChoiceButton extends StatelessWidget {
                             BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8),
                           ],
                         ),
-                        child: const Icon(Icons.check, color: Colors.white, size: 14),
+                        child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
                       ),
                     ),
                 ],

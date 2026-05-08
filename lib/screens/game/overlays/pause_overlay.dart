@@ -153,11 +153,19 @@ class PauseOverlay extends ConsumerWidget {
                         onPressed: () {
                           ref.read(vibrationProvider.notifier).toggle();
                         },
-                        child: Icon(
-                          vibrationEnabled ? Icons.vibration : Icons.phone_android,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                        child: vibrationEnabled
+                            ? const Icon(Icons.vibration, color: Colors.white, size: 24)
+                            : const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Icon(Icons.vibration, color: Colors.white, size: 24),
+                                    _SlashLine(size: 24),
+                                  ],
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -182,4 +190,35 @@ class PauseOverlay extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _SlashLine extends StatelessWidget {
+  final double size;
+  const _SlashLine({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _SlashPainter(),
+    );
+  }
+}
+
+class _SlashPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(size.width * 0.15, size.height * 0.15),
+      Offset(size.width * 0.85, size.height * 0.85),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
