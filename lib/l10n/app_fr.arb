@@ -253,6 +253,12 @@
   "okButton": "OK",
   "notifStreakTitle": "Votre série est en danger !",
   "notifStreakBody": "Jouez une partie pour maintenir votre série de jeu.",
+  "notifStreakBodyWithDays": "Votre série de {days} jours est en danger ! Jouez pour la maintenir.",
+  "@notifStreakBodyWithDays": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "notifChannelName": "Série de jeu",
   "notifChannelDesc": "Rappels pour garder votre série de jeu active.",
   "musicLabel": "Musique",

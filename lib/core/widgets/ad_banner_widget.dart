@@ -10,6 +10,7 @@ import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/offline_banner.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
+import 'package:shape_merge/providers/nav_provider.dart';
 import 'package:vibration/vibration.dart';
 
 const _log = AppLogger('Ads');
@@ -35,15 +36,15 @@ abstract final class _BannerTuning {
 
 /// Persistent shell that keeps a single [AdBannerWidget] alive across routes.
 /// Detects tab navigation and notifies the banner to reload.
-class AdShell extends StatefulWidget {
+class AdShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
   const AdShell({super.key, required this.navigationShell});
 
   @override
-  State<AdShell> createState() => _AdShellState();
+  ConsumerState<AdShell> createState() => _AdShellState();
 }
 
-class _AdShellState extends State<AdShell> {
+class _AdShellState extends ConsumerState<AdShell> {
   final _bannerKey = GlobalKey<_AdBannerWidgetState>();
   int _previousIndex = -1;
   bool _wasGameScreen = false;
@@ -53,6 +54,13 @@ class _AdShellState extends State<AdShell> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final currentIndex = widget.navigationShell.currentIndex;
     final isGameScreen = GoRouterState.of(context).uri.path == '/home/game';
+
+    // Publish current branch index so tab content can pause animations when
+    // not visible (saves CPU/battery). See `currentBranchIndexProvider`.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(currentBranchIndexProvider.notifier).state = currentIndex;
+    });
 
     // Detect tab change → request banner reload
     if (_previousIndex != -1 && _previousIndex != currentIndex) {
@@ -397,15 +405,14 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
 
     // Always reserve the banner slot so layout never jumps and the user
     // sees a consistent space at the bottom. While the ad is (re)loading,
-    // a subtle placeholder keeps the slot visible.
+    // we show a solid black placeholder so the slot is visible but discreet.
+    final hasAd = _isLoaded && _bannerAd != null;
     return Container(
       width: double.infinity,
       height: _BannerTuning.slotHeight,
-      color: AppTheme.navBarBg,
+      color: hasAd ? AppTheme.navBarBg : Colors.black,
       alignment: Alignment.center,
-      child: (_isLoaded && _bannerAd != null)
-          ? AdWidget(ad: _bannerAd!)
-          : const SizedBox.shrink(),
+      child: hasAd ? AdWidget(ad: _bannerAd!) : const SizedBox.shrink(),
     );
   }
 }

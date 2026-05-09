@@ -64,39 +64,72 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
     if (state == null || state!.rewardClaimed || state!.reward == null) return;
     _isClaiming = true;
     try {
-    // Mark claimed in state FIRST to prevent double-call
-    if (mounted) state = state!.copyWith(rewardClaimed: true);
-    final reward = state!.reward!;
-    final multiplier = doubled ? 2 : 1;
+      final user = _ref.read(authStateProvider).valueOrNull;
 
-    switch (reward) {
-      case StreakJokerReward(:final type, :final amount):
-        _ref.read(gameStateProvider.notifier).addJokers(type, amount * multiplier);
-      case StreakXpReward(:final xp):
-        await _ref.read(progressionProvider.notifier).addBonusXP(xp * multiplier);
-    }
+      // ── Signed-in: server-authoritative claim via Cloud Function ──
+      if (user != null) {
+        final service = _ref.read(streakServiceProvider);
+        StreakClaimResult? serverResult;
+        try {
+          serverResult = await service.claimSigned();
+        } catch (e) {
+          // Network/auth failure — leave state un-claimed so user can retry.
+          if (mounted) state = state!.copyWith(rewardClaimed: false);
+          return;
+        }
 
-    // Also deliver milestone bonus rewards if any
-    final milestone = state!.milestoneReward;
-    if (milestone != null) {
-      for (final m in milestone) {
-        _ref.read(gameStateProvider.notifier).addJokers(m.type, m.amount);
+        // Mark claimed in state immediately (prevents double-call).
+        if (mounted) state = state!.copyWith(rewardClaimed: true);
+
+        // null = server says already_claimed today → don't deliver again.
+        if (serverResult == null) {
+          _ref.invalidate(playerProvider);
+          return;
+        }
+
+        // Server-authoritative reward delivery to in-memory game state.
+        // (Server already persisted to Firestore atomically.)
+        final reward = serverResult.reward;
+        final multiplier = doubled ? 2 : 1;
+        switch (reward) {
+          case StreakJokerReward(:final type, :final amount):
+            _ref.read(gameStateProvider.notifier).addJokers(type, amount * multiplier);
+          case StreakXpReward():
+            // XP already credited server-side; refresh provider to display new level.
+            break;
+        }
+        if (serverResult.milestone != null) {
+          for (final m in serverResult.milestone!) {
+            _ref.read(gameStateProvider.notifier).addJokers(m.type, m.amount);
+          }
+        }
+
+        // Refresh player to show new XP/level/streak from Firestore.
+        _ref.invalidate(playerProvider);
+        return;
       }
-    }
 
-    // Persist claimed date — Firestore if signed in, localStorage if guest
-    final todayKey = PlayerStreak.todayKey();
-    final user = _ref.read(authStateProvider).valueOrNull;
-    if (user != null) {
-      final firestore = _ref.read(firestoreServiceProvider);
-      await firestore.updateRewardClaimedDate(user.uid, todayKey);
-      // Invalidate so next checkAndUpdate reads fresh rewardClaimedDate
-      _ref.invalidate(playerProvider);
-    } else {
+      // ── Guest: local-only claim ──
+      if (mounted) state = state!.copyWith(rewardClaimed: true);
+      final reward = state!.reward!;
+      final multiplier = doubled ? 2 : 1;
+
+      switch (reward) {
+        case StreakJokerReward(:final type, :final amount):
+          _ref.read(gameStateProvider.notifier).addJokers(type, amount * multiplier);
+        case StreakXpReward(:final xp):
+          await _ref.read(progressionProvider.notifier).addBonusXP(xp * multiplier);
+      }
+
+      final milestone = state!.milestoneReward;
+      if (milestone != null) {
+        for (final m in milestone) {
+          _ref.read(gameStateProvider.notifier).addJokers(m.type, m.amount);
+        }
+      }
+
       final storage = await _ref.read(localStorageProvider.future);
-      await storage.setRewardClaimedDate(todayKey);
-    }
-
+      await storage.setRewardClaimedDate(PlayerStreak.todayKey());
     } finally {
       _isClaiming = false;
     }

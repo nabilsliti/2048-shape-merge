@@ -253,6 +253,12 @@
   "okButton": "OK",
   "notifStreakTitle": "Your streak is at risk!",
   "notifStreakBody": "Play a game to keep your streak alive.",
+  "notifStreakBodyWithDays": "Your {days}-day streak is at risk! Play to keep it.",
+  "@notifStreakBodyWithDays": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "notifChannelName": "Game Streak",
   "notifChannelDesc": "Reminders to keep your game streak active.",
   "musicLabel": "Music",

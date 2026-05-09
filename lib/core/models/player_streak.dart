@@ -176,3 +176,58 @@ class StreakCheckResult {
     );
   }
 }
+
+/// Server-authoritative response from the `claimDailyStreakReward` CF.
+/// All fields are computed server-side using `Timestamp.now()`.
+class StreakClaimResult {
+  final int currentStreak;
+  final int longestStreak;
+  final int nextRewardIndex;
+  final StreakReward reward;
+  final List<StreakJokerReward>? milestone;
+
+  const StreakClaimResult({
+    required this.currentStreak,
+    required this.longestStreak,
+    required this.nextRewardIndex,
+    required this.reward,
+    this.milestone,
+  });
+
+  factory StreakClaimResult.fromMap(Map<String, Object?> data) {
+    final rewardMap = Map<String, Object?>.from(data['reward'] as Map);
+    final reward = _rewardFromMap(rewardMap);
+
+    final rawMilestone = data['milestone'];
+    List<StreakJokerReward>? milestone;
+    if (rawMilestone is List) {
+      milestone = rawMilestone
+          .whereType<Map<Object?, Object?>>()
+          .map((m) => Map<String, Object?>.from(m))
+          .map((m) => StreakJokerReward(
+                JokerType.values.byName(m['type'] as String),
+                (m['amount'] as num).toInt(),
+              ))
+          .toList();
+    }
+
+    return StreakClaimResult(
+      currentStreak: (data['currentStreak'] as num).toInt(),
+      longestStreak: (data['longestStreak'] as num).toInt(),
+      nextRewardIndex: (data['nextRewardIndex'] as num).toInt(),
+      reward: reward,
+      milestone: milestone,
+    );
+  }
+
+  static StreakReward _rewardFromMap(Map<String, Object?> m) {
+    final kind = m['kind'] as String;
+    if (kind == 'xp') {
+      return StreakXpReward((m['xp'] as num).toInt());
+    }
+    return StreakJokerReward(
+      JokerType.values.byName(m['type'] as String),
+      (m['amount'] as num).toInt(),
+    );
+  }
+}

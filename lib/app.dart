@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cloud_functions/cloud_functions.dart';
@@ -10,6 +11,8 @@ import 'package:shape_merge/core/config/app_routes.dart';
 import 'package:shape_merge/core/constants/shape_pack.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
+import 'package:shape_merge/core/services/notification_service.dart';
+import 'package:shape_merge/core/widgets/account_sync_overlay.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -23,6 +26,7 @@ import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/providers/shape_pack_provider.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
+import 'package:shape_merge/providers/account_sync_provider.dart';
 import 'package:shape_merge/screens/splash/splash_screen.dart';
 import 'package:shape_merge/screens/hub/main_hub_screen.dart';
 import 'package:shape_merge/screens/game/game_screen.dart';
@@ -100,6 +104,24 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Boot the local-notifications plugin, ask for permission on Android 13+/iOS,
+    // then schedule the streak-reminder so users who don't open a game today
+    // still get pinged tomorrow.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await NotificationService.instance.init();
+      await NotificationService.instance.requestPermission();
+      if (!mounted) return;
+      await _rescheduleStreakReminder();
+    });
+  }
+
+  Future<void> _rescheduleStreakReminder() async {
+    if (!mounted) return;
+    final streakDays = ref.read(streakProvider)?.streak.currentStreak ?? 0;
+    await NotificationService.instance.scheduleStreakReminder(
+      l10n: AppLocalizations.of(context),
+      streakDays: streakDays,
+    );
   }
 
   @override
@@ -119,6 +141,8 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
         // Re-check streak when user brings the app to foreground (next day scenario)
         ref.read(streakProvider.notifier).checkAndUpdate();
         ref.read(dailyChallengeProvider.notifier).checkRenewal();
+        // Re-arm the streak reminder for the next 23 h.
+        unawaited(_rescheduleStreakReminder());
       case AppLifecycleState.detached:
         break;
     }
@@ -148,6 +172,9 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
       if (nextUser != null) {
         notifier.setSignedIn(nextUser.uid, ref.read(firestoreServiceProvider));
         ref.read(streakProvider.notifier).migrateAndRefresh(nextUser);
+        // Show full-screen sync spinner so the user doesn't see jokers /
+        // best-score "jump" while we replay purchases and merge guest data.
+        ref.read(accountSyncProvider.notifier).state = true;
         // Load the new account's data from Firestore, merge guest jokers
         // (max per type) so locally-purchased jokers are never lost,
         // then clear localStorage.
@@ -231,6 +258,8 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
           }
 
           await _resetLocalToDefaults(storage);
+        }).whenComplete(() {
+          ref.read(accountSyncProvider.notifier).state = false;
         });
         // Reload daily challenges for the new account
         ref.read(dailyChallengeProvider.notifier).checkRenewal();
@@ -309,6 +338,14 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: _router,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            const AccountSyncOverlay(),
+          ],
+        );
+      },
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

@@ -432,6 +432,8 @@ class _RadiationPainter extends CustomPainter {
     final maxRadius = size.width / 2;
 
     // 3 rings expanding outward with staggered timing
+    // Reused across all 3 ripple draws per frame to avoid allocations.
+    final paint = _ripplePaint;
     for (var i = 0; i < 3; i++) {
       final delay = i * 0.15;
       final t = ((progress - delay) / (1.0 - delay)).clamp(0.0, 1.0);
@@ -441,16 +443,14 @@ class _RadiationPainter extends CustomPainter {
       final radius = maxRadius * 0.4 + maxRadius * 0.6 * eased;
       final opacity = (1.0 - eased) * 0.7;
 
-      canvas.drawCircle(
-        center,
-        radius,
-        Paint()
-          ..color = color.withValues(alpha: opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5 * (1.0 - eased * 0.5),
-      );
+      paint
+        ..color = color.withValues(alpha: opacity)
+        ..strokeWidth = 2.5 * (1.0 - eased * 0.5);
+      canvas.drawCircle(center, radius, paint);
     }
   }
+
+  static final _ripplePaint = Paint()..style = PaintingStyle.stroke;
 
   @override
   bool shouldRepaint(_RadiationPainter old) => progress != old.progress;

@@ -6,8 +6,8 @@ import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/challenge_service.dart';
+import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
@@ -197,7 +197,7 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
         ..[idx] = challenge.copyWith(rewardCollected: true),
     );
     if (mounted) state = updated;
-    AudioService.instance.playReward();
+    _ref.read(audioServiceProvider).playReward();
 
     final user = _ref.read(authStateProvider).valueOrNull;
 
@@ -245,7 +245,7 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
         ..[idx] = challenge.copyWith(rewardCollected: true),
     );
     if (mounted) state = updated;
-    AudioService.instance.playReward();
+    _ref.read(audioServiceProvider).playReward();
 
     final user = _ref.read(authStateProvider).valueOrNull;
 
@@ -277,7 +277,7 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     final current = state;
     if (current == null || !current.canCollectBonus) return;
 
-    AudioService.instance.playReward();
+    _ref.read(audioServiceProvider).playReward();
 
     final updated = current.copyWith(bonusCollected: true);
     if (mounted) state = updated;

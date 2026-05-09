@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:shape_merge/core/models/player.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
@@ -51,10 +52,49 @@ class StreakService {
       nextRewardIndex: player.nextRewardIndex,
     );
 
-    // Read rewardClaimedDate from Player (Firestore) when signed in
-    final result = _compute(current, nudgeAlreadyShown: false, rewardClaimedDate: player.rewardClaimedDate);
-    await _saveToFirestore(player.uid, result.streak, firestore);
-    return result;
+    // Read-only prediction for UI — NEVER writes to Firestore client-side.
+    // The actual streak update happens server-side in `claimDailyStreakReward`
+    // when the user collects the reward (anti-cheat: clock manipulation).
+    final claimedToday = _isClaimedToday(player);
+    return _compute(
+      current,
+      nudgeAlreadyShown: false,
+      rewardClaimedDate: claimedToday ? PlayerStreak.todayKey() : null,
+    );
+  }
+
+  /// Returns true if the player's `lastClaimAt` (server timestamp) falls on
+  /// the same UTC day as now. Falls back to the legacy `rewardClaimedDate`
+  /// String if no server timestamp is set yet.
+  bool _isClaimedToday(Player player) {
+    final last = player.lastClaimAt;
+    if (last != null) {
+      final nowUtc = DateTime.now().toUtc();
+      final lastUtc = last.toUtc();
+      return nowUtc.year == lastUtc.year &&
+          nowUtc.month == lastUtc.month &&
+          nowUtc.day == lastUtc.day;
+    }
+    return player.rewardClaimedDate == PlayerStreak.todayKey();
+  }
+
+  /// Calls the `claimDailyStreakReward` Cloud Function.
+  /// Returns the server-authoritative result, or null on already-claimed.
+  /// Throws on network/auth errors so the caller can show a retry UI.
+  Future<StreakClaimResult?> claimSigned() async {
+    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+        .httpsCallable('claimDailyStreakReward');
+    try {
+      final res = await callable.call<Map<Object?, Object?>>();
+      final data = Map<String, Object?>.from(res.data);
+      return StreakClaimResult.fromMap(data);
+    } on FirebaseFunctionsException catch (e) {
+      if (e.code == 'already-exists') {
+        _log.info('Streak already claimed today (server)');
+        return null;
+      }
+      rethrow;
+    }
   }
 
   // ─────────────────────────────────────────────

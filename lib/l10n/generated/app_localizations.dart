@@ -1082,6 +1082,12 @@ abstract class AppLocalizations {
   /// **'Play a game to keep your streak alive.'**
   String get notifStreakBody;
 
+  /// No description provided for @notifStreakBodyWithDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {days}-day streak is at risk! Play to keep it.'**
+  String notifStreakBodyWithDays(int days);
+
   /// No description provided for @notifChannelName.
   ///
   /// In en, this message translates to:

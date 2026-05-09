@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shape_merge/core/config/notification_config.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -97,15 +98,22 @@ class NotificationService {
 
   /// Schedules (or reschedules) a streak-danger notification 23 h from now.
   /// Cancels any previous streak reminder first.
+  ///
+  /// Pass [l10n] to localize the title/body in the user's current language.
+  /// When [l10n] is null, falls back to the FR strings in [NotificationConfig]
+  /// (legacy behaviour kept for callers that don't have a `BuildContext`).
   Future<void> scheduleStreakReminder({
-    String title = NotificationConfig.defaultTitle,
-    String? body,
+    AppLocalizations? l10n,
     int? streakDays,
   }) async {
-    final resolvedBody = body ??
-        (streakDays != null && streakDays > 0
-            ? 'Votre série de $streakDays jours est en danger ! Jouez pour la maintenir.'
-            : NotificationConfig.defaultBody);
+    final title = l10n?.notifStreakTitle ?? NotificationConfig.defaultTitle;
+    final body = (streakDays != null && streakDays > 0)
+        ? (l10n?.notifStreakBodyWithDays(streakDays) ??
+            'Votre série de $streakDays jours est en danger ! Jouez pour la maintenir.')
+        : (l10n?.notifStreakBody ?? NotificationConfig.defaultBody);
+    final channelName = l10n?.notifChannelName ?? _channelName;
+    final channelDesc = l10n?.notifChannelDesc ?? _channelDescription;
+
     if (!_initialized) await init();
     if (kIsWeb) return;
 
@@ -113,16 +121,16 @@ class NotificationService {
 
     final fire = tz.TZDateTime.now(tz.local).add(NotificationConfig.reminderDelay);
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
+        channelName,
+        channelDescription: channelDesc,
         importance: Importance.high,
         priority: Priority.high,
         icon: '@mipmap/ic_launcher',
       ),
-      iOS: DarwinNotificationDetails(
+      iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
@@ -132,7 +140,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       _streakReminderId,
       title,
-      resolvedBody,
+      body,
       fire,
       details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

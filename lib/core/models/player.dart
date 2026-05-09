@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'joker_inventory.dart';
 
 class Player {
@@ -21,6 +22,10 @@ class Player {
   final bool noAdsPurchased;
   final bool emojiPackPurchased;
   final String? rewardClaimedDate;
+  /// Server-authoritative timestamp of the last claimed daily streak reward.
+  /// Written by the `claimDailyStreakReward` Cloud Function via
+  /// `FieldValue.serverTimestamp()`. Never set client-side.
+  final DateTime? lastClaimAt;
 
   const Player({
     required this.uid,
@@ -42,6 +47,7 @@ class Player {
     this.noAdsPurchased = false,
     this.emojiPackPurchased = false,
     this.rewardClaimedDate,
+    this.lastClaimAt,
   });
 
   Player copyWith({
@@ -63,6 +69,7 @@ class Player {
     bool? noAdsPurchased,
     bool? emojiPackPurchased,
     String? rewardClaimedDate,
+    DateTime? lastClaimAt,
   }) {
     return Player(
       uid: uid,
@@ -84,6 +91,7 @@ class Player {
       noAdsPurchased: noAdsPurchased ?? this.noAdsPurchased,
       emojiPackPurchased: emojiPackPurchased ?? this.emojiPackPurchased,
       rewardClaimedDate: rewardClaimedDate ?? this.rewardClaimedDate,
+      lastClaimAt: lastClaimAt ?? this.lastClaimAt,
     );
   }
 
@@ -135,6 +143,9 @@ class Player {
       noAdsPurchased: data['noAdsPurchased'] as bool? ?? false,
       emojiPackPurchased: data['emojiPackPurchased'] as bool? ?? false,
       rewardClaimedDate: data['rewardClaimedDate'] as String?,
+      lastClaimAt: (data['lastClaimAt'] is Timestamp)
+          ? (data['lastClaimAt'] as Timestamp).toDate()
+          : null,
     );
   }
 }

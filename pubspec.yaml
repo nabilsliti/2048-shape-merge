@@ -1,7 +1,7 @@
 name: shape_merge
 description: '2048 Shape Merge — A shape fusion puzzle game.'
 publish_to: 'none'
-version: 1.0.0+27
+version: 1.0.1+28
 
 environment:
   sdk: ^3.7.2

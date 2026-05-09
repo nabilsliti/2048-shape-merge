@@ -353,6 +353,7 @@ class _ConfettiRainPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final paint = _confettiPaint;
     for (final c in pieces) {
       final t = (progress * (0.3 + c.speed * 0.7) + c.phase) % 1.0;
       final px = c.x * size.width + sin(t * pi * 2) * c.drift * size.width;
@@ -368,13 +369,14 @@ class _ConfettiRainPainter extends CustomPainter {
         width: c.width,
         height: c.height * (0.5 + 0.5 * cos(t * pi * 3).abs()),
       );
-      canvas.drawRect(rect, Paint()
-        ..color = c.color.withValues(alpha: 0.85)
-        ..style = PaintingStyle.fill);
+      paint.color = c.color.withValues(alpha: 0.85);
+      canvas.drawRect(rect, paint);
 
       canvas.restore();
     }
   }
+
+  static final _confettiPaint = Paint()..style = PaintingStyle.fill;
 
   @override
   bool shouldRepaint(covariant _ConfettiRainPainter old) => old.progress != progress;

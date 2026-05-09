@@ -594,6 +594,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Jouez une partie pour maintenir votre série de jeu.';
 
   @override
+  String notifStreakBodyWithDays(int days) {
+    return 'Votre série de $days jours est en danger ! Jouez pour la maintenir.';
+  }
+
+  @override
   String get notifChannelName => 'Série de jeu';
 
   @override

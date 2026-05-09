@@ -9,6 +9,7 @@ import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
+import 'package:shape_merge/providers/nav_provider.dart';
 import 'package:shape_merge/screens/hub/widgets/daily_challenge_card.dart';
 
 
@@ -34,15 +35,17 @@ class HomeScreenContent extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _bgAnim;
   late final AnimationController _confettiCtrl;
   late final List<_HomeConfetti> _confettiPieces;
   bool _pendingCelebration = false;
+  bool _bgAnimPausedByLifecycle = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _bgAnim = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 60),
@@ -62,6 +65,20 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pause the 60s background loop when the app is backgrounded to save battery.
+    final shouldPause =
+        state == AppLifecycleState.paused || state == AppLifecycleState.inactive;
+    if (shouldPause && _bgAnim.isAnimating) {
+      _bgAnim.stop();
+      _bgAnimPausedByLifecycle = true;
+    } else if (!shouldPause && _bgAnimPausedByLifecycle) {
+      _bgAnim.repeat();
+      _bgAnimPausedByLifecycle = false;
+    }
+  }
+
   void _tryCelebrate() {
     if (!_pendingCelebration) return;
     if (!TickerMode.valuesOf(context).enabled) return;
@@ -77,6 +94,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _bgAnim.dispose();
     _confettiCtrl.dispose();
     super.dispose();
@@ -86,6 +104,19 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final gameState = ref.watch(gameStateProvider);
+
+    // Pause the 60s nebula loop when this tab is not visible (other branch
+    // selected in the bottom nav). Saves CPU/battery while the user is on
+    // Shop / Leaderboard / Profile / Settings.
+    const homeBranchIndex = 2;
+    ref.listen<int>(currentBranchIndexProvider, (_, next) {
+      if (_bgAnimPausedByLifecycle) return; // lifecycle takes precedence
+      if (next == homeBranchIndex && !_bgAnim.isAnimating) {
+        _bgAnim.repeat();
+      } else if (next != homeBranchIndex && _bgAnim.isAnimating) {
+        _bgAnim.stop();
+      }
+    });
 
     return Stack(
       children: [

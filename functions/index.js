@@ -479,3 +479,167 @@ exports.onPlayerProfileUpdate = onDocumentUpdated(
     logger.info(`Mirrored profile update to leaderboard for ${uid}`, update);
   },
 );
+
+// ══════════════════════════════════════════════════════════════
+// Daily Streak — server-authoritative claim with serverTimestamp
+// ──────────────────────────────────────────────────────────────
+// Anti-cheat: client cannot manipulate device clock to claim
+// rewards twice or maintain a streak fraudulently. All date math
+// uses Firestore server time (Timestamp.now()).
+//
+// On call:
+//   1. Read player doc inside transaction
+//   2. Determine "today" / "yesterday" UTC keys from server now
+//   3. Compare with stored `lastClaimAt` (Timestamp) — fallback to
+//      legacy `rewardClaimedDate` (String) for migration
+//   4. If already claimed today → throw `already_claimed`
+//   5. Compute new streak: yesterday => +1, else reset to 1
+//   6. Re-derive reward server-side (mirror of player_streak.dart)
+//   7. Atomically: update streak fields + jokerInventory / XP
+//   8. Set `lastClaimAt = serverTimestamp()` (source of truth)
+//
+// Returns: { currentStreak, longestStreak, reward, milestone }
+// ══════════════════════════════════════════════════════════════
+
+const STREAK_CYCLE = 7;
+// Mirror of player_streak.dart `_baseRewards` (J1..J6).
+// J7 uses premium rotation computed below.
+const STREAK_BASE_REWARDS = [
+  { kind: "xp",    xp: 15 },                    // J1
+  { kind: "joker", type: "bomb",     amount: 1 }, // J2
+  { kind: "xp",    xp: 20 },                    // J3
+  { kind: "joker", type: "wildcard", amount: 1 }, // J4
+  { kind: "xp",    xp: 25 },                    // J5
+  { kind: "joker", type: "reducer",  amount: 1 }, // J6
+  // J7 placeholder — replaced by premium rotation
+];
+const STREAK_J7_ROTATION = ["radar", "evolution", "megaBomb"];
+
+const STREAK_MILESTONES = {
+  14:  [{ type: "evolution", amount: 1 }],
+  30:  [{ type: "megaBomb",  amount: 1 }, { type: "wildcard", amount: 1 }],
+  100: [{ type: "megaBomb",  amount: 1 }, { type: "evolution", amount: 1 }, { type: "radar", amount: 1 }],
+};
+
+function streakRewardFor(streak) {
+  if (streak <= 0) return { kind: "xp", xp: 15 };
+  const dayIndex = (streak - 1) % STREAK_CYCLE;
+  const weekNum = Math.floor((streak - 1) / STREAK_CYCLE) + 1;
+  if (dayIndex === 6) {
+    const premium = STREAK_J7_ROTATION[(weekNum - 1) % STREAK_J7_ROTATION.length];
+    return { kind: "joker", type: premium, amount: 1 };
+  }
+  return STREAK_BASE_REWARDS[dayIndex];
+}
+
+/** Returns "YYYY-MM-DD" in UTC for a given Date. */
+function utcDayKey(date) {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+exports.claimDailyStreakReward = onCall(
+  { region: "europe-west1", maxInstances: 10 },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Must be signed in");
+    }
+    const uid = request.auth.uid;
+    const playerRef = db.collection("players").doc(uid);
+
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(playerRef);
+      const data = snap.exists ? snap.data() : {};
+
+      // ── Server time is the only trusted clock ──
+      const now = new Date();
+      const todayKey = utcDayKey(now);
+      const yesterdayKey = utcDayKey(new Date(now.getTime() - 86400000));
+
+      // Determine last claim day key.
+      let lastKey = null;
+      if (data.lastClaimAt && typeof data.lastClaimAt.toDate === "function") {
+        lastKey = utcDayKey(data.lastClaimAt.toDate());
+      } else if (typeof data.rewardClaimedDate === "string") {
+        // Legacy fallback — accept the stored String key as-is.
+        lastKey = data.rewardClaimedDate;
+      }
+
+      if (lastKey === todayKey) {
+        throw new HttpsError("already-exists", "Reward already claimed today");
+      }
+
+      const prevStreak = typeof data.currentStreak === "number" ? data.currentStreak : 0;
+      const prevLongest = typeof data.longestStreak === "number" ? data.longestStreak : 0;
+
+      // Yesterday claim continues the streak; anything else resets to 1.
+      const newStreak = lastKey === yesterdayKey ? prevStreak + 1 : 1;
+      const newLongest = Math.max(prevLongest, newStreak);
+      const newIndex = ((newStreak - 1) % STREAK_CYCLE + STREAK_CYCLE) % STREAK_CYCLE;
+
+      const reward = streakRewardFor(newStreak);
+      const milestone = STREAK_MILESTONES[newStreak] || null;
+
+      // Build inventory + XP updates (atomic).
+      const inventory = data.jokerInventory ? { ...data.jokerInventory } : {};
+      let level = typeof data.level === "number" ? data.level : 1;
+      let currentXP = typeof data.currentXP === "number" ? data.currentXP : 0;
+      let totalXP = typeof data.totalXP === "number" ? data.totalXP : 0;
+
+      const addJoker = (type, amount) => {
+        const cur = typeof inventory[type] === "number" ? inventory[type] : 0;
+        inventory[type] = Math.min(cur + amount, MAX_PER_JOKER);
+      };
+
+      if (reward.kind === "joker") {
+        addJoker(reward.type, reward.amount);
+      } else if (reward.kind === "xp") {
+        totalXP += reward.xp;
+        currentXP += reward.xp;
+        // Level-up loop (mirror of progression_service)
+        while (level < XP_MAX_LEVEL && currentXP >= xpForLevel(level)) {
+          currentXP -= xpForLevel(level);
+          level += 1;
+        }
+        if (level >= XP_MAX_LEVEL) currentXP = 0;
+      }
+
+      if (milestone) {
+        for (const bonus of milestone) {
+          addJoker(bonus.type, bonus.amount);
+        }
+      }
+
+      tx.set(
+        playerRef,
+        {
+          currentStreak: newStreak,
+          longestStreak: newLongest,
+          nextRewardIndex: newIndex,
+          lastClaimAt: FieldValue.serverTimestamp(),
+          // Keep legacy fields in sync for backward-compat readers.
+          lastLoginDate: todayKey,
+          rewardClaimedDate: todayKey,
+          jokerInventory: inventory,
+          level,
+          currentXP,
+          totalXP,
+        },
+        { merge: true },
+      );
+
+      return {
+        currentStreak: newStreak,
+        longestStreak: newLongest,
+        nextRewardIndex: newIndex,
+        reward,
+        milestone,
+      };
+    });
+
+    logger.info(`Streak claimed for ${uid}: day ${result.currentStreak}`);
+    return result;
+  },
+);

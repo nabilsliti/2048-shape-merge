@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/config/shop_catalog.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
-import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
 
+import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
@@ -23,7 +23,7 @@ final iapInitProvider = FutureProvider<void>((ref) async {
 
   // Wire delivery: server verified → read Firestore, not verified → add locally
   iap.onProductDelivered = (productId, {required bool serverVerified}) {
-    AudioService.instance.playReward();
+    ref.read(audioServiceProvider).playReward();
     final notifier = ref.read(gameStateProvider.notifier);
 
     if (notifier.isSignedIn) {

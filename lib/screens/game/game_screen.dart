@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
-import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/config/shop_catalog.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/leaderboard_entry.dart';
@@ -69,7 +68,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
   bool _scoreSubmitted = false;
   bool _reviveUsed = false;
   bool _waitingForRescuePurchase = false;
-  int _gameOverCount = 0;
+  /// `true` when the most recent game over should trigger an interstitial
+  /// on the next "new game" tap. Computed once per game over (when
+  /// [_scoreSubmitted] flips), via [AdsService.noteGameOverAndShouldShowInterstitial].
+  bool _showInterstitialNext = false;
   static const _tutorialSeenKey = 'tutorial_seen';
 
   int _lastPersistedBest = 0;
@@ -334,7 +336,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     // Auto-submit score to leaderboard when game ends
     if (!gameState.gameActive && !_scoreSubmitted) {
       _scoreSubmitted = true;
-      _gameOverCount++;
+      _showInterstitialNext = ref
+          .read(adsServiceProvider)
+          .noteGameOverAndShouldShowInterstitial();
       AudioService.instance.pauseGameMusic();
       // Clear checkpoint — game is over, no need to restore
       ref.read(localStorageProvider).whenData((s) => s.clearGameCheckpoint());
@@ -368,6 +372,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
         // for 23 h from now so the reminder fires tomorrow if they don't play.
         NotificationService.instance
             .scheduleStreakReminder(
+          l10n: AppLocalizations.of(context),
           streakDays: ref.read(streakProvider)?.streak.currentStreak ?? 0,
         );
         // Maybe request in-app review after a good session
@@ -580,10 +585,11 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
   void _maybeShowInterstitial(VoidCallback then) {
     final noAds = ref.read(noAdsPurchasedProvider);
-    if (noAds || _gameOverCount % InterstitialTuning.showEveryNGameOvers != 0) {
+    if (noAds || !_showInterstitialNext) {
       then();
       return;
     }
+    _showInterstitialNext = false;
     final ads = ref.read(adsServiceProvider);
     ads.showInterstitialAd(onDismissed: then);
   }

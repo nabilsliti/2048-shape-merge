@@ -590,6 +590,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifStreakBody => 'Play a game to keep your streak alive.';
 
   @override
+  String notifStreakBodyWithDays(int days) {
+    return 'Your $days-day streak is at risk! Play to keep it.';
+  }
+
+  @override
   String get notifChannelName => 'Game Streak';
 
   @override

@@ -4,27 +4,37 @@ import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/button_3d.dart';
 import 'package:vibration/vibration.dart';
 
+/// Riverpod handle for [AudioService]. Default returns [AudioService.instance];
+/// override in tests via `ProviderScope(overrides: [audioServiceProvider.overrideWithValue(FakeAudioService())])`.
+final audioServiceProvider = Provider<AudioService>((_) => AudioService.instance);
+
 final audioProvider =
-    StateNotifierProvider<AudioNotifier, bool>((ref) => AudioNotifier());
+    StateNotifierProvider<AudioNotifier, bool>((ref) => AudioNotifier(ref));
 
 class AudioNotifier extends StateNotifier<bool> {
-  AudioNotifier() : super(AudioService.instance.soundEnabled);
+  AudioNotifier(this._ref) : super(_ref.read(audioServiceProvider).soundEnabled);
+
+  final Ref _ref;
 
   Future<void> toggle() async {
-    await AudioService.instance.toggleSound();
-    state = AudioService.instance.soundEnabled;
+    final audio = _ref.read(audioServiceProvider);
+    await audio.toggleSound();
+    state = audio.soundEnabled;
   }
 }
 
 final musicProvider =
-    StateNotifierProvider<MusicNotifier, bool>((ref) => MusicNotifier());
+    StateNotifierProvider<MusicNotifier, bool>((ref) => MusicNotifier(ref));
 
 class MusicNotifier extends StateNotifier<bool> {
-  MusicNotifier() : super(AudioService.instance.musicEnabled);
+  MusicNotifier(this._ref) : super(_ref.read(audioServiceProvider).musicEnabled);
+
+  final Ref _ref;
 
   Future<void> toggle() async {
-    await AudioService.instance.toggleMusic();
-    state = AudioService.instance.musicEnabled;
+    final audio = _ref.read(audioServiceProvider);
+    await audio.toggleMusic();
+    state = audio.musicEnabled;
   }
 }
 

@@ -165,6 +165,7 @@ class _ConfettiPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final paint = _confettiPaint;
     for (final c in pieces) {
       // Stagger start: each piece starts at a slightly different time
       final delay = c.x * 0.2;
@@ -186,16 +187,14 @@ class _ConfettiPainter extends CustomPainter {
         width: c.width,
         height: c.height * (0.5 + 0.5 * cos(localP * pi * 3).abs()),
       );
-      canvas.drawRect(
-        rect,
-        Paint()
-          ..color = c.color.withValues(alpha: opacity.clamp(0.0, 1.0))
-          ..style = PaintingStyle.fill,
-      );
+      paint.color = c.color.withValues(alpha: opacity.clamp(0.0, 1.0));
+      canvas.drawRect(rect, paint);
 
       canvas.restore();
     }
   }
+
+  static final _confettiPaint = Paint()..style = PaintingStyle.fill;
 
   @override
   bool shouldRepaint(covariant _ConfettiPainter old) => old.progress != progress;
