@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/game_constants.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
+import 'package:shape_merge/core/constants/shape_pack.dart';
 import 'package:shape_merge/core/models/game_shape.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/game/logic/joker_handler.dart';
 import 'package:shape_merge/game/logic/merge_detector.dart';
-import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/shape_pack_provider.dart';
@@ -57,9 +57,17 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    final gameState = ref.watch(gameStateProvider);
+    // Watch only what affects the board layout/visual. Score/combo/joker
+    // inventory changes won't trigger a 32-shape rebuild anymore.
+    final shapes = ref.watch(gameStateProvider.select((s) => s.shapes));
     final jokerMode = ref.watch(jokerModeProvider);
     final radarHighlights = ref.watch(radarHighlightProvider);
+    // Hoist provider watch outside the per-shape loop (was called 32× per build).
+    final shapePack = ref.watch(shapePackProvider);
+    // Pre-compute dragged shape once instead of an O(n) lookup per shape.
+    final draggedShape = _draggingId == null
+        ? null
+        : shapes.where((s) => s.id == _draggingId).firstOrNull;
 
     return LayoutBuilder(builder: (context, constraints) {
       final boardSize = Size(constraints.maxWidth, constraints.maxHeight);
@@ -80,8 +88,8 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
             child: Stack(
               clipBehavior: Clip.hardEdge, // Force les formes à rester dans la zone
               children: [
-                for (final shape in gameState.shapes)
-                  _buildDraggableShape(shape, gameState, jokerMode, boardSize, radarHighlights),
+                for (final shape in shapes)
+                  _buildDraggableShape(shape, draggedShape, jokerMode, boardSize, radarHighlights, shapePack),
               ],
             ),
           ),
@@ -92,10 +100,11 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
 
   Widget _buildDraggableShape(
     GameShape shape,
-    GameState gameState,
+    GameShape? draggedShape,
     JokerMode jokerMode,
     Size boardSize,
     Map<String, int> radarHighlights,
+    ShapePack shapePack,
   ) {
     final isDragging = _draggingId == shape.id;
     final isSnappingBack = _snapBackId == shape.id && _snapBackCtrl != null && _snapBackCtrl!.isAnimating;
@@ -104,11 +113,8 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
     final size = ShapeSizing.forLevel(shape.level);
 
     var isHighlighted = false;
-    if (_draggingId != null && _draggingId != shape.id) {
-      final dragged = gameState.shapes.where((s) => s.id == _draggingId).firstOrNull;
-      if (dragged != null) {
-        isHighlighted = MergeDetector.canMerge(dragged, shape);
-      }
+    if (draggedShape != null && draggedShape.id != shape.id) {
+      isHighlighted = MergeDetector.canMerge(draggedShape, shape);
     }
     final isRadarHighlighted = radarHighlights.containsKey(shape.id);
     final radarGroupIndex = radarHighlights[shape.id] ?? -1;
@@ -137,11 +143,14 @@ class _GameBoardState extends ConsumerState<GameBoard> with TickerProviderStateM
       isRadarHighlighted: isRadarHighlighted,
       radarGroupIndex: radarGroupIndex,
       isMergeResult: shape.id == _recentMergedId,
-      shapePack: ref.watch(shapePackProvider),
+      shapePack: shapePack,
     );
     if (extraScale != 1.0) {
       shapeChild = Transform.scale(scale: extraScale, child: shapeChild);
     }
+    // Each shape is repaint-isolated so that animations on one shape
+    // (snap-back, fly-to, drag) don't repaint the other 31 shapes.
+    shapeChild = RepaintBoundary(child: shapeChild);
 
     final gestureDetector = GestureDetector(
       onTap: () {

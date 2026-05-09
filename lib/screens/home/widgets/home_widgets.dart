@@ -127,12 +127,13 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        AnimatedBuilder(
-          animation: Listenable.merge([_pulse, _celebCtrl]),
+    return RepaintBoundary(
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          AnimatedBuilder(
+            animation: Listenable.merge([_pulse, _celebCtrl]),
           child: Image.asset(
             'assets/images/trophy.png',
             fit: BoxFit.contain,
@@ -262,6 +263,7 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
           },
         ),
       ],
+      ),
     );
   }
 

@@ -39,7 +39,7 @@ class NotificationService {
 
     tz_data.initializeTimeZones();
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('@drawable/ic_stat_notify');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -128,7 +128,11 @@ class NotificationService {
         channelDescription: channelDesc,
         importance: Importance.high,
         priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
+        // Small status-bar icon: white silhouette extracted from app_icon.png
+        // (Android renders alpha only — colored mipmaps appear as white squares).
+        icon: '@drawable/ic_stat_notify',
+        // Full-color app_icon shown in the expanded notification & drawer.
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
       ),
       iOS: const DarwinNotificationDetails(
         presentAlert: true,

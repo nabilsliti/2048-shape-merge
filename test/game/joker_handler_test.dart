@@ -37,13 +37,14 @@ void main() {
         expect(result.scoreBonus, greaterThan(0));
       });
 
-      test('does not remove same type+color at different level', () {
+      test('removes same type+color regardless of level', () {
         final shapes = [target, sameTypeColorDiffLevel, different];
         final result = JokerHandler.useBomb(target, shapes, inventory);
 
-        expect(result.shapes.length, 2);
-        expect(result.shapes.any((s) => s.id == 'samediff'), true);
-        expect(result.shapes.any((s) => s.id == 'diff'), true);
+        // Bomb removes all shapes with matching type+color, ignoring level
+        // (matches the user-facing description "quel que soit leur niveau").
+        expect(result.shapes.length, 1);
+        expect(result.shapes.first.id, 'diff');
       });
 
       test('does nothing with 0 bombs', () {

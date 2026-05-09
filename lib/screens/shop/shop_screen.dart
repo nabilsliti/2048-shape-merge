@@ -15,7 +15,6 @@ import 'package:shape_merge/core/widgets/joker_choice_dialog.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 
 import 'package:shape_merge/core/config/shop_catalog.dart';
-import 'package:shape_merge/game/models/game_state.dart';
 import 'package:shape_merge/core/services/remote_config_service.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
@@ -93,10 +92,17 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final inventory = ref.watch(gameStateProvider).jokerInventory;
+    // Granular watches: rebuild only when these specific fields change.
+    final inventory = ref.watch(
+      gameStateProvider.select((s) => s.jokerInventory),
+    );
+    final shopContext = ref.watch(
+      gameStateProvider.select(
+        (s) => (gameActive: s.gameActive, bestScore: s.bestScore),
+      ),
+    );
     final noAds = ref.watch(noAdsPurchasedProvider);
     final emojiPack = ref.watch(emojiPackPurchasedProvider);
-    final gameState = ref.watch(gameStateProvider);
 
     // Init IAP (idempotent)
     ref.watch(iapReadyProvider);
@@ -130,7 +136,7 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     adsService.loadRewardedAd();
 
     // ── Dynamic 3rd slot logic ──
-    final altPack = _pickAlternativePack(gameState, emojiPack);
+    final altPack = _pickAlternativePack(shopContext, emojiPack);
 
     // ── Scroll section: remaining packs (exclude rescue + alt) ──
     final scrollPacks = ShopCatalog.packs
@@ -326,13 +332,16 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
   }
 
   /// Pick the best alternative pack for slot 3 based on player context.
-  ShopPack _pickAlternativePack(GameState gameState, bool emojiPurchased) {
+  ShopPack _pickAlternativePack(
+    ({bool gameActive, int bestScore}) ctx,
+    bool emojiPurchased,
+  ) {
     // Player stuck (game over) → Comet (more powerful)
-    if (!gameState.gameActive) return ShopCatalog.byId('pack_comet')!;
+    if (!ctx.gameActive) return ShopCatalog.byId('pack_comet')!;
     // Casual player (low score) → Emoji cosmetic
-    if (!emojiPurchased && gameState.bestScore < 500) return ShopCatalog.emojiPack;
+    if (!emojiPurchased && ctx.bestScore < 500) return ShopCatalog.emojiPack;
     // Engaged player (high score) → Diamond (max value)
-    if (gameState.bestScore >= 2000) return ShopCatalog.byId('pack_diamond')!;
+    if (ctx.bestScore >= 2000) return ShopCatalog.byId('pack_diamond')!;
     // Default → Comet
     return ShopCatalog.byId('pack_comet')!;
   }

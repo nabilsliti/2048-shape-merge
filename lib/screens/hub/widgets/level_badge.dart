@@ -15,9 +15,12 @@ class LevelBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider).valueOrNull;
-    final player = ref.watch(playerProvider).valueOrNull;
-    final localStorage = ref.watch(localStorageProvider).valueOrNull;
+    // Watch only resolved values, not full AsyncValue (skips loading/error rebuilds).
+    final user = ref.watch(authStateProvider.select((a) => a.valueOrNull));
+    final player = ref.watch(playerProvider.select((a) => a.valueOrNull));
+    final localStorage = ref.watch(
+      localStorageProvider.select((a) => a.valueOrNull),
+    );
 
     final level = user != null
         ? (player?.level ?? localStorage?.playerLevel ?? 1)
@@ -33,9 +36,11 @@ class XpBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider).valueOrNull;
-    final player = ref.watch(playerProvider).valueOrNull;
-    final localStorage = ref.watch(localStorageProvider).valueOrNull;
+    final user = ref.watch(authStateProvider.select((a) => a.valueOrNull));
+    final player = ref.watch(playerProvider.select((a) => a.valueOrNull));
+    final localStorage = ref.watch(
+      localStorageProvider.select((a) => a.valueOrNull),
+    );
 
     final level = user != null
         ? (player?.level ?? localStorage?.playerLevel ?? 1)

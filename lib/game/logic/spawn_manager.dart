@@ -39,43 +39,40 @@ class SpawnManager {
       final bool isBeginner = totalMerges < SpawnTuning.beginnerMergeLimit;
       GameShape template;
 
+      // Single-pass partner counting (was O(n²) nested .where().any()).
+      // Key = "type|color|level" — number of shapes sharing that signature.
+      final partnerCount = <String, int>{};
+      for (final s in existing) {
+        final key = '${s.type.index}|${s.color.toARGB32()}|${s.level}';
+        partnerCount[key] = (partnerCount[key] ?? 0) + 1;
+      }
+
+      String keyOf(GameShape s) =>
+          '${s.type.index}|${s.color.toARGB32()}|${s.level}';
+
       if (isBeginner) {
-        // Find shapes that have at least one matching partner on the board
-        final mergeable = existing.where((s) =>
-          existing.any((other) =>
-            other.id != s.id &&
-            other.type == s.type &&
-            other.color == s.color &&
-            other.level == s.level
-          )
-        ).toList();
+        // Shapes that have ≥1 matching partner (signature count ≥ 2 because
+        // the shape itself is counted).
+        final mergeable = <GameShape>[];
+        for (final s in existing) {
+          if ((partnerCount[keyOf(s)] ?? 0) >= 2) mergeable.add(s);
+        }
         template = mergeable.isNotEmpty
             ? mergeable[_random.nextInt(mergeable.length)]
             : existing[_random.nextInt(existing.length)];
       } else {
-        // Prefer "orphan" shapes — those with exactly 1 partner (same type+color+level).
-        // Creating a 2nd match gives the player a new pair without stacking triples.
-        final orphans = existing.where((s) {
-          final partners = existing.where((o) =>
-            o.id != s.id &&
-            o.type == s.type &&
-            o.color == s.color &&
-            o.level == s.level
-          ).length;
-          return partners == 1;
-        }).toList();
-        // Fallback: shapes with 0 partners (creates a new pair)
-        final solos = orphans.isEmpty
-            ? existing.where((s) {
-                final partners = existing.where((o) =>
-                  o.id != s.id &&
-                  o.type == s.type &&
-                  o.color == s.color &&
-                  o.level == s.level
-                ).length;
-                return partners == 0;
-              }).toList()
-            : <GameShape>[];
+        // Orphans: signature count == 2 (the shape + exactly one partner).
+        // Creating a second match yields a new pair without stacking triples.
+        final orphans = <GameShape>[];
+        final solos = <GameShape>[];
+        for (final s in existing) {
+          final c = partnerCount[keyOf(s)] ?? 0;
+          if (c == 2) {
+            orphans.add(s);
+          } else if (c == 1) {
+            solos.add(s);
+          }
+        }
         final candidates = orphans.isNotEmpty
             ? orphans
             : solos.isNotEmpty

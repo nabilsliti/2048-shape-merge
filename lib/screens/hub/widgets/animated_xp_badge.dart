@@ -39,29 +39,31 @@ class _AnimatedXpBadgeState extends State<AnimatedXpBadge>
     _displayXP = widget.currentXP;
     _prevXP = widget.currentXP;
     _bounce = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600))
-      ..addListener(() => setState(() {}));
+        vsync: this, duration: const Duration(milliseconds: 600));
     _plusLabel = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1200))
-      ..addListener(() => setState(() {}));
+        vsync: this, duration: const Duration(milliseconds: 1200));
     _counterRoll = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1500))
       ..addStatusListener((s) {
-        if (s == AnimationStatus.completed) {
+        if (s == AnimationStatus.completed && mounted) {
           setState(() {
             _isRolling = false;
             _displayXP = widget.currentXP;
           });
         }
-      })
-      ..addListener(() => setState(() {}));
+      });
     _ring = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700))
-      ..addListener(() => setState(() {}));
+        vsync: this, duration: const Duration(milliseconds: 700));
     _sparkles = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900))
-      ..addListener(() => setState(() {}));
+        vsync: this, duration: const Duration(milliseconds: 900));
+    // Single merged listenable used by the AnimatedBuilder below — replaces
+    // 5× `addListener(setState)` (which rebuilt the whole subtree at 60 fps).
+    _allAnims = Listenable.merge(
+      [_bounce, _plusLabel, _counterRoll, _ring, _sparkles],
+    );
   }
+
+  late final Listenable _allAnims;
 
   @override
   void didUpdateWidget(covariant AnimatedXpBadge oldWidget) {
@@ -101,6 +103,15 @@ class _AnimatedXpBadgeState extends State<AnimatedXpBadge>
 
   @override
   Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _allAnims,
+        builder: (context, _) => _buildContent(context),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     // Bounce: elastic scale 1 → 1.35 → 0.92 → 1
     final double bounceScale;
     if (_bounce.value < 0.3) {

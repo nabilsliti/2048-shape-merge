@@ -50,11 +50,21 @@ class GameEngine {
       return list;
     }
 
+    // Single-pass merge ratio (avoids creating an intermediate iterable).
+    double computeMergeRate(List<bool> attempts) {
+      if (attempts.isEmpty) return 0.5;
+      var trueCount = 0;
+      for (final b in attempts) {
+        if (b) trueCount++;
+      }
+      return trueCount / attempts.length;
+    }
+
     if (target == null) {
       // No merge — shape position stays unchanged (snap back handled by UI),
       // spawn only if below max capacity
       final attempts = updatedAttempts(false);
-      final mergeRate = attempts.isEmpty ? 0.5 : attempts.where((b) => b).length / attempts.length;
+      final mergeRate = computeMergeRate(attempts);
       final updatedShapes = List<GameShape>.from(state.shapes);
       if (updatedShapes.length < BoardTuning.maxShapes) {
         final newShape = SpawnManager.spawnShape(updatedShapes, boardSize, mergeRate: mergeRate, totalMerges: state.mergeCount);
@@ -104,7 +114,7 @@ class GameEngine {
     );
 
     final attempts = updatedAttempts(true);
-    final mergeRate = attempts.isEmpty ? 0.5 : attempts.where((b) => b).length / attempts.length;
+    final mergeRate = computeMergeRate(attempts);
     final updatedShapes = state.shapes
         .where((s) => s.id != dragged.id && s.id != target.id)
         .toList()

@@ -9,6 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'app.dart';
 import 'core/config/flavor_config.dart';
 import 'core/services/audio_service.dart';
+import 'core/services/auth_service.dart';
 import 'core/services/remote_config_service.dart';
 import 'screens/game/game_screen.dart';
 import 'firebase_options.dart';
@@ -28,9 +29,13 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await MobileAds.instance.initialize();
+  // Fire-and-forget background warm-ups (don't block runApp).
   unawaited(RemoteConfigService.instance.init());
-  await AudioService.instance.init();
-  await GameScreen.preload();
+  unawaited(AuthService.instance.warmUp());
+  // Audio + tutorial preload run in parallel during the splash to cut
+  // perceived startup time (no longer awaited sequentially).
+  unawaited(AudioService.instance.init());
+  unawaited(GameScreen.preload());
 
   runApp(
     const ProviderScope(

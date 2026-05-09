@@ -5,6 +5,9 @@ import 'package:shape_merge/core/services/app_logger.dart';
 const _log = AppLogger('Auth');
 
 class AuthService {
+  AuthService._();
+  static final AuthService instance = AuthService._();
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId:
@@ -17,6 +20,18 @@ class AuthService {
 
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  /// Pre-initialise the Google Sign-In plugin so the first interactive
+  /// `signIn()` doesn't pay the ~500 ms-1 s native init cost (platform channel
+  /// registration + Play Services wake-up). Safe to fire-and-forget at boot.
+  Future<void> warmUp() async {
+    try {
+      await _googleSignIn.signInSilently(suppressErrors: true);
+      _log.debug('Google Sign-In: warm-up complete');
+    } catch (e) {
+      _log.debug('Google Sign-In warm-up skipped: $e');
+    }
+  }
 
   Future<UserCredential?> signInWithGoogle() async {
     lastError = null;

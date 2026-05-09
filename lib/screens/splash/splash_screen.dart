@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
@@ -48,11 +49,42 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Run init work concurrently with the minimum splash animation
     await Future.wait([
       _initProviders(storage),
+      _precacheAssets(),
+      _preloadFonts(),
       Future<void>.delayed(const Duration(milliseconds: 1500)),
     ]);
     if (!mounted) return;
 
     context.go(AppRoutes.home);
+  }
+
+  /// Precache hot-path images so first frames after splash don't stall on
+  /// asset decoding (especially on cold-start).
+  Future<void> _precacheAssets() async {
+    if (!mounted) return;
+    const images = [
+      AssetImage('assets/images/pub.webp'),
+      AssetImage('assets/images/trophy.png'),
+      AssetImage('assets/images/calendar.webp'),
+      AssetImage('assets/images/shop-cart.webp'),
+    ];
+    await Future.wait([
+      for (final img in images)
+        precacheImage(img, context).catchError((_) {}),
+    ]);
+  }
+
+  /// Preload Google Fonts so first text render doesn't trigger a network
+  /// fetch / cache miss (warms up Fredoka & Nunito families used app-wide).
+  Future<void> _preloadFonts() async {
+    try {
+      await Future.wait([
+        GoogleFonts.pendingFonts([
+          GoogleFonts.fredoka(),
+          GoogleFonts.nunito(),
+        ]),
+      ]);
+    } catch (_) {/* Font fetch can fail offline — fallbacks render fine. */}
   }
 
   Future<void> _initProviders(LocalStorageService storage) async {

@@ -31,19 +31,29 @@ class MainHubScreen extends ConsumerStatefulWidget {
 class _MainHubScreenState extends ConsumerState<MainHubScreen> {
 
   @override
+  void initState() {
+    super.initState();
+    // Preload rewarded ad once after first frame instead of on every build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(adsServiceProvider).loadRewardedAd();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Initialize IAP early to catch pending purchases
     ref.watch(iapReadyProvider);
-
-    // Preload rewarded ad (same pattern as shop)
-    ref.read(adsServiceProvider).loadRewardedAd();
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBg,
       body: Stack(
         children: [
-          // Global Background
-          Positioned.fill(child: _buildGradientBackground()),
+          // Global Background — wrapped in RepaintBoundary so the static
+          // gradient + orb circles aren't repainted by every overlay update.
+          Positioned.fill(
+            child: RepaintBoundary(child: _buildGradientBackground()),
+          ),
 
           // Home Screen Content
           const Positioned.fill(

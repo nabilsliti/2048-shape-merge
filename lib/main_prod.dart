@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'core/config/flavor_config.dart';
 import 'core/services/audio_service.dart';
+import 'core/services/auth_service.dart';
 import 'core/services/remote_config_service.dart';
 import 'screens/game/game_screen.dart';
 import 'firebase_options.dart';
@@ -29,8 +30,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   unawaited(RemoteConfigService.instance.init());
-  await AudioService.instance.init();
-  await GameScreen.preload();
+  unawaited(AuthService.instance.warmUp());
+  unawaited(AudioService.instance.init());
+  unawaited(GameScreen.preload());
 
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
