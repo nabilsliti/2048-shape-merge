@@ -59,6 +59,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final notifier = ref.read(gameStateProvider.notifier);
     notifier.setStorage(storage);
     notifier.setRadarHighlightNotifier(ref.read(radarHighlightProvider.notifier));
+    notifier.setRadarActivationTickNotifier(ref.read(radarActivationTickProvider.notifier));
     notifier.loadSavedState(
       bestScore: storage.bestScore,
       jokers: storage.jokerInventory,

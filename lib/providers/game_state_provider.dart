@@ -36,6 +36,11 @@ final jokerEmptyTapProvider = StateProvider<int>((_) => 0);
 // Map of shape ID → group index highlighted by radar
 final radarHighlightProvider = StateProvider<Map<String, int>>((_) => {});
 
+/// Counter incremented each time the radar joker is activated.
+/// The GameScreen listens to this to spawn the sonar visual effect
+/// at the board centre (mirrors the playable-ad behaviour).
+final radarActivationTickProvider = StateProvider<int>((_) => 0);
+
 /// Which joker type the suggestion engine recommends right now (null = none).
 final jokerSuggestionProvider = StateProvider<JokerType?>((_) => null);
 
@@ -50,6 +55,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
   String? _uid;
 
   void setBoardSize(Size size) => _boardSize = size;
+
+  /// Current board size (null until the GameBoard has laid out).
+  Size? get boardSize => _boardSize;
 
   void setStorage(LocalStorageService storage) => _storage = storage;
 
@@ -293,10 +301,17 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   Timer? _radarTimer;
   StateController<Map<String, int>>? _radarHighlightNotifier;
+  StateController<int>? _radarActivationTickNotifier;
 
   /// Inject the radar highlight notifier so we don't need WidgetRef.
   void setRadarHighlightNotifier(StateController<Map<String, int>> notifier) {
     _radarHighlightNotifier = notifier;
+  }
+
+  /// Inject the radar activation tick notifier so the GameScreen can
+  /// react (sonar visual + sfx) without coupling the provider to widgets.
+  void setRadarActivationTickNotifier(StateController<int> notifier) {
+    _radarActivationTickNotifier = notifier;
   }
 
   void activateRadar() {
@@ -310,6 +325,10 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _incrementJokerUsed();
     unawaited(AnalyticsService.instance.logJokerUsed(JokerType.radar));
     _saveJokers();
+    // Tick the visual notifier so the GameScreen spawns the sonar effect
+    // (and AudioService plays joker_radar) at the board centre.
+    final tick = _radarActivationTickNotifier;
+    if (tick != null) tick.state = tick.state + 1;
     _radarTimer?.cancel();
     _radarTimer = Timer(_radarDuration, () {
       if (mounted) {

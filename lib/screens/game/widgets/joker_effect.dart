@@ -46,10 +46,15 @@ class _JokerEffectState extends State<JokerEffect>
   static Duration _duration(JokerType type) => switch (type) {
         JokerType.megaBomb => const Duration(milliseconds: 950),
         JokerType.bomb => const Duration(milliseconds: 700),
-        JokerType.radar => const Duration(milliseconds: 800),
+        JokerType.radar => const Duration(milliseconds: 1400),
         JokerType.evolution => const Duration(milliseconds: 750),
         JokerType.wildcard => const Duration(milliseconds: 700),
         JokerType.reducer => const Duration(milliseconds: 600),
+      };
+
+  static double _effectSize(JokerType type) => switch (type) {
+        JokerType.radar => 360.0,
+        _ => 150.0,
       };
 
   @override
@@ -60,7 +65,7 @@ class _JokerEffectState extends State<JokerEffect>
 
   @override
   Widget build(BuildContext context) {
-    const effectSize = 150.0;
+    final effectSize = _effectSize(widget.jokerType);
 
     return AnimatedBuilder(
       animation: _ctrl,
@@ -597,20 +602,20 @@ class _JokerEffectPainter extends CustomPainter {
     final opacity = (1.0 - progress).clamp(0.0, 1.0);
     final maxR = size.width * 0.46;
 
-    // Concentric pulse rings — 3 staggered
+    // Concentric pulse rings — same design as playable: 3 staggered rings,
+    // radius 40 → 180, lineWidth 2, alpha (1 - localP) * 0.7
     for (var i = 0; i < 3; i++) {
-      final delay = i * 0.18;
-      final localP = ((progress - delay) / (1.0 - delay)).clamp(0.0, 1.0);
+      final localP = (progress - i * 0.18).clamp(0.0, 1.0);
       if (localP <= 0) continue;
-      final localOpacity = (1.0 - localP).clamp(0.0, 1.0);
-      final ringR = maxR * Curves.easeOutCubic.transform(localP);
+      final ease = 1 - pow(1 - localP, 3).toDouble();
+      // Map "40 + ease * 140" (playable) proportionally to maxR
+      final ringR = maxR * (0.22 + ease * 0.78);
       canvas.drawCircle(
         Offset(cx, cy),
         ringR,
         _strokePaint
-          
-          ..strokeWidth = 2.5 * (1 - localP)
-          ..color = color.withValues(alpha: localOpacity * 0.6),
+          ..strokeWidth = 2.0
+          ..color = color.withValues(alpha: (1.0 - localP) * 0.7),
       );
     }
 

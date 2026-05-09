@@ -78,6 +78,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
   ProviderSubscription<int>? _bestScoreListener;
   ProviderSubscription<GameState>? _liveObjectiveListener;
   ProviderSubscription<IapResult?>? _iapListener;
+  ProviderSubscription<int>? _radarTickListener;
   final List<Widget> _toasts = [];
 
   @override
@@ -205,6 +206,20 @@ class _GameScreenState extends ConsumerState<GameScreen>
           },
         );
 
+        // Radar joker activation: spawn the sonar visual effect at the board
+        // centre + play the radar SFX (matches the playable-ad behaviour).
+        _radarTickListener = ref.listenManual<int>(
+          radarActivationTickProvider,
+          (previous, next) {
+            if (previous == null || next == previous) return;
+            final boardSize = ref.read(gameStateProvider.notifier).boardSize;
+            if (boardSize == null) return;
+            final centre = Offset(boardSize.width / 2, boardSize.height / 2);
+            _addJokerEffect(centre, JokerType.radar);
+            AudioService.instance.playJoker('radar');
+          },
+        );
+
         if (!mounted) return;
         // Start the game once board is laid out (setBoardSize called in GameBoard.build)
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -229,6 +244,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     _iapListener?.close();
     _bestScoreListener?.close();
     _liveObjectiveListener?.close();
+    _radarTickListener?.close();
     WidgetsBinding.instance.removeObserver(this);
     AudioService.instance.stopGameMusic();
     super.dispose();
