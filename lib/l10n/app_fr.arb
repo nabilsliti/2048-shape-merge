@@ -376,6 +376,17 @@
   "bestChoice": "MEILLEUR CHOIX",
   "rescueHeroDesc": "Sauve ta partie et continue ton meilleur run",
   "rescueCtaLabel": "Sauver ma partie \uD83D\uDD25",
-  "freeJokerShort": "+1 joker au choix",
+  "freeJokerShort": "+1 joker mystère",
+  "adJokerCooldownLabel": "Disponible dans",
+  "adJokerLimitReached": "Limite atteinte",
+  "adJokerLimitTomorrow": "Limite quotidienne atteinte. Reviens demain !",
+  "adJokerCapBadge": "DEMAIN",
+  "adJokerAdsLeft": "{count, plural, =1{1 pub restante} other{{count} pubs restantes}}",
+  "@adJokerAdsLeft": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "adJokerSpinTitle": "JOKER MYSTÈRE",
+  "adJokerSpinCta": "LANCER",
+  "adJokerYouGot": "Tu as gagné :",
   "sectionMoreOffers": "PLUS D'OFFRES"
 }

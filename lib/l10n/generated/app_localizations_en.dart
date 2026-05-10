@@ -867,7 +867,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rescueCtaLabel => 'Save my game 🔥';
 
   @override
-  String get freeJokerShort => '+1 joker of your choice';
+  String get freeJokerShort => '+1 mystery joker';
+
+  @override
+  String get adJokerCooldownLabel => 'Available in';
+
+  @override
+  String get adJokerLimitReached => 'Limit reached';
+
+  @override
+  String get adJokerLimitTomorrow => 'Daily limit reached. Come back tomorrow!';
+
+  @override
+  String get adJokerCapBadge => 'TOMORROW';
+
+  @override
+  String adJokerAdsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ads left',
+      one: '1 ad left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adJokerSpinTitle => 'MYSTERY JOKER';
+
+  @override
+  String get adJokerSpinCta => 'SPIN';
+
+  @override
+  String get adJokerYouGot => 'You got:';
 
   @override
   String get sectionMoreOffers => 'MORE OFFERS';

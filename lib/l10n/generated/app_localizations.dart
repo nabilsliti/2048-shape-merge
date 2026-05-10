@@ -1595,8 +1595,56 @@ abstract class AppLocalizations {
   /// No description provided for @freeJokerShort.
   ///
   /// In en, this message translates to:
-  /// **'+1 joker of your choice'**
+  /// **'+1 mystery joker'**
   String get freeJokerShort;
+
+  /// No description provided for @adJokerCooldownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Available in'**
+  String get adJokerCooldownLabel;
+
+  /// No description provided for @adJokerLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit reached'**
+  String get adJokerLimitReached;
+
+  /// No description provided for @adJokerLimitTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily limit reached. Come back tomorrow!'**
+  String get adJokerLimitTomorrow;
+
+  /// No description provided for @adJokerCapBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'TOMORROW'**
+  String get adJokerCapBadge;
+
+  /// No description provided for @adJokerAdsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 ad left} other{{count} ads left}}'**
+  String adJokerAdsLeft(int count);
+
+  /// No description provided for @adJokerSpinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MYSTERY JOKER'**
+  String get adJokerSpinTitle;
+
+  /// No description provided for @adJokerSpinCta.
+  ///
+  /// In en, this message translates to:
+  /// **'SPIN'**
+  String get adJokerSpinCta;
+
+  /// No description provided for @adJokerYouGot.
+  ///
+  /// In en, this message translates to:
+  /// **'You got:'**
+  String get adJokerYouGot;
 
   /// No description provided for @sectionMoreOffers.
   ///

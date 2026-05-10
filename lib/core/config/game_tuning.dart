@@ -89,6 +89,26 @@ abstract final class InterstitialTuning {
   static const int showEveryNGameOvers = 3;
 }
 
+/// Free-joker rewarded ad settings.
+/// Tuned to preserve eCPM (Google penalises >8 ads/day per user) and avoid
+/// cannibalising IAP packs while keeping the offer attractive.
+abstract final class AdJokerTuning {
+  /// Minimum delay between two free-joker ads.
+  static const Duration cooldown = Duration(minutes: 5);
+
+  /// Maximum free-joker ads watched per UTC day.
+  static const int dailyCap = 3;
+
+  /// Pool of jokers that may be awarded by the rewarded ad.
+  /// Premium jokers (radar / evolution / megaBomb) are intentionally excluded
+  /// to preserve the value of paid packs.
+  static const List<JokerType> rewardPool = [
+    JokerType.bomb,
+    JokerType.wildcard,
+    JokerType.reducer,
+  ];
+}
+
 /// XP and level progression.
 abstract final class Progression {
   static const int maxLevel = 50;

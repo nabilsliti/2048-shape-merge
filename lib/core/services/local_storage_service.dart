@@ -84,6 +84,60 @@ class LocalStorageService {
   Future<void> setFirstJokerLogged() =>
       _prefs.setBool(_firstJokerLoggedKey, true);
 
+  // ── Free-joker rewarded-ad gate (cooldown + daily cap) ──
+  static const _adJokerLastEpochKey = 'adJokerLastEpochMs';
+  static const _adJokerDayKey = 'adJokerDay';
+  static const _adJokerCountKey = 'adJokerCount';
+
+  /// UTC date in YYYY-MM-DD form. Used to reset the daily cap at midnight UTC.
+  static String _todayUtcKey() {
+    final now = DateTime.now().toUtc();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  /// Timestamp of the last free-joker ad (epoch ms), or 0 if never watched.
+  int get adJokerLastEpochMs => _prefs.getInt(_adJokerLastEpochKey) ?? 0;
+
+  /// Free-joker ads watched today (auto-resets at midnight UTC).
+  int get adJokerCountToday {
+    final storedDay = _prefs.getString(_adJokerDayKey);
+    if (storedDay != _todayUtcKey()) return 0;
+    return _prefs.getInt(_adJokerCountKey) ?? 0;
+  }
+
+  /// Remaining cooldown before the next ad-joker can be watched.
+  /// Returns [Duration.zero] if cooldown elapsed.
+  Duration get adJokerCooldownRemaining {
+    final last = adJokerLastEpochMs;
+    if (last == 0) return Duration.zero;
+    final elapsed = Duration(
+        milliseconds: DateTime.now().millisecondsSinceEpoch - last);
+    final remaining = AdJokerTuning.cooldown - elapsed;
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  /// Number of free-joker ads still available today.
+  int get adJokerAdsLeftToday =>
+      (AdJokerTuning.dailyCap - adJokerCountToday).clamp(0, AdJokerTuning.dailyCap);
+
+  /// Whether the user can watch a free-joker ad right now (cooldown + cap).
+  bool get canWatchAdJoker =>
+      adJokerCooldownRemaining == Duration.zero && adJokerAdsLeftToday > 0;
+
+  /// Persist that the user just watched a free-joker ad. Resets the daily
+  /// counter if a new UTC day started.
+  Future<void> recordAdJokerWatched() async {
+    final today = _todayUtcKey();
+    final storedDay = _prefs.getString(_adJokerDayKey);
+    final newCount = (storedDay == today)
+        ? (_prefs.getInt(_adJokerCountKey) ?? 0) + 1
+        : 1;
+    await _prefs.setString(_adJokerDayKey, today);
+    await _prefs.setInt(_adJokerCountKey, newCount);
+    await _prefs.setInt(
+        _adJokerLastEpochKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
   bool get soundEnabled => _prefs.getBool(_soundEnabledKey) ?? true;
   Future<void> setSoundEnabled(bool enabled) =>
       _prefs.setBool(_soundEnabledKey, enabled);

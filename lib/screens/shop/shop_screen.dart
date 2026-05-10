@@ -10,14 +10,16 @@ import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/constants/joker_ui.dart';
 import 'package:shape_merge/core/models/joker_inventory.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
-import 'package:shape_merge/core/widgets/joker_choice_dialog.dart';
+import 'package:shape_merge/core/widgets/joker_random_reveal_dialog.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 
 import 'package:shape_merge/core/config/shop_catalog.dart';
 import 'package:shape_merge/core/services/remote_config_service.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/core/services/iap_service.dart';
+import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
@@ -30,7 +32,6 @@ part 'widgets/joker_stock_card.dart';
 part 'widgets/shop_items.dart';
 part 'widgets/shop_packs.dart';
 part 'widgets/shop_painters.dart';
-part 'widgets/joker_choice_panel.dart';
 part 'widgets/purchase_result_overlay.dart';
 
 const _log = AppLogger('Shop');
@@ -468,6 +469,25 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     final adsService = ref.read(adsServiceProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    // Cooldown / daily-cap gate (defensive — UI also disables the slot).
+    final storage = await ref.read(localStorageProvider.future);
+    if (!storage.canWatchAdJoker) {
+      if (context.mounted) {
+        final isCap = storage.adJokerAdsLeftToday == 0;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isCap ? l10n.adJokerLimitTomorrow : l10n.adJokerLimitReached,
+              style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
+            ),
+            backgroundColor: AppTheme.redTop,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
     final rewarded = await adsService.showRewardedAd(onRewarded: () {});
 
     if (!rewarded) {
@@ -485,16 +505,20 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
     }
 
     if (context.mounted) {
-      await _showJokerChoiceDialog(context, ref);
+      await _showRandomJokerReveal(context, ref, storage);
     }
   }
 
-  Future<void> _showJokerChoiceDialog(BuildContext context, WidgetRef ref) async {
-    final chosenType = await JokerChoiceDialog.show(context);
+  Future<void> _showRandomJokerReveal(
+    BuildContext context,
+    WidgetRef ref,
+    LocalStorageService storage,
+  ) async {
+    const pool = AdJokerTuning.rewardPool;
+    final reward = pool[math.Random().nextInt(pool.length)];
+    final got = await JokerRandomRevealDialog.show(context, reward: reward);
+    if (got == null) return;
 
-    if (chosenType == null) return; // user tapped RETOUR
-
-    // Scroll to top so the inventory animation is visible
     if (_scrollController.hasClients) {
       await _scrollController.animateTo(
         0,
@@ -503,11 +527,11 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
       );
     }
 
-    // Small pause then add joker → triggers the animation in view
     await Future.delayed(const Duration(milliseconds: 150));
     if (mounted) {
-      _log.debug('Adding joker: $chosenType');
-      ref.read(gameStateProvider.notifier).addJokers(chosenType);
+      _log.debug('Adding random joker: $got');
+      ref.read(gameStateProvider.notifier).addJokers(got);
+      await storage.recordAdJokerWatched();
     }
   }
 }

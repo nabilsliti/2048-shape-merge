@@ -54,6 +54,7 @@ abstract class AudioService {
   void playMergeAbort();
   void playNewRecord();
   void playReward();
+  void playSpinJoker();
   void playButtonTap();
   void playGameOver();
   void playJoker(String jokerName);
@@ -266,6 +267,8 @@ class _SoLoudAudioService implements AudioService {
   void playNewRecord() => play(AudioCatalog.newRecordSound);
   @override
   void playReward() => play(AudioCatalog.rewardSound);
+  @override
+  void playSpinJoker() => play(AudioCatalog.spinJokerSound);
   @override
   void playButtonTap() => play(AudioCatalog.buttonTapSound);
 

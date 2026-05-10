@@ -12,6 +12,7 @@ abstract final class AudioCatalog {
     'merge': 'assets/sounds/merge.mp3',
     'level_up': 'assets/sounds/level_complete.mp3',
     'reward': 'assets/sounds/reward_pub.wav',
+    'spin_joker': 'assets/sounds/spin_joker.mp3',
     'merge_abort': 'assets/sounds/merge-abort.mp3',
     'new_record': 'assets/sounds/new-record.wav',
     'click': 'assets/sounds/click.mp3',
@@ -36,6 +37,7 @@ abstract final class AudioCatalog {
   static const String mergeAbortSound = 'merge_abort';
   static const String newRecordSound = 'new_record';
   static const String rewardSound = 'reward';
+  static const String spinJokerSound = 'spin_joker';
   static const String buttonTapSound = 'click';
   static const String gameOverSound = 'game_over';
 

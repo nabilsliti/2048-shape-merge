@@ -1,10 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/retention_ui.dart';
 import 'package:shape_merge/core/services/progression_service.dart';
-import 'package:shape_merge/core/widgets/joker_choice_dialog.dart';
+import 'package:shape_merge/core/widgets/joker_random_reveal_dialog.dart';
 import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
@@ -198,6 +201,26 @@ class _TopHud extends ConsumerWidget {
     final adsService = ref.read(adsServiceProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    // Defensive check — AdRewardGemButton is already disabled when these
+    // conditions fail, but guards against any race / programmatic call.
+    final storage = await ref.read(localStorageProvider.future);
+    if (!storage.canWatchAdJoker) {
+      if (context.mounted) {
+        final isCap = storage.adJokerAdsLeftToday == 0;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isCap ? l10n.adJokerLimitTomorrow : l10n.adJokerLimitReached,
+              style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
+            ),
+            backgroundColor: AppTheme.redTop,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
     final rewarded = await adsService.showRewardedAd(onRewarded: () {});
 
     if (!rewarded) {
@@ -215,9 +238,13 @@ class _TopHud extends ConsumerWidget {
     }
 
     if (context.mounted) {
-      final chosen = await JokerChoiceDialog.show(context);
-      if (chosen != null) {
-        ref.read(gameStateProvider.notifier).addJokers(chosen);
+      const pool = AdJokerTuning.rewardPool;
+      final reward = pool[math.Random().nextInt(pool.length)];
+      final got = await JokerRandomRevealDialog.show(context, reward: reward);
+      if (got != null) {
+        ref.read(gameStateProvider.notifier).addJokers(got);
+        // Persist cooldown + daily-cap counter so the button reflects it.
+        await storage.recordAdJokerWatched();
       }
       adsService.loadRewardedAd();
     }

@@ -376,6 +376,17 @@
   "bestChoice": "BEST CHOICE",
   "rescueHeroDesc": "Save your game and continue your best run",
   "rescueCtaLabel": "Save my game \uD83D\uDD25",
-  "freeJokerShort": "+1 joker of your choice",
+  "freeJokerShort": "+1 mystery joker",
+  "adJokerCooldownLabel": "Available in",
+  "adJokerLimitReached": "Limit reached",
+  "adJokerLimitTomorrow": "Daily limit reached. Come back tomorrow!",
+  "adJokerCapBadge": "TOMORROW",
+  "adJokerAdsLeft": "{count, plural, =1{1 ad left} other{{count} ads left}}",
+  "@adJokerAdsLeft": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "adJokerSpinTitle": "MYSTERY JOKER",
+  "adJokerSpinCta": "SPIN",
+  "adJokerYouGot": "You got:",
   "sectionMoreOffers": "MORE OFFERS"
 }
