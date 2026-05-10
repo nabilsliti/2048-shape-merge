@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
+import 'package:shape_merge/core/services/analytics_service.dart';
 import 'package:shape_merge/core/services/streak_service.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
@@ -50,6 +53,16 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
     }
 
     if (mounted) state = result;
+
+    // ── Analytics: streak retention signals ──
+    final analytics = AnalyticsService.instance;
+    unawaited(analytics.setStreakDays(result.streak.currentStreak));
+    if (result.streakIncremented) {
+      unawaited(analytics.logStreakDay(result.streak.currentStreak));
+    }
+    if (result.streakReset) {
+      unawaited(analytics.logStreakLost(result.streak.currentStreak));
+    }
     } finally {
       _isProcessing = false;
     }
@@ -106,6 +119,10 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
 
         // Refresh player to show new XP/level/streak from Firestore.
         _ref.invalidate(playerProvider);
+        unawaited(AnalyticsService.instance.logStreakRewardClaimed(
+          day: state?.streak.currentStreak ?? 0,
+          doubled: doubled,
+        ));
         return;
       }
 
@@ -130,6 +147,10 @@ class StreakNotifier extends StateNotifier<StreakCheckResult?> {
 
       final storage = await _ref.read(localStorageProvider.future);
       await storage.setRewardClaimedDate(PlayerStreak.todayKey());
+      unawaited(AnalyticsService.instance.logStreakRewardClaimed(
+        day: state?.streak.currentStreak ?? 0,
+        doubled: doubled,
+      ));
     } finally {
       _isClaiming = false;
     }

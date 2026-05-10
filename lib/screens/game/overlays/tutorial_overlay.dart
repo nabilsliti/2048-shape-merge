@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shape_merge/core/services/analytics_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/screens/home/widgets/animated_background.dart';
@@ -16,6 +19,13 @@ class TutorialOverlay extends StatefulWidget {
 class _TutorialOverlayState extends State<TutorialOverlay> {
   final _controller = PageController();
   int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(AnalyticsService.instance.logTutorialBegin());
+    unawaited(AnalyticsService.instance.logTutorialStep(0));
+  }
 
   @override
   void dispose() {
@@ -48,7 +58,10 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12, right: 16),
                   child: TextButton(
-                    onPressed: widget.onDismiss,
+                    onPressed: () {
+                    unawaited(AnalyticsService.instance.logTutorialSkipped(_page));
+                    widget.onDismiss();
+                  },
                     child: Text(
                       l10n.skipTutorial,
                       style: GoogleFonts.nunito(
@@ -65,7 +78,10 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
-                  onPageChanged: (i) => setState(() => _page = i),
+                  onPageChanged: (i) {
+                    setState(() => _page = i);
+                    unawaited(AnalyticsService.instance.logTutorialStep(i));
+                  },
                   itemCount: slides.length,
                   itemBuilder: (_, i) => slides[i],
                 ),
@@ -99,6 +115,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
                   expand: true,
                   onPressed: () {
                     if (isLast) {
+                      unawaited(AnalyticsService.instance.logTutorialCompleted());
                       widget.onDismiss();
                     } else {
                       _controller.nextPage(

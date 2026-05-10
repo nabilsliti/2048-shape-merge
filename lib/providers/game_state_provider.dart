@@ -148,6 +148,11 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   void _incrementJokerUsed() {
     state = state.copyWith(jokersUsedThisGame: state.jokersUsedThisGame + 1);
+    // First-ever joker use across the player's lifetime — funnel signal.
+    if (_storage != null && !_storage!.firstJokerLogged) {
+      unawaited(_storage!.setFirstJokerLogged());
+      unawaited(AnalyticsService.instance.logFirstJokerUsed());
+    }
   }
 
   /// After destructive jokers (bomb, megaBomb, reducer), respawn shapes
@@ -177,8 +182,17 @@ class GameStateNotifier extends StateNotifier<GameState> {
       _boardSize!,
       wasTap: wasTap,
     );
+    final wasFirstEverMerge =
+        result.mergedShape != null && state.mergeCount == 0;
     state = result.state;
     _saveCheckpoint();
+    if (wasFirstEverMerge) {
+      // Fire only once across the player's lifetime, persisted via prefs.
+      if (_storage != null && !_storage!.firstMergeLogged) {
+        unawaited(_storage!.setFirstMergeLogged());
+        unawaited(AnalyticsService.instance.logFirstMerge());
+      }
+    }
     return (mergedShape: result.mergedShape, pointsEarned: result.pointsEarned, wasTap: result.wasTap, comboCount: result.comboCount);
   }
 

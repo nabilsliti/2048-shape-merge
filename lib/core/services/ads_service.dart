@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/ad_units.dart';
+import 'package:shape_merge/core/services/analytics_service.dart';
 
 class AdsService {
   BannerAd? bannerAd;
@@ -95,6 +96,8 @@ class AdsService {
         completer.complete(rewarded);
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
+        unawaited(AnalyticsService.instance
+            .logAdFailed(type: 'rewarded', error: error.message));
         ad.dispose();
         _rewardedAd = null;
         loadRewardedAd();
@@ -105,6 +108,7 @@ class AdsService {
     await _rewardedAd!.show(
       onUserEarnedReward: (_, __) {
         rewarded = true;
+        unawaited(AnalyticsService.instance.logAdRewarded(placement: 'rewarded'));
         onRewarded();
       },
     );
@@ -163,13 +167,16 @@ class AdsService {
         loadInterstitialAd();
         onDismissed();
       },
-      onAdFailedToShowFullScreenContent: (ad, _) {
+      onAdFailedToShowFullScreenContent: (ad, err) {
+        unawaited(AnalyticsService.instance
+            .logAdFailed(type: 'interstitial', error: err.message));
         ad.dispose();
         _interstitialAd = null;
         loadInterstitialAd();
         onDismissed();
       },
     );
+    unawaited(AnalyticsService.instance.logAdInterstitialShown());
     _interstitialAd!.show();
   }
 

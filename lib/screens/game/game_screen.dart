@@ -364,6 +364,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
         mergeCount: gameState.mergeCount,
         shapesOnBoard: gameState.shapes.length,
       ));
+      // Refresh user properties so Firebase audiences stay accurate.
+      unawaited(AnalyticsService.instance.setBestScore(gameState.bestScore));
+      unawaited(AnalyticsService.instance
+          .setJokersInventory(gameState.jokerInventory));
+      final iap = ref.read(iapServiceProvider);
+      unawaited(AnalyticsService.instance.setPremiumStatus(
+        noAds: iap.noAdsPurchased,
+        emojiPack: iap.emojiPackPurchased,
+      ));
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (isSignedIn) {
           _submitScore(user, gameState);
@@ -372,11 +381,28 @@ class _GameScreenState extends ConsumerState<GameScreen>
           _updateLocalStats(gameState.mergeCount);
         }
         // Capture completed count BEFORE syncing to compute delta for XP
-        final completedBefore = ref.read(dailyChallengeProvider)?.completedCount ?? 0;
+        final beforeCompleted = ref
+            .read(dailyChallengeProvider)
+            ?.challenges
+            .where((c) => c.completed)
+            .map((c) => c.id)
+            .toSet() ??
+            {};
+        final completedBefore = beforeCompleted.length;
         // Sync `parties` objective — other objectives were already synced live
         ref.read(dailyChallengeProvider.notifier).syncGameEnd();
-        final completedAfter = ref.read(dailyChallengeProvider)?.completedCount ?? 0;
+        final afterChallenges =
+            ref.read(dailyChallengeProvider)?.challenges ?? const [];
+        final completedAfter =
+            afterChallenges.where((c) => c.completed).length;
         final newlyCompleted = completedAfter - completedBefore;
+        // Analytics: log each newly completed challenge.
+        for (final c in afterChallenges) {
+          if (c.completed && !beforeCompleted.contains(c.id)) {
+            unawaited(AnalyticsService.instance
+                .logChallengeCompleted(challengeId: c.id));
+          }
+        }
         // Process XP gain — use delta of newly completed objectives, not total
         ref.read(progressionProvider.notifier).processGameEnd(
           score: gameState.score,

@@ -96,6 +96,7 @@ class ProgressionNotifier extends StateNotifier<ProgressionResult?> {
         gameNotifier.addJokers(type, amount);
       }
       unawaited(AnalyticsService.instance.logLevelReached(result.level));
+      unawaited(AnalyticsService.instance.setPlayerLevel(result.level));
     }
 
     if (mounted) {

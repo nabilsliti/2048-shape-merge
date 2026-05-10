@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shape_merge/core/config/app_routes.dart';
 import 'package:shape_merge/core/constants/shape_pack.dart';
+import 'package:shape_merge/core/services/analytics_service.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/services/notification_service.dart';
@@ -40,6 +42,10 @@ const _log = AppLogger('App');
 
 final _router = GoRouter(
   initialLocation: AppRoutes.splash,
+  // Auto-tracks screen_view in Firebase Analytics for every navigation.
+  observers: [
+    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+  ],
   errorBuilder: (context, state) => Scaffold(
     body: Center(
       child: Text(AppLocalizations.of(context)!.pageNotFound(state.uri.toString())),
@@ -157,6 +163,10 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
 
       final isSameUser = prevUser?.uid == nextUser?.uid;
       if (isSameUser) return;
+
+      // Bind identity to Analytics + Crashlytics on every auth transition
+      // (guest ↔ signed-in ↔ different account). Best-effort, fire-and-forget.
+      unawaited(AnalyticsService.instance.setAuthState(nextUser));
 
       final notifier = ref.read(gameStateProvider.notifier);
 

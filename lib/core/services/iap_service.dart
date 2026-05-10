@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shape_merge/core/config/shop_catalog.dart';
+import 'package:shape_merge/core/services/analytics_service.dart';
 import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 
@@ -126,6 +127,7 @@ class IapService {
       return false;
     }
 
+    unawaited(AnalyticsService.instance.logIapAttempt(productId));
     onStatusChanged?.call(IapResult(
       status: IapStatus.purchasing,
       productId: productId,
@@ -140,6 +142,7 @@ class IapService {
       }
     } catch (e) {
       _log.error('Buy failed for $productId', error: e);
+      unawaited(AnalyticsService.instance.logIapError(productId, e.toString()));
       onStatusChanged?.call(IapResult(
         status: IapStatus.error,
         productId: productId,
@@ -193,6 +196,8 @@ class IapService {
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
 
         case PurchaseStatus.error:
+          unawaited(AnalyticsService.instance
+              .logIapError(p.productID, p.error?.message ?? 'unknown'));
           onStatusChanged?.call(IapResult(
             status: IapStatus.error,
             productId: p.productID,
@@ -201,6 +206,7 @@ class IapService {
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
 
         case PurchaseStatus.canceled:
+          unawaited(AnalyticsService.instance.logIapCanceled(p.productID));
           onStatusChanged?.call(IapResult(
             status: IapStatus.idle,
             productId: p.productID,
@@ -230,6 +236,11 @@ class IapService {
         final status = result.data['status'] as String?;
         if (status == 'ok' || status == 'already_processed') {
           _log.info('Purchase verified server-side: $id ($status)');
+          unawaited(AnalyticsService.instance.logIapSuccess(
+            productId: id,
+            details: products[id],
+            serverVerified: true,
+          ));
           onProductDelivered?.call(id, serverVerified: true);
         } else {
           _log.error('Unexpected verification status: $status');
@@ -251,6 +262,11 @@ class IapService {
           platform: Platform.isIOS ? 'ios' : 'android',
         );
         _log.info('Saved pending purchase for $id');
+        unawaited(AnalyticsService.instance.logIapSuccess(
+          productId: id,
+          details: products[id],
+          serverVerified: false,
+        ));
         onProductDelivered?.call(id, serverVerified: false);
       }
     }

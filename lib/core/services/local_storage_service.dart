@@ -72,6 +72,18 @@ class LocalStorageService {
   Future<void> setOnboardingDone(bool done) =>
       _prefs.setBool(_onboardingDoneKey, done);
 
+  // ── Analytics one-shot flags (so first_* events fire only once ever) ──
+  static const _firstMergeLoggedKey = 'analyticsFirstMergeLogged';
+  static const _firstJokerLoggedKey = 'analyticsFirstJokerLogged';
+
+  bool get firstMergeLogged => _prefs.getBool(_firstMergeLoggedKey) ?? false;
+  Future<void> setFirstMergeLogged() =>
+      _prefs.setBool(_firstMergeLoggedKey, true);
+
+  bool get firstJokerLogged => _prefs.getBool(_firstJokerLoggedKey) ?? false;
+  Future<void> setFirstJokerLogged() =>
+      _prefs.setBool(_firstJokerLoggedKey, true);
+
   bool get soundEnabled => _prefs.getBool(_soundEnabledKey) ?? true;
   Future<void> setSoundEnabled(bool enabled) =>
       _prefs.setBool(_soundEnabledKey, enabled);
