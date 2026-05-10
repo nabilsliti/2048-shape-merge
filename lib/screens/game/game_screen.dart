@@ -184,7 +184,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
                 next.shapesDestroyedThisGame == previous.shapesDestroyedThisGame &&
                 next.wildcardMergesThisGame == previous.wildcardMergesThisGame &&
                 next.highLevelMergesThisGame == previous.highLevelMergesThisGame &&
-                next.boardClearsThisGame == previous.boardClearsThisGame &&
                 next.maxComboReached == previous.maxComboReached) {
               return;
             }
@@ -197,7 +196,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
               shapesDestroyedSoFar: next.shapesDestroyedThisGame,
               wildcardMergesSoFar: next.wildcardMergesThisGame,
               highLevelMergesSoFar: next.highLevelMergesThisGame,
-              boardClearsSoFar: next.boardClearsThisGame,
               maxComboSoFar: next.maxComboReached,
             );
             for (final challenge in newlyCompleted) {
@@ -288,7 +286,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
       ChallengeType.shapesDestroyed => l10n.objectiveShapesDestroyed(c.target),
       ChallengeType.wildcardMerges  => l10n.objectiveWildcardMerges(c.target),
       ChallengeType.highLevelMerges => l10n.objectiveHighLevelMerges(c.target),
-      ChallengeType.boardClears     => l10n.objectiveBoardClears(c.target),
       ChallengeType.maxCombo        => l10n.objectiveMaxCombo(c.target),
     };
   }

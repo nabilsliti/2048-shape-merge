@@ -145,12 +145,6 @@
       "n": {"type": "int"}
     }
   },
-  "objectiveBoardClears": "{n, plural, =1{Vider le plateau 1 fois} other{Vider le plateau {n} fois}}",
-  "@objectiveBoardClears": {
-    "placeholders": {
-      "n": {"type": "int"}
-    }
-  },
   "objectiveMaxCombo": "Atteindre un combo de {n}",
   "@objectiveMaxCombo": {
     "placeholders": {
@@ -266,6 +260,7 @@
   },
   "maxShapesWarning": "Max 30 formes",
   "storeNotAvailable": "Boutique indisponible",
+  "productUnavailable": "Ce produit n'est pas disponible pour le moment.",
   "signInError": "Erreur de connexion : {error}",
   "@signInError": {
     "placeholders": {

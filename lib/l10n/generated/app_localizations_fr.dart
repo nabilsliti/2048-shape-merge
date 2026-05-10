@@ -357,17 +357,6 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String objectiveBoardClears(int n) {
-    String _temp0 = intl.Intl.pluralLogic(
-      n,
-      locale: localeName,
-      other: 'Vider le plateau $n fois',
-      one: 'Vider le plateau 1 fois',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String objectiveMaxCombo(int n) {
     return 'Atteindre un combo de $n';
   }
@@ -606,6 +595,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get storeNotAvailable => 'Boutique indisponible';
+
+  @override
+  String get productUnavailable =>
+      'Ce produit n\'est pas disponible pour le moment.';
 
   @override
   String signInError(String error) {

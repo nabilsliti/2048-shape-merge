@@ -656,12 +656,6 @@ abstract class AppLocalizations {
   /// **'{n, plural, =1{Create 1 shape of rank 6+} other{Create {n} shapes of rank 6+}}'**
   String objectiveHighLevelMerges(int n);
 
-  /// No description provided for @objectiveBoardClears.
-  ///
-  /// In en, this message translates to:
-  /// **'{n, plural, =1{Clear the board 1 time} other{Clear the board {n} times}}'**
-  String objectiveBoardClears(int n);
-
   /// No description provided for @objectiveMaxCombo.
   ///
   /// In en, this message translates to:
@@ -1099,6 +1093,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Store not available'**
   String get storeNotAvailable;
+
+  /// No description provided for @productUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This product is not available right now.'**
+  String get productUnavailable;
 
   /// No description provided for @signInError.
   ///

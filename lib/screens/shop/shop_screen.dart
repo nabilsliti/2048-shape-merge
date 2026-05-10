@@ -366,10 +366,12 @@ class _ShopScreenContentState extends ConsumerState<ShopScreenContent> {
       return;
     }
     if (!iap.products.containsKey(productId)) {
+      _log.warning('Product "$productId" not found. Loaded: ${iap.products.keys.toList()}');
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Product "$productId" not found. Loaded: ${iap.products.keys.toList()}'),
+            content: Text(l10n.productUnavailable),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 5),
           ),

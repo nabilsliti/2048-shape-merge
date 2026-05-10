@@ -10,7 +10,6 @@ enum ChallengeType {
   shapesDestroyed,
   wildcardMerges,
   highLevelMerges,
-  boardClears,
   maxCombo,
 }
 

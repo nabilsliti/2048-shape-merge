@@ -29,7 +29,6 @@ abstract final class ChallengeTargets {
     'shapesDestroyed': {'easy': 5, 'medium': 15, 'hard': 30},
     'wildcardMerges': {'easy': 2, 'medium': 4, 'hard': 7},
     'highLevelMerges': {'easy': 2, 'medium': 5, 'hard': 10},
-    'boardClears': {'easy': 1, 'medium': 2, 'hard': 3},
     'maxCombo': {'easy': 3, 'medium': 5, 'hard': 8},
   };
 

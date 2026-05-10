@@ -145,12 +145,6 @@
       "n": {"type": "int"}
     }
   },
-  "objectiveBoardClears": "{n, plural, =1{Clear the board 1 time} other{Clear the board {n} times}}",
-  "@objectiveBoardClears": {
-    "placeholders": {
-      "n": {"type": "int"}
-    }
-  },
   "objectiveMaxCombo": "Reach a combo of {n}",
   "@objectiveMaxCombo": {
     "placeholders": {
@@ -266,6 +260,7 @@
   },
   "maxShapesWarning": "Max 30 shapes",
   "storeNotAvailable": "Store not available",
+  "productUnavailable": "This product is not available right now.",
   "signInError": "Sign-in error: {error}",
   "@signInError": {
     "placeholders": {

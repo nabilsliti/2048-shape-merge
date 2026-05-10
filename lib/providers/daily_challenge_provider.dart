@@ -87,7 +87,6 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     required int shapesDestroyedSoFar,
     required int wildcardMergesSoFar,
     required int highLevelMergesSoFar,
-    required int boardClearsSoFar,
     required int maxComboSoFar,
   }) {
     final current = state;
@@ -109,7 +108,6 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
       shapesDestroyedSoFar: shapesDestroyedSoFar,
       wildcardMergesSoFar: wildcardMergesSoFar,
       highLevelMergesSoFar: highLevelMergesSoFar,
-      boardClearsSoFar: boardClearsSoFar,
       maxComboSoFar: maxComboSoFar,
     );
 
@@ -134,7 +132,6 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     required int shapesDestroyedThisGame,
     required int wildcardMergesThisGame,
     required int highLevelMergesThisGame,
-    required int boardClearsThisGame,
     required int maxComboReached,
   }) async {
     final current = state;
@@ -150,7 +147,6 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
       shapesDestroyedThisGame: shapesDestroyedThisGame,
       wildcardMergesThisGame: wildcardMergesThisGame,
       highLevelMergesThisGame: highLevelMergesThisGame,
-      boardClearsThisGame: boardClearsThisGame,
       maxComboReached: maxComboReached,
     );
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/config/avatar_catalog.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
+import 'package:shape_merge/l10n/generated/app_localizations.dart';
 
 /// Reusable avatar picker grid.
 ///
@@ -28,6 +29,7 @@ class AvatarPickerGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -91,7 +93,7 @@ class AvatarPickerGrid extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'Lvl ${avatar.unlockLevel}',
+                        '${l10n.levelShortLabel} ${avatar.unlockLevel}',
                         style: GoogleFonts.fredoka(
                           fontSize: 8,
                           fontWeight: FontWeight.w700,

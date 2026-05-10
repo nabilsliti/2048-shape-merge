@@ -98,7 +98,6 @@ class ChallengeService {
     required int shapesDestroyedSoFar,
     required int wildcardMergesSoFar,
     required int highLevelMergesSoFar,
-    required int boardClearsSoFar,
     required int maxComboSoFar,
   }) {
     final updated = state.challenges.map((c) {
@@ -120,8 +119,6 @@ class ChallengeService {
           newCurrent = min(base + wildcardMergesSoFar, c.target);
         case ChallengeType.highLevelMerges:
           newCurrent = min(base + highLevelMergesSoFar, c.target);
-        case ChallengeType.boardClears:
-          newCurrent = min(base + boardClearsSoFar, c.target);
         case ChallengeType.maxCombo:
           if (maxComboSoFar > newCurrent) newCurrent = min(maxComboSoFar, c.target);
         case ChallengeType.parties:
@@ -146,7 +143,6 @@ class ChallengeService {
     required int shapesDestroyedThisGame,
     required int wildcardMergesThisGame,
     required int highLevelMergesThisGame,
-    required int boardClearsThisGame,
     required int maxComboReached,
   }) {
     final updated = state.challenges.map((c) {
@@ -170,8 +166,6 @@ class ChallengeService {
           newCurrent = min(c.current + wildcardMergesThisGame, c.target);
         case ChallengeType.highLevelMerges:
           newCurrent = min(c.current + highLevelMergesThisGame, c.target);
-        case ChallengeType.boardClears:
-          newCurrent = min(c.current + boardClearsThisGame, c.target);
         case ChallengeType.maxCombo:
           // Best combo in a single game (not cumulative)
           if (maxComboReached > newCurrent) newCurrent = min(maxComboReached, c.target);
@@ -252,7 +246,6 @@ class ChallengeService {
       ChallengeType.shapesDestroyed => ChallengeTargets.target('shapesDestroyed', diff.name),
       ChallengeType.wildcardMerges  => ChallengeTargets.target('wildcardMerges', diff.name),
       ChallengeType.highLevelMerges => ChallengeTargets.target('highLevelMerges', diff.name),
-      ChallengeType.boardClears     => ChallengeTargets.target('boardClears', diff.name),
       ChallengeType.maxCombo        => ChallengeTargets.target('maxCombo', diff.name),
     };
 

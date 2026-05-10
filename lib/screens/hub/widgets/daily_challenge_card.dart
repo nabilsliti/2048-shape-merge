@@ -489,7 +489,6 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow>
     ChallengeType.shapesDestroyed => Icons.local_fire_department_rounded,
     ChallengeType.wildcardMerges  => Icons.style_rounded,
     ChallengeType.highLevelMerges => Icons.upgrade_rounded,
-    ChallengeType.boardClears     => Icons.cleaning_services_rounded,
     ChallengeType.maxCombo        => Icons.bolt_rounded,
   };
 
@@ -504,7 +503,6 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow>
       ChallengeType.shapesDestroyed => l10n.objectiveShapesDestroyed(c.target),
       ChallengeType.wildcardMerges  => l10n.objectiveWildcardMerges(c.target),
       ChallengeType.highLevelMerges => l10n.objectiveHighLevelMerges(c.target),
-      ChallengeType.boardClears     => l10n.objectiveBoardClears(c.target),
       ChallengeType.maxCombo        => l10n.objectiveMaxCombo(c.target),
     };
   }
