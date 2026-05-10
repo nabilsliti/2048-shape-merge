@@ -9,6 +9,7 @@ import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/audio_service.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/offline_banner.dart';
+import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/providers/iap_provider.dart';
 import 'package:shape_merge/providers/nav_provider.dart';
 import 'package:vibration/vibration.dart';
@@ -242,8 +243,15 @@ class AdBannerWidget extends ConsumerStatefulWidget {
 
 class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
     with WidgetsBindingObserver {
+  /// Currently displayed banner. Stays mounted until [_pendingBanner]
+  /// finishes loading, so the slot is never visually empty during a
+  /// navigation-triggered refresh.
   BannerAd? _bannerAd;
   bool _isLoaded = false;
+
+  /// Banner being loaded in background. Swapped into [_bannerAd] once
+  /// the [BannerAdListener] confirms a successful load.
+  BannerAd? _pendingBanner;
   bool _isLoading = false;
 
   /// Tracks the last successful (or attempted) load time for cooldown.
@@ -282,7 +290,6 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
       _reloadIfCooldownPassed();
     }
   }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -321,12 +328,25 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
 
   void _reload() {
     _cancelTimers();
-    _disposeBannerOnly();
+    // Graceful swap: keep the current banner on screen while the new one
+    // loads in the background. The displayed banner is only replaced once
+    // [_pendingBanner] reports onAdLoaded.
     _loadAd();
   }
 
   Future<void> _loadAd() async {
     if (_isLoading) return;
+
+    // Try to consume the banner pre-warmed at app startup. This avoids
+    // showing an empty slot on first render.
+    final preloaded = ref.read(adsServiceProvider).takePreloadedBanner();
+    if (preloaded != null) {
+      _cachedAdSize ??= preloaded.size;
+      _lastLoadTime = DateTime.now();
+      _swapInNewBanner(preloaded);
+      return;
+    }
+
     _isLoading = true;
     _lastLoadTime = DateTime.now();
 
@@ -338,26 +358,38 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
 
     if (!mounted) return;
 
-    _bannerAd = BannerAd(
+    _pendingBanner = BannerAd(
       adUnitId: _adUnitId,
       size: _cachedAdSize!,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (_) => _onAdLoaded(),
+        onAdLoaded: (ad) => _swapInNewBanner(ad as BannerAd),
         onAdFailedToLoad: (ad, error) => _onAdFailed(ad, error),
       ),
     )..load();
   }
 
-  void _onAdLoaded() {
+  /// Atomically replace the visible banner with [newBanner]. The old one
+  /// is disposed only after the new one is in place, so the slot never
+  /// flashes empty between two refreshes.
+  void _swapInNewBanner(BannerAd newBanner) {
+    if (!mounted) {
+      newBanner.dispose();
+      return;
+    }
+    final old = _bannerAd;
+    _bannerAd = newBanner;
+    _pendingBanner = null;
+    _isLoading = false;
     _failCount = 0;
-    if (mounted) setState(() => _isLoaded = true);
-    _log.info('Banner loaded');
+    setState(() => _isLoaded = true);
+    old?.dispose();
+    _log.info('Banner loaded (swapped)');
   }
 
   void _onAdFailed(Ad ad, LoadAdError error) {
     ad.dispose();
-    _bannerAd = null;
+    _pendingBanner = null;
     _isLoading = false;
     _failCount++;
     _log.warning('Banner failed (attempt $_failCount): $error');
@@ -382,10 +414,12 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
     _retryTimer = null;
   }
 
-  /// Dispose only the BannerAd instance, not the timers.
+  /// Dispose both displayed and pending BannerAd instances.
   void _disposeBannerOnly() {
     _bannerAd?.dispose();
     _bannerAd = null;
+    _pendingBanner?.dispose();
+    _pendingBanner = null;
     _isLoaded = false;
     _isLoading = false;
   }
@@ -403,14 +437,15 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
     final noAds = ref.watch(noAdsPurchasedProvider);
     if (noAds) return const SizedBox.shrink();
 
-    // Always reserve the banner slot so layout never jumps and the user
-    // sees a consistent space at the bottom. While the ad is (re)loading,
-    // we show a solid black placeholder so the slot is visible but discreet.
+    // Always reserve the banner slot so layout never jumps. While the ad is
+    // (re)loading, paint the slot with the nav-bar background colour so the
+    // empty placeholder visually blends with the navigation bar above
+    // instead of looking like a broken black void.
     final hasAd = _isLoaded && _bannerAd != null;
     return Container(
       width: double.infinity,
       height: _BannerTuning.slotHeight,
-      color: hasAd ? AppTheme.navBarBg : Colors.black,
+      color: AppTheme.navBarBg,
       alignment: Alignment.center,
       child: hasAd ? AdWidget(ad: _bannerAd!) : const SizedBox.shrink(),
     );

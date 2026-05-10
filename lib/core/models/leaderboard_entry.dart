@@ -10,7 +10,6 @@ class LeaderboardEntry {
   final int maxLevel;
   final int mergeCount;
   final DateTime timestamp;
-  final String weekKey;
 
   const LeaderboardEntry({
     this.docId,
@@ -22,7 +21,6 @@ class LeaderboardEntry {
     required this.maxLevel,
     required this.mergeCount,
     required this.timestamp,
-    required this.weekKey,
   });
 
   Map<String, Object?> toFirestore() {
@@ -35,7 +33,6 @@ class LeaderboardEntry {
       'maxLevel': maxLevel,
       'mergeCount': mergeCount,
       'timestamp': Timestamp.fromDate(timestamp),
-      'weekKey': weekKey,
     };
   }
 
@@ -51,7 +48,7 @@ class LeaderboardEntry {
       maxLevel: data['maxLevel'] as int? ?? 1,
       mergeCount: data['mergeCount'] as int? ?? 0,
       timestamp: ts is Timestamp ? ts.toDate() : DateTime.now(),
-      weekKey: data['weekKey'] as String? ?? '',
     );
   }
 }
+

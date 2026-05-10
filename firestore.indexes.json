@@ -7,14 +7,6 @@
         { "fieldPath": "score", "order": "DESCENDING" },
         { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "leaderboard",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "weekKey", "order": "ASCENDING" },
-        { "fieldPath": "score", "order": "DESCENDING" }
-      ]
     }
   ]
 }

@@ -64,7 +64,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
     const images = [
       AssetImage('assets/images/pub.webp'),
-      AssetImage('assets/images/trophy.png'),
+      AssetImage('assets/images/trophy.webp'),
       AssetImage('assets/images/calendar.webp'),
       AssetImage('assets/images/shop-cart.webp'),
     ];

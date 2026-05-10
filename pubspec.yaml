@@ -77,9 +77,13 @@ flutter:
 
   assets:
     - assets/sounds/
-    - assets/icon/
     - assets/images/
     - assets/shapes/emoji/
+
+# NOTE: `assets/icon/` is intentionally NOT listed in `assets:` above.
+# Those files (app_icon.png, crestbit_logo.png) are only consumed at build
+# time by `flutter_launcher_icons` and `flutter_native_splash`; bundling
+# them as runtime assets would add ~1 MB of dead weight to the AAB.
 
 flutter_launcher_icons:
   android: true

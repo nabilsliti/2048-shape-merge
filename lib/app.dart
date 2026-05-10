@@ -29,6 +29,7 @@ import 'package:shape_merge/providers/progression_provider.dart';
 import 'package:shape_merge/providers/shape_pack_provider.dart';
 import 'package:shape_merge/providers/streak_provider.dart';
 import 'package:shape_merge/providers/account_sync_provider.dart';
+import 'package:shape_merge/providers/ads_provider.dart';
 import 'package:shape_merge/screens/splash/splash_screen.dart';
 import 'package:shape_merge/screens/hub/main_hub_screen.dart';
 import 'package:shape_merge/screens/game/game_screen.dart';
@@ -110,6 +111,11 @@ class _ShapeMergeAppState extends ConsumerState<ShapeMergeApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Trigger AdsService init early so the banner ad is pre-warmed in
+    // parallel with the splash, removing the visible empty slot at first
+    // home render. Reading the provider creates the singleton + kicks off
+    // init().
+    ref.read(adsServiceProvider);
     // Boot the local-notifications plugin, ask for permission on Android 13+/iOS,
     // then schedule the streak-reminder so users who don't open a game today
     // still get pinged tomorrow.

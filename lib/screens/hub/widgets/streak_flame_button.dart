@@ -102,6 +102,11 @@ class _StreakFlameButtonState extends State<StreakFlameButton>
 
   @override
   Widget build(BuildContext context) {
+    // When the daily reward is already claimed, swap the badge below the
+    // circle to the red countdown style used by AdRewardGemButton during
+    // cooldown — so the user instantly sees it's blocked until midnight.
+    final blocked = widget.rewardClaimed;
+
     final content = GestureDetector(
       onTap: widget.onTap,
       child: SizedBox(
@@ -125,11 +130,16 @@ class _StreakFlameButtonState extends State<StreakFlameButton>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          AppTheme.hubStreakPurple1,
-                          AppTheme.hubStreakPurple2,
-                        ],
+                      gradient: LinearGradient(
+                        colors: blocked
+                            ? const [
+                                AppTheme.hubDangerRed1,
+                                AppTheme.hubDangerRed2,
+                              ]
+                            : const [
+                                AppTheme.hubStreakPurple1,
+                                AppTheme.hubStreakPurple2,
+                              ],
                       ),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.white, width: 1.2),
@@ -142,14 +152,11 @@ class _StreakFlameButtonState extends State<StreakFlameButton>
                       ],
                     ),
                     child: Text(
-                      widget.rewardClaimed
-                          ? _countdown
-                          : '${widget.streakCount}🔥',
+                      blocked ? _countdown : '${widget.streakCount}🔥',
                       maxLines: 1,
                       softWrap: false,
                       style: GoogleFonts.fredoka(
-                        fontSize:
-                            widget.rewardClaimed ? 9 : AppTheme.fontTiny,
+                        fontSize: blocked ? 9 : AppTheme.fontTiny,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         height: 1.2,

@@ -2,14 +2,15 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shape_merge/core/config/app_routes.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shape_merge/core/theme/app_theme.dart';
 import 'package:shape_merge/core/widgets/joker_icons.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
 import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/nav_provider.dart';
+import 'package:shape_merge/screens/home/widgets/best_score_nudge.dart';
+import 'package:shape_merge/screens/home/widgets/daily_challenge_footer.dart';
+import 'package:shape_merge/screens/home/widgets/home_play_button.dart';
 import 'package:shape_merge/screens/hub/widgets/daily_challenge_card.dart';
 
 
@@ -178,33 +179,23 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent>
                     confettiCtrl: _confettiCtrl,
                   ),
 
+                  const SizedBox(height: 8),
+
+                  // ── Motivational nudge (Top World / beat player / first record) ──
+                  const BestScoreNudge(),
+
                   const SizedBox(height: 10),
 
-                  // ── Daily challenges card ──
+                  // ── Daily challenges card + global progress footer ──
                   const DailyChallengeCard(),
+                  const DailyChallengeFooter(),
 
                   const SizedBox(height: 10),
 
-                  // ── Play button — full width Button3D green ──
-                  Button3D.green(
-                    expand: true,
-                    onPressed: () {
-                      // Audio joué SEULEMENT dans game_screen
-                      context.push(AppRoutes.game);
-                    },
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Transform.translate(
-                        offset: const Offset(-14, 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const _AnimatedRocket(size: 44),
-                            const SizedBox(width: 14),
-                            Text(l10n.play.toUpperCase(), style: AppTheme.titleStyle(AppTheme.fontH2)),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // ── Play button (contextual subtitle + glow when objectives close) ──
+                  const HomePlayButton(
+                    rocket: _AnimatedRocket(size: 44),
+                  ),
 
                   const SizedBox(height: 24), // space for bottom nav + ad
                 ],

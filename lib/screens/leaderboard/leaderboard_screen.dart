@@ -334,7 +334,7 @@ class LeaderboardScreenContent extends ConsumerWidget {
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const SizedBox.shrink(),
               error: (_, __) => Center(
                 child: Text(l10n.leaderboardError, style: GoogleFonts.nunito(color: AppTheme.redTop, fontWeight: FontWeight.w900)),
               ),

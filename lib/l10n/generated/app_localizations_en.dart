@@ -181,12 +181,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rank => 'Rank';
 
   @override
-  String get allTime => 'All Time';
-
-  @override
-  String get thisWeek => 'This Week';
-
-  @override
   String get maxLevel => 'Max Level';
 
   @override
@@ -566,12 +560,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayLabel => 'DAY';
 
   @override
-  String get weeklyRewardsLabel => 'Reward';
-
-  @override
-  String get weekLabel => 'Week';
-
-  @override
   String get levelShortLabel => 'LV';
 
   @override
@@ -903,4 +891,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sectionMoreOffers => 'MORE OFFERS';
+
+  @override
+  String homeNudgeTopWorld(String n) {
+    return '$n pts to the Top';
+  }
+
+  @override
+  String homeNudgeBeatPlayer(String name, String score) {
+    return 'Beat $name: $score';
+  }
+
+  @override
+  String get homeNudgeFirstBest => 'Set your first record!';
+
+  @override
+  String get homeNudgeYouAreTop => 'You are #1 worldwide 👑';
+
+  @override
+  String objectivesProgress(int done, int total) {
+    return '$done/$total';
+  }
+
+  @override
+  String objectivesResetIn(String time) {
+    return 'Resets in $time';
+  }
+
+  @override
+  String get objectivesAllDoneToday => 'All today\'s objectives completed!';
+
+  @override
+  String get playSubtitleResume => 'Resume game';
+
+  @override
+  String get playSubtitleNewGame => 'New game';
 }

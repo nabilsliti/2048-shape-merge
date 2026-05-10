@@ -54,8 +54,6 @@
   "adNotReady": "Pub pas encore prête, réessaie dans un instant",
   "chooseJoker": "Choisis un joker à recharger",
   "rank": "Rang",
-  "allTime": "Tous les temps",
-  "thisWeek": "Cette semaine",
   "maxLevel": "Niveau max",
   "fusionsCount": "{count} fusions",
   "@fusionsCount": {
@@ -245,8 +243,6 @@
   "rewardAdded": "Ajouté à ton inventaire !",
   "xpLabel": "XP",
   "dayLabel": "JOUR",
-  "weeklyRewardsLabel": "Récompense",
-  "weekLabel": "Semaine",
   "levelShortLabel": "NIV",
   "defaultPlayerName": "Joueur",
   "defaultGuestName": "Invité",
@@ -388,5 +384,32 @@
   "adJokerSpinTitle": "JOKER MYSTÈRE",
   "adJokerSpinCta": "LANCER",
   "adJokerYouGot": "Tu as gagné :",
-  "sectionMoreOffers": "PLUS D'OFFRES"
+  "sectionMoreOffers": "PLUS D'OFFRES",
+  "homeNudgeTopWorld": "À {n} pts du Top Mondial",
+  "@homeNudgeTopWorld": {
+    "placeholders": { "n": { "type": "String" } }
+  },
+  "homeNudgeBeatPlayer": "Bats {name} : {score}",
+  "@homeNudgeBeatPlayer": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "score": { "type": "String" }
+    }
+  },
+  "homeNudgeFirstBest": "Tente ton premier record !",
+  "homeNudgeYouAreTop": "Tu es N°1 mondial 👑",
+  "objectivesProgress": "{done}/{total}",
+  "@objectivesProgress": {
+    "placeholders": {
+      "done": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "objectivesResetIn": "Reset dans {time}",
+  "@objectivesResetIn": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "objectivesAllDoneToday": "Tous les objectifs du jour sont complétés !",
+  "playSubtitleResume": "Reprendre la partie",
+  "playSubtitleNewGame": "Nouvelle partie"
 }

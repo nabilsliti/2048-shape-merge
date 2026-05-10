@@ -300,8 +300,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
         : gameState.bestScore;
     const AppLogger('Leaderboard').debug('submitScore: score=$bestForLeaderboard (game=${gameState.score}, best=${gameState.bestScore}), uid=${user.uid}');
     final now = DateTime.now();
-    final weekNum = ((now.difference(DateTime(now.year, 1, 1)).inDays + DateTime(now.year, 1, 1).weekday - 1) ~/ 7) + 1;
-    final weekKey = '${now.year}-W${weekNum.toString().padLeft(2, '0')}';
     final player = ref.read(playerProvider).valueOrNull;
     final entry = LeaderboardEntry(
       uid: user.uid,
@@ -312,7 +310,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
       maxLevel: gameState.maxLevelReached,
       mergeCount: gameState.mergeCount,
       timestamp: now,
-      weekKey: weekKey,
     );
     unawaited(ref.read(firestoreServiceProvider).submitScore(entry).catchError((Object e) {
       if (mounted) {

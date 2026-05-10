@@ -135,7 +135,7 @@ class _BestScoreDisplayState extends ConsumerState<_BestScoreDisplay>
           AnimatedBuilder(
             animation: Listenable.merge([_pulse, _celebCtrl]),
           child: Image.asset(
-            'assets/images/trophy.png',
+            'assets/images/trophy.webp',
             fit: BoxFit.contain,
           ),
           builder: (context, trophyImage) {

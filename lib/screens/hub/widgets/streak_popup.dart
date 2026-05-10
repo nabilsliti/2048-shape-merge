@@ -41,7 +41,15 @@ class StreakPopup extends ConsumerStatefulWidget {
 
 class _StreakPopupState extends ConsumerState<StreakPopup>
     with TickerProviderStateMixin {
-  late bool _collected;
+  /// True once the local collect animation has finished. Combined with the
+  /// live `streakProvider.rewardClaimed` to decide whether the popup should
+  /// show the Collect button, the reward animation, or the countdown. We
+  /// must NOT cache `widget.result.rewardClaimed` once at construction —
+  /// that snapshot can become stale (e.g. user closes the popup mid-claim,
+  /// reopens it, and the provider state has since flipped to claimed). See
+  /// regression: "clicked Collect, closed, reopened, Collect appeared
+  /// again".
+  bool _localAnimDone = false;
   bool _showCollectAnim = false;
   bool _isX2 = false;
 
@@ -55,7 +63,6 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
   @override
   void initState() {
     super.initState();
-    _collected = widget.result.rewardClaimed;
     _bounceCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1400));
     _plusOneCtrl = AnimationController(
@@ -88,7 +95,10 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
   }
 
   void _onCollect() {
-    if (_collected || _showCollectAnim) return;
+    // Source of truth = live provider state (already-claimed guard) plus the
+    // local animation guard (don't re-trigger while we're mid-celebration).
+    final liveClaimed = ref.read(streakProvider)?.rewardClaimed ?? false;
+    if (liveClaimed || _showCollectAnim || _localAnimDone) return;
     ref.read(streakProvider.notifier).claimStreakReward();
     _playCollectAnimation();
   }
@@ -104,12 +114,13 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
 
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
-      setState(() => _collected = true);
+      setState(() => _localAnimDone = true);
     });
   }
 
   void _onCollectX2() async {
-    if (_collected || _showCollectAnim) return;
+    final liveClaimed = ref.read(streakProvider)?.rewardClaimed ?? false;
+    if (liveClaimed || _showCollectAnim || _localAnimDone) return;
     final adsService = ref.read(adsServiceProvider);
     final rewarded = await adsService.showRewardedAd(onRewarded: () {});
     if (!rewarded) {
@@ -153,6 +164,13 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
             PlayerStreak.rewardCycleLength) %
         PlayerStreak.rewardCycleLength;
     final l10n = AppLocalizations.of(context)!;
+
+    // `collected` is reactive: as soon as the streak provider flips to
+    // claimed (server CF success, guest local write, or already-claimed
+    // detected on retry), the popup hides the Collect button and shows the
+    // countdown — even if the popup was opened with a stale `widget.result`.
+    final liveClaimed = ref.watch(streakProvider)?.rewardClaimed ?? false;
+    final collected = liveClaimed || _localAnimDone;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -200,13 +218,13 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                           ),
                         ),
                         const SizedBox(height: 8),
-                        _buildMilestoneBar(streak.currentStreak, _collected, l10n),
+                        _buildMilestoneBar(streak.currentStreak, collected, l10n),
                         const SizedBox(height: 10),
                         if (result.streakReset) ...[
                           _buildResetBanner(l10n),
                           const SizedBox(height: 8),
                         ],
-                        _buildDayGrid(todaySlot, streak.currentStreak, l10n),
+                        _buildDayGrid(todaySlot, streak.currentStreak, collected, l10n),
                         const SizedBox(height: 8),
                         _buildDay7Card(todaySlot, streak.currentStreak, l10n),
                         const SizedBox(height: 10),
@@ -214,11 +232,11 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                           _buildGuestNudge(l10n),
                           const SizedBox(height: 10),
                         ],
-                        if (!_collected &&
+                        if (!collected &&
                             !_showCollectAnim &&
                             result.reward != null)
                           _buildCollectButton(l10n, result.reward!)
-                        else if (_showCollectAnim && !_collected && result.reward != null)
+                        else if (_showCollectAnim && !collected && result.reward != null)
                           _buildCollectAnimation(result.reward!)
                         else
                           _buildCountdown(l10n),
@@ -557,7 +575,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
   // DAY GRID 3x2
   // ────────────────────────────────────────────────────────────────
   Widget _buildDayGrid(
-      int todaySlot, int currentStreak, AppLocalizations l10n) {
+      int todaySlot, int currentStreak, bool collected, AppLocalizations l10n) {
     final weekStart =
         currentStreak - (currentStreak - 1) % PlayerStreak.rewardCycleLength;
     return Column(
@@ -574,6 +592,7 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
                       index: row * 3 + col,
                       todaySlot: todaySlot,
                       weekStart: weekStart,
+                      collected: collected,
                       l10n: l10n,
                     ),
                   ),
@@ -589,13 +608,14 @@ class _StreakPopupState extends ConsumerState<StreakPopup>
     required int index,
     required int todaySlot,
     required int weekStart,
+    required bool collected,
     required AppLocalizations l10n,
   }) {
     final dayStreak = weekStart + index;
     final reward = PlayerStreak.rewardForStreak(dayStreak);
     final isToday = index == todaySlot;
     final isPast = index < todaySlot;
-    final isCollectedToday = isToday && _collected;
+    final isCollectedToday = isToday && collected;
 
     final Widget rewardIcon;
     final String rewardLabel;

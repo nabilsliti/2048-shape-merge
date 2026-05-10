@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shape_merge/core/config/game_tuning.dart';
 import 'package:shape_merge/core/constants/ad_units.dart';
@@ -9,6 +10,13 @@ import 'package:shape_merge/core/services/analytics_service.dart';
 
 class AdsService {
   BannerAd? bannerAd;
+
+  /// Banner pre-warmed at app launch so the first impression renders
+  /// without a visible empty slot. Consumed once by [AdBannerWidget]
+  /// via [takePreloadedBanner].
+  BannerAd? _preloadedBanner;
+  bool _preloadingBanner = false;
+
   RewardedAd? _rewardedAd;
   InterstitialAd? _interstitialAd;
   bool _disposed = false;
@@ -45,6 +53,70 @@ class AdsService {
     await MobileAds.instance.initialize();
     loadRewardedAd();
     loadInterstitialAd();
+    unawaited(_preloadBanner());
+  }
+
+  /// Returns the pre-warmed banner (if any) and clears the internal slot,
+  /// transferring ownership to the caller. Caller is responsible for
+  /// disposing the returned ad.
+  BannerAd? takePreloadedBanner() {
+    final ad = _preloadedBanner;
+    _preloadedBanner = null;
+    return ad;
+  }
+
+  Future<void> _preloadBanner() async {
+    if (_disposed || _preloadingBanner || _preloadedBanner != null) return;
+    _preloadingBanner = true;
+
+    // Resolve adaptive size using the platform window so we don't depend
+    // on a BuildContext (this runs at app launch).
+    final view = WidgetsBinding.instance.platformDispatcher.views.isEmpty
+        ? null
+        : WidgetsBinding.instance.platformDispatcher.views.first;
+    final widthPx = view == null
+        ? 360
+        : (view.physicalSize.width / view.devicePixelRatio).truncate();
+    AdSize size;
+    try {
+      size = await AdSize.getAnchoredAdaptiveBannerAdSize(
+            Orientation.portrait,
+            widthPx,
+          ) ??
+          AdSize.banner;
+    } catch (_) {
+      size = AdSize.banner;
+    }
+    if (_disposed) {
+      _preloadingBanner = false;
+      return;
+    }
+
+    final ad = BannerAd(
+      adUnitId: _bannerAdUnitId,
+      size: size,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (loaded) {
+          if (_disposed) {
+            loaded.dispose();
+            return;
+          }
+          _preloadedBanner = loaded as BannerAd;
+          _preloadingBanner = false;
+          if (kDebugMode) debugPrint('[AdsService] banner pre-warmed ✓');
+        },
+        onAdFailedToLoad: (loaded, error) {
+          loaded.dispose();
+          _preloadedBanner = null;
+          _preloadingBanner = false;
+          if (kDebugMode) {
+            debugPrint('[AdsService] banner pre-warm failed: $error');
+          }
+        },
+      ),
+    );
+    await ad.load();
   }
 
   void loadBannerAd({required void Function(BannerAd) onLoaded}) {
@@ -187,6 +259,8 @@ class AdsService {
     _interstitialRetryTimer = null;
     bannerAd?.dispose();
     bannerAd = null;
+    _preloadedBanner?.dispose();
+    _preloadedBanner = null;
     _rewardedAd?.dispose();
     _rewardedAd = null;
     _interstitialAd?.dispose();

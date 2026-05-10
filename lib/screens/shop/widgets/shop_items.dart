@@ -471,62 +471,200 @@ class _EmojiPackCardState extends State<_EmojiPackCard> with SingleTickerProvide
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Free Joker Slot — compact row for Watch Ad
+// Free Joker Slot — compact row for Watch Ad.
+//
+// Cooldown-aware: when the rewarded-joker cooldown (5 min) is active OR
+// the daily cap is reached, the card displays a padlock + countdown,
+// dims to ~55% opacity, and the tap is intercepted to show a snackbar.
 // ═══════════════════════════════════════════════════════════════
-class _FreeJokerSlot extends StatefulWidget {
+class _FreeJokerSlot extends ConsumerStatefulWidget {
   final VoidCallback onTap;
   final String label;
   const _FreeJokerSlot({required this.onTap, required this.label});
 
   @override
-  State<_FreeJokerSlot> createState() => _FreeJokerSlotState();
+  ConsumerState<_FreeJokerSlot> createState() => _FreeJokerSlotState();
 }
 
-class _FreeJokerSlotState extends State<_FreeJokerSlot> with SingleTickerProviderStateMixin {
+class _FreeJokerSlotState extends ConsumerState<_FreeJokerSlot> with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
+
+  /// Per-second tick so the cooldown countdown stays live without forcing
+  /// a provider re-emit.
+  Timer? _ticker;
 
   @override
   void initState() {
     super.initState();
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat(reverse: true);
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
-  void dispose() { _pulse.dispose(); super.dispose(); }
+  void dispose() {
+    _pulse.dispose();
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  String _formatCooldown(Duration d) {
+    final m = d.inMinutes.toString();
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppTheme.orangeTop.withValues(alpha: 0.3), AppTheme.sectionBg],
+    final storage = ref.watch(localStorageProvider).valueOrNull;
+
+    final cooldown = storage?.adJokerCooldownRemaining ?? Duration.zero;
+    final adsLeft = storage?.adJokerAdsLeftToday;
+    final reachedCap = adsLeft == 0;
+    final inCooldown = cooldown > Duration.zero;
+    final blocked = reachedCap || inCooldown;
+
+    // Subtitle is overridden when blocked so users instantly see why.
+    final String subtitle;
+    if (reachedCap) {
+      subtitle = l10n.adJokerLimitTomorrow;
+    } else if (inCooldown) {
+      subtitle = '${l10n.adJokerCooldownLabel} ${_formatCooldown(cooldown)}';
+    } else {
+      subtitle = widget.label;
+    }
+
+    void handleTap() {
+      if (!blocked) {
+        widget.onTap();
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            reachedCap
+                ? l10n.adJokerLimitTomorrow
+                : '${l10n.adJokerCooldownLabel} ${_formatCooldown(cooldown)}',
+            style: GoogleFonts.nunito(fontWeight: FontWeight.w700),
           ),
-          borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
-          border: Border.all(color: AppTheme.orangeTop.withValues(alpha: 0.4), width: 1.5),
+          backgroundColor: AppTheme.hubDangerRed1,
+          duration: const Duration(seconds: 2),
         ),
-        child: Row(
-          children: [
-            Image.asset('assets/images/pub.webp', width: 40, height: 40),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.watchAd.toUpperCase(),
-                      style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w800, color: Colors.white)),
-                  Text(widget.label,
-                      style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w600, color: Colors.white54)),
-                ],
-              ),
+      );
+    }
+
+    return Opacity(
+      opacity: blocked ? 0.55 : 1.0,
+      child: GestureDetector(
+        onTap: handleTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.orangeTop.withValues(alpha: 0.3), AppTheme.sectionBg],
             ),
-            _AdGratuitButton(pulse: _pulse),
-          ],
+            borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+            border: Border.all(
+              color: blocked
+                  ? Colors.white24
+                  : AppTheme.orangeTop.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Ad icon with optional padlock overlay when blocked.
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset('assets/images/pub.webp', width: 40, height: 40),
+                    if (blocked)
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withValues(alpha: 0.55),
+                        ),
+                        child: const Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l10n.watchAd.toUpperCase(),
+                        style: GoogleFonts.fredoka(fontSize: AppTheme.fontBody, fontWeight: FontWeight.w800, color: Colors.white)),
+                    Text(subtitle,
+                        style: GoogleFonts.nunito(fontSize: AppTheme.fontSmall, fontWeight: FontWeight.w600, color: Colors.white54)),
+                  ],
+                ),
+              ),
+              // Action chip: pulsing GRATUIT when available, static M:SS / cap
+              // chip when blocked, so users see at-a-glance why they can't tap.
+              if (blocked)
+                _BlockedAdChip(
+                  text: reachedCap
+                      ? l10n.adJokerCapBadge
+                      : _formatCooldown(cooldown),
+                )
+              else
+                _AdGratuitButton(pulse: _pulse),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Static red chip shown in place of "GRATUIT" when the ad joker is on
+// cooldown or has hit its daily cap. Mirrors the styling of the hub's
+// AdRewardGemButton countdown badge for consistency.
+// ═══════════════════════════════════════════════════════════════
+class _BlockedAdChip extends StatelessWidget {
+  final String text;
+  const _BlockedAdChip({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.hubDangerRed1, AppTheme.hubDangerRed2],
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXXTiny),
+        border: Border.all(color: Colors.white24, width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.lock_rounded, color: Colors.white, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.fredoka(
+              fontSize: AppTheme.fontRegular,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

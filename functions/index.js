@@ -198,7 +198,7 @@ exports.submitScore = onCall(
     }
 
     const uid = request.auth.uid;
-    const { score, mergeCount, maxLevel, displayName, photoUrl, avatarId, weekKey } = request.data;
+    const { score, mergeCount, maxLevel, displayName, photoUrl, avatarId } = request.data;
 
     // ── Validate inputs ──
     const error = validateScoreConsistency(score, mergeCount, maxLevel);
@@ -237,7 +237,6 @@ exports.submitScore = onCall(
         mergeCount,
         maxLevel,
         displayName: displayName.substring(0, 50),
-        weekKey: weekKey || null,
         timestamp: FieldValue.serverTimestamp(),
       };
       if (photoUrl) entry.photoUrl = photoUrl;

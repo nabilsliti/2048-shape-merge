@@ -11,8 +11,8 @@ import 'package:shape_merge/providers/local_storage_provider.dart';
 // ═══════════════════════════════════════════════════════════════
 // Ad Reward Button — pub icon + dynamic label.
 //
-// • If cooldown active   → shows "M:SS" countdown, button disabled.
-// • If daily cap reached → shows "Demain", button disabled.
+// • If cooldown active   → padlock overlay + "M:SS" countdown, button disabled.
+// • If daily cap reached → padlock overlay + "Demain", button disabled.
 // • Otherwise            → shows "+1 🃏", button enabled.
 // ═══════════════════════════════════════════════════════════════
 class AdRewardGemButton extends ConsumerStatefulWidget {
@@ -133,9 +133,11 @@ class _AdRewardGemButtonState extends ConsumerState<AdRewardGemButton> {
                   ),
                 ),
               ),
-              // Lock overlay when daily cap reached — makes the disabled
-              // state instantly readable (greyscale + padlock).
-              if (reachedCap)
+              // Lock overlay when ad joker is unavailable (daily cap reached
+              // OR 5-min cooldown active). Makes the disabled state instantly
+              // readable: greyscale circle + padlock icon. The cooldown also
+              // shows the M:SS countdown badge below.
+              if (reachedCap || inCooldown)
                 Container(
                   width: 60,
                   height: 60,

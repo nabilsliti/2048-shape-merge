@@ -101,38 +101,6 @@ class _RingPainter extends CustomPainter {
       old.ratio != ratio || old.color != color;
 }
 
-// ─── Bolt painter — merge lightning icon ────────────────────
-class _BoltPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    final bolt = Path()
-      ..moveTo(w * 0.55, 0)
-      ..lineTo(w * 0.20, h * 0.50)
-      ..lineTo(w * 0.45, h * 0.48)
-      ..lineTo(w * 0.35, h)
-      ..lineTo(w * 0.80, h * 0.42)
-      ..lineTo(w * 0.52, h * 0.44)
-      ..close();
-
-    canvas.drawPath(bolt, Paint()
-      ..color = AppTheme.statMerge.withValues(alpha: 0.4)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
-
-    canvas.drawPath(bolt, Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(w * 0.5, 0),
-        Offset(w * 0.5, h),
-        [AppTheme.purpleBorder, AppTheme.statMerge2],
-      ));
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 // ─── Confetti data model ────────────────────────────────────
 class _Confetti {
   final double x;

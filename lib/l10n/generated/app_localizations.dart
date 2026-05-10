@@ -422,18 +422,6 @@ abstract class AppLocalizations {
   /// **'Rank'**
   String get rank;
 
-  /// No description provided for @allTime.
-  ///
-  /// In en, this message translates to:
-  /// **'All Time'**
-  String get allTime;
-
-  /// No description provided for @thisWeek.
-  ///
-  /// In en, this message translates to:
-  /// **'This Week'**
-  String get thisWeek;
-
   /// No description provided for @maxLevel.
   ///
   /// In en, this message translates to:
@@ -1033,18 +1021,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DAY'**
   String get dayLabel;
-
-  /// No description provided for @weeklyRewardsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Reward'**
-  String get weeklyRewardsLabel;
-
-  /// No description provided for @weekLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Week'**
-  String get weekLabel;
 
   /// No description provided for @levelShortLabel.
   ///
@@ -1651,6 +1627,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'MORE OFFERS'**
   String get sectionMoreOffers;
+
+  /// No description provided for @homeNudgeTopWorld.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} pts to the Top'**
+  String homeNudgeTopWorld(String n);
+
+  /// No description provided for @homeNudgeBeatPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Beat {name}: {score}'**
+  String homeNudgeBeatPlayer(String name, String score);
+
+  /// No description provided for @homeNudgeFirstBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your first record!'**
+  String get homeNudgeFirstBest;
+
+  /// No description provided for @homeNudgeYouAreTop.
+  ///
+  /// In en, this message translates to:
+  /// **'You are #1 worldwide 👑'**
+  String get homeNudgeYouAreTop;
+
+  /// No description provided for @objectivesProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total}'**
+  String objectivesProgress(int done, int total);
+
+  /// No description provided for @objectivesResetIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resets in {time}'**
+  String objectivesResetIn(String time);
+
+  /// No description provided for @objectivesAllDoneToday.
+  ///
+  /// In en, this message translates to:
+  /// **'All today\'s objectives completed!'**
+  String get objectivesAllDoneToday;
+
+  /// No description provided for @playSubtitleResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume game'**
+  String get playSubtitleResume;
+
+  /// No description provided for @playSubtitleNewGame.
+  ///
+  /// In en, this message translates to:
+  /// **'New game'**
+  String get playSubtitleNewGame;
 }
 
 class _AppLocalizationsDelegate

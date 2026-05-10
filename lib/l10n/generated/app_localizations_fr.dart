@@ -182,12 +182,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rank => 'Rang';
 
   @override
-  String get allTime => 'Tous les temps';
-
-  @override
-  String get thisWeek => 'Cette semaine';
-
-  @override
   String get maxLevel => 'Niveau max';
 
   @override
@@ -569,12 +563,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dayLabel => 'JOUR';
 
   @override
-  String get weeklyRewardsLabel => 'Récompense';
-
-  @override
-  String get weekLabel => 'Semaine';
-
-  @override
   String get levelShortLabel => 'NIV';
 
   @override
@@ -912,4 +900,40 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sectionMoreOffers => 'PLUS D\'OFFRES';
+
+  @override
+  String homeNudgeTopWorld(String n) {
+    return 'À $n pts du Top Mondial';
+  }
+
+  @override
+  String homeNudgeBeatPlayer(String name, String score) {
+    return 'Bats $name : $score';
+  }
+
+  @override
+  String get homeNudgeFirstBest => 'Tente ton premier record !';
+
+  @override
+  String get homeNudgeYouAreTop => 'Tu es N°1 mondial 👑';
+
+  @override
+  String objectivesProgress(int done, int total) {
+    return '$done/$total';
+  }
+
+  @override
+  String objectivesResetIn(String time) {
+    return 'Reset dans $time';
+  }
+
+  @override
+  String get objectivesAllDoneToday =>
+      'Tous les objectifs du jour sont complétés !';
+
+  @override
+  String get playSubtitleResume => 'Reprendre la partie';
+
+  @override
+  String get playSubtitleNewGame => 'Nouvelle partie';
 }

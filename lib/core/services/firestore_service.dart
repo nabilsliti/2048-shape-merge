@@ -54,7 +54,6 @@ class FirestoreService {
         'displayName': entry.displayName,
         'photoUrl': entry.photoUrl,
         'avatarId': entry.avatarId,
-        'weekKey': entry.weekKey,
       });
       _log.info('Score submitted via function: ${entry.score} for ${entry.uid}');
     }, label: 'submitScore');
@@ -62,18 +61,6 @@ class FirestoreService {
 
   Stream<List<LeaderboardEntry>> leaderboardStream({int limit = 50}) {
     return _leaderboardRef
-        .orderBy('score', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => LeaderboardEntry.fromFirestore(doc.id, doc.data()))
-            .toList());
-  }
-
-  Stream<List<LeaderboardEntry>> weeklyLeaderboardStream(String weekKey,
-      {int limit = 50}) {
-    return _leaderboardRef
-        .where('weekKey', isEqualTo: weekKey)
         .orderBy('score', descending: true)
         .limit(limit)
         .snapshots()
