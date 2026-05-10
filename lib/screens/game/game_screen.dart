@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -309,6 +310,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
       timestamp: now,
     );
     unawaited(ref.read(firestoreServiceProvider).submitScore(entry).catchError((Object e) {
+      // Server-side rate limit (1 submit / 5s) is expected during a game with
+      // many small best-score updates — the next submit (or the game-over one)
+      // will succeed. Don't bother the user with a snackbar in that case.
+      if (e is FirebaseFunctionsException && e.code == 'resource-exhausted') {
+        return;
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

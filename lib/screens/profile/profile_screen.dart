@@ -207,35 +207,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     SizedBox(
                       width: 180,
-                      child: TextField(
-                        controller: _nameCtrl,
-                        maxLength: 20,
-                        autofocus: true,
-                        style: GoogleFonts.nunito(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: TextField(
+                          controller: _nameCtrl,
+                          maxLength: 20,
+                          autofocus: true,
+                          style: GoogleFonts.nunito(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            counterText: '',
+                            filled: true,
+                            fillColor: Colors.white.withValues(alpha: 0.08),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                              borderSide: const BorderSide(color: AppTheme.panelBorder),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                              borderSide: const BorderSide(color: AppTheme.panelBorder),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                              borderSide: const BorderSide(color: AppTheme.gold, width: 2),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          onSubmitted: (_) => _saveName(),
                         ),
-                        textAlign: TextAlign.center,
-                        decoration: InputDecoration(
-                          counterText: '',
-                          filled: true,
-                          fillColor: Colors.white.withValues(alpha: 0.08),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                            borderSide: const BorderSide(color: AppTheme.panelBorder),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                            borderSide: const BorderSide(color: AppTheme.panelBorder),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                            borderSide: const BorderSide(color: AppTheme.gold, width: 2),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        onSubmitted: (_) => _saveName(),
                       ),
                     ),
                     const SizedBox(width: 8),

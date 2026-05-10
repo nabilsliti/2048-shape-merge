@@ -443,8 +443,8 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // x2 with ad button (hide for no-ads users)
-        if (!noAds)
+        // x2 with ad button (XP rewards only — jokers don't offer x2)
+        if (!noAds && challenge.reward is XpReward)
           Button3D.green(
             onPressed: _onCollectX2Tap,
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
@@ -467,7 +467,7 @@ class _ChallengeRowState extends ConsumerState<_ChallengeRow>
           )
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .scaleXY(begin: 1.0, end: 1.08, duration: 700.ms, curve: Curves.easeInOut),
-        if (!noAds) const SizedBox(width: 4),
+        if (!noAds && challenge.reward is XpReward) const SizedBox(width: 4),
         // Normal collect button
         Button3D.gold(
           onPressed: _onCollectTap,

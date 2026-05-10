@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/daily_challenge.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
-import 'package:shape_merge/core/services/app_logger.dart';
 import 'package:shape_merge/core/services/challenge_service.dart';
 import 'package:shape_merge/providers/audio_provider.dart';
 import 'package:shape_merge/providers/auth_providers.dart';
@@ -13,8 +11,6 @@ import 'package:shape_merge/providers/game_state_provider.dart';
 import 'package:shape_merge/providers/leaderboard_provider.dart';
 import 'package:shape_merge/providers/player_provider.dart';
 import 'package:shape_merge/providers/progression_provider.dart';
-
-const _log = AppLogger('DailyChallenge');
 
 final challengeServiceProvider =
     Provider<ChallengeService>((_) => const ChallengeService());
@@ -176,8 +172,9 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
   }
 
   /// Collect reward for a completed challenge.
-  /// Signed-in: calls Cloud Function (server distributes reward).
-  /// Guest: distributes reward client-side.
+  /// Same path for signed-in and guest: `addBonusXP` / `addJokers` already
+  /// persist to Firestore (signed) or local storage (guest), and `_persist`
+  /// syncs the `rewardCollected` flag the same way.
   Future<void> collectReward(String challengeId) async {
     final current = state;
     if (current == null) return;
@@ -195,37 +192,16 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     if (mounted) state = updated;
     _ref.read(audioServiceProvider).playReward();
 
-    final user = _ref.read(authStateProvider).valueOrNull;
-
-    if (user != null) {
-      // ── Signed-in: Cloud Function distributes reward ──
-      try {
-        await FirebaseFunctions.instanceFor(region: 'europe-west1')
-            .httpsCallable('claimChallengeReward')
-            .call({'challengeId': challengeId});
-
-        // Refresh player data to pick up joker/XP changes
-        _ref.invalidate(playerProvider);
-      } catch (e) {
-        _log.error('claimChallengeReward failed', error: e);
-        // Revert optimistic UI on failure
-        if (mounted) state = current;
-        return;
-      }
-    } else {
-      // ── Guest: distribute reward client-side ──
-      switch (challenge.reward) {
-        case JokerReward(:final joker):
-          _ref.read(gameStateProvider.notifier).addJokers(joker, 1);
-        case XpReward(:final xp):
-          _ref.read(progressionProvider.notifier).addBonusXP(xp);
-      }
-      await _persist(updated);
+    switch (challenge.reward) {
+      case JokerReward(:final joker):
+        _ref.read(gameStateProvider.notifier).addJokers(joker, 1);
+      case XpReward(:final xp):
+        await _ref.read(progressionProvider.notifier).addBonusXP(xp);
     }
+    await _persist(updated);
   }
 
   /// Collect reward x2 (after watching ad). Same as [collectReward] but doubles.
-  /// Guest: distributes 2x client-side. Signed-in: calls Cloud Function with x2 flag.
   Future<void> collectRewardX2(String challengeId) async {
     final current = state;
     if (current == null) return;
@@ -243,32 +219,16 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     if (mounted) state = updated;
     _ref.read(audioServiceProvider).playReward();
 
-    final user = _ref.read(authStateProvider).valueOrNull;
-
-    if (user != null) {
-      try {
-        await FirebaseFunctions.instanceFor(region: 'europe-west1')
-            .httpsCallable('claimChallengeReward')
-            .call({'challengeId': challengeId, 'doubleReward': true});
-        _ref.invalidate(playerProvider);
-      } catch (e) {
-        _log.error('claimChallengeReward x2 failed', error: e);
-        if (mounted) state = current;
-        return;
-      }
-    } else {
-      switch (challenge.reward) {
-        case JokerReward(:final joker):
-          _ref.read(gameStateProvider.notifier).addJokers(joker, 2);
-        case XpReward(:final xp):
-          _ref.read(progressionProvider.notifier).addBonusXP(xp * 2);
-      }
-      await _persist(updated);
+    switch (challenge.reward) {
+      case JokerReward(:final joker):
+        _ref.read(gameStateProvider.notifier).addJokers(joker, 2);
+      case XpReward(:final xp):
+        await _ref.read(progressionProvider.notifier).addBonusXP(xp * 2);
     }
+    await _persist(updated);
   }
 
   /// Collect the bonus for completing all 3 objectives (+3 jokers).
-  /// Signed-in: calls Cloud Function. Guest: distributes client-side.
   Future<void> collectBonus() async {
     final current = state;
     if (current == null || !current.canCollectBonus) return;
@@ -278,29 +238,11 @@ class DailyChallengeNotifier extends StateNotifier<DailyChallengeState?> {
     final updated = current.copyWith(bonusCollected: true);
     if (mounted) state = updated;
 
-    final user = _ref.read(authStateProvider).valueOrNull;
-
-    if (user != null) {
-      // ── Signed-in: Cloud Function distributes bonus ──
-      try {
-        await FirebaseFunctions.instanceFor(region: 'europe-west1')
-            .httpsCallable('claimChallengeReward')
-            .call({'bonus': true});
-
-        _ref.invalidate(playerProvider);
-      } catch (e) {
-        _log.error('claimChallengeReward (bonus) failed', error: e);
-        if (mounted) state = current;
-        return;
-      }
-    } else {
-      // ── Guest: distribute bonus client-side ──
-      final notifier = _ref.read(gameStateProvider.notifier);
-      for (final j in [JokerType.bomb, JokerType.wildcard, JokerType.reducer]) {
-        notifier.addJokers(j, 1);
-      }
-      await _persist(updated);
+    final notifier = _ref.read(gameStateProvider.notifier);
+    for (final j in [JokerType.bomb, JokerType.wildcard, JokerType.reducer]) {
+      notifier.addJokers(j, 1);
     }
+    await _persist(updated);
   }
 
   Future<void> _persist(DailyChallengeState state) async {
