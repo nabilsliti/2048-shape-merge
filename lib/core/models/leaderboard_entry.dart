@@ -38,9 +38,15 @@ class LeaderboardEntry {
 
   factory LeaderboardEntry.fromFirestore(String docId, Map<String, Object?> data) {
     final ts = data['timestamp'];
+    // The Cloud Function `submitScore` stores the entry under `docId == uid`
+    // but does NOT write an explicit `uid` field on the document. Earlier
+    // client-written docs DO carry `uid`. Fall back to `docId` so the
+    // self-row detection in the leaderboard screen always works regardless
+    // of write path.
+    final rawUid = data['uid'] as String?;
     return LeaderboardEntry(
       docId: docId,
-      uid: data['uid'] as String? ?? '',
+      uid: (rawUid == null || rawUid.isEmpty) ? docId : rawUid,
       displayName: data['displayName'] as String? ?? '',
       photoUrl: data['photoUrl'] as String?,
       avatarId: data['avatarId'] as String?,

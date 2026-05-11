@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shape_merge/core/config/notification_config.dart';
 import 'package:shape_merge/l10n/generated/app_localizations.dart';
@@ -25,6 +26,12 @@ class NotificationService {
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+
+  /// In-flight permission request, if any. The Android plugin throws
+  /// `permissionRequestInProgress` when called concurrently (e.g. fast
+  /// re-init during tests or rapid app relaunches), so we coalesce
+  /// concurrent callers onto the same Future.
+  Future<bool>? _pendingPermissionRequest;
 
   /// Emits notification payloads when the user taps a notification.
   final _payloadController = StreamController<String>.broadcast();
@@ -69,6 +76,24 @@ class NotificationService {
   /// Requests notification permissions on iOS/Android 13+.
   /// Returns true if granted.
   Future<bool> requestPermission() async {
+    // Coalesce concurrent calls onto the same Future to avoid the Android
+    // `permissionRequestInProgress` PlatformException.
+    final pending = _pendingPermissionRequest;
+    if (pending != null) return pending;
+    final future = _doRequestPermission();
+    _pendingPermissionRequest = future;
+    try {
+      return await future;
+    } on PlatformException catch (e) {
+      // Swallow the race-condition variant; everything else propagates.
+      if (e.code == 'permissionRequestInProgress') return false;
+      rethrow;
+    } finally {
+      _pendingPermissionRequest = null;
+    }
+  }
+
+  Future<bool> _doRequestPermission() async {
     if (kIsWeb) return false;
     if (Platform.isIOS) {
       final ios = _plugin

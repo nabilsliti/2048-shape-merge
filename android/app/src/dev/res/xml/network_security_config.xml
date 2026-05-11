@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dev-only network security config.
+  Allows cleartext HTTP traffic to the Firebase emulators, whether reached
+  via 10.0.2.2 (Android emulator), 127.0.0.1/localhost (adb reverse), or
+  the host's LAN IP (wireless / physical device).
+  This file is ONLY merged into the dev flavor; release/staging/prod APKs
+  inherit the platform default (no cleartext allowed).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

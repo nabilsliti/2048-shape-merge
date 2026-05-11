@@ -5,6 +5,7 @@ class FlavorConfig {
 
   static FlavorConfig? _instance;
   static FlavorConfig get instance => _instance!;
+  static bool get isInitialized => _instance != null;
 
   late final FlavorType flavor;
   late final String name;

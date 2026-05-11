@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dev-flavor manifest overlay.
+  ONLY merged into the `dev` flavor APK. Adds a network security config that
+  permits cleartext traffic to Firebase emulator hosts (10.0.2.2, localhost,
+  127.0.0.1). Production builds (prod/staging) keep the platform default,
+  i.e. NO cleartext traffic allowed.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+    <application
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:replace="android:networkSecurityConfig"/>
+</manifest>
