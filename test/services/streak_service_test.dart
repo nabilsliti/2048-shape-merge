@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shape_merge/core/constants/joker_types.dart';
 import 'package:shape_merge/core/models/player_streak.dart';
 import 'package:shape_merge/core/services/local_storage_service.dart';
 import 'package:shape_merge/core/services/streak_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   late StreakService service;
@@ -135,15 +136,57 @@ void main() {
       expect(PlayerStreak.yesterdayKey(), expectedKey);
     });
 
-    test('rewardForIndex cycles through 7 rewards with scaling', () {
-      final rewards = List.generate(7, PlayerStreak.rewardForIndex);
-      expect(rewards.length, 7);
-      // Week 1 day 1: bomb ×1
-      final (type0, amount0) = PlayerStreak.rewardForIndex(0);
-      // Week 2 day 1: same type, ×2
-      final (type7, amount7) = PlayerStreak.rewardForIndex(7);
-      expect(type0, type7); // same joker type in the cycle
-      expect(amount7, amount0 * 2); // week 2 scales ×2
+    test('rewardForStreak J1 is XP and J2 is joker', () {
+      expect(PlayerStreak.rewardForStreak(1), isA<StreakXpReward>());
+      expect(PlayerStreak.rewardForStreak(2), isA<StreakJokerReward>());
+    });
+
+    test('rewardForStreak J7 rotates premium joker by week', () {
+      final w1 = PlayerStreak.rewardForStreak(7) as StreakJokerReward;
+      final w2 = PlayerStreak.rewardForStreak(14) as StreakJokerReward;
+      final w3 = PlayerStreak.rewardForStreak(21) as StreakJokerReward;
+      final w4 = PlayerStreak.rewardForStreak(28) as StreakJokerReward;
+      expect(w1.type, isNot(w2.type));
+      expect(w2.type, isNot(w3.type));
+      expect(w4.type, w1.type, reason: 'rotation has length 3');
+      // J7 is always amount 1
+      expect(w1.amount, 1);
+      expect(w2.amount, 1);
+    });
+
+    test('rewardForStreak handles 0/negative as J1 default', () {
+      expect(PlayerStreak.rewardForStreak(0), isA<StreakXpReward>());
+      expect(PlayerStreak.rewardForStreak(-5), isA<StreakXpReward>());
+    });
+
+    test('milestoneFor returns rewards at 14 / 30 / 100, null otherwise', () {
+      expect(PlayerStreak.milestoneFor(14), isNotNull);
+      expect(PlayerStreak.milestoneFor(30), isNotNull);
+      expect(PlayerStreak.milestoneFor(100), isNotNull);
+      expect(PlayerStreak.milestoneFor(1), isNull);
+      expect(PlayerStreak.milestoneFor(15), isNull);
+      expect(PlayerStreak.milestoneFor(99), isNull);
+    });
+
+    test('weekNumber computed from currentStreak', () {
+      const a = PlayerStreak(currentStreak: 1, longestStreak: 1, nextRewardIndex: 0);
+      const b = PlayerStreak(currentStreak: 7, longestStreak: 7, nextRewardIndex: 6);
+      const c = PlayerStreak(currentStreak: 8, longestStreak: 8, nextRewardIndex: 0);
+      const d = PlayerStreak(currentStreak: 0, longestStreak: 0, nextRewardIndex: 0);
+      expect(a.weekNumber, 1);
+      expect(b.weekNumber, 1);
+      expect(c.weekNumber, 2);
+      expect(d.weekNumber, 1);
+    });
+
+    test('StreakJokerReward.canDoubleWithAd false for premium types', () {
+      expect(const StreakJokerReward(JokerType.bomb, 1).canDoubleWithAd, true);
+      expect(const StreakJokerReward(JokerType.megaBomb, 1).canDoubleWithAd, false);
+      expect(const StreakJokerReward(JokerType.evolution, 1).canDoubleWithAd, false);
+    });
+
+    test('StreakXpReward.canDoubleWithAd is always true', () {
+      expect(const StreakXpReward(15).canDoubleWithAd, true);
     });
   });
 }

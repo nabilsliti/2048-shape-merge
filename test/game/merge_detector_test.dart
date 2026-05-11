@@ -119,5 +119,47 @@ void main() {
       );
       expect(result?.id, 'near');
     });
+
+    test('findBestTarget returns null when no shape within snap radius', () {
+      final farMatch = GameShape(
+        id: 'far', x: 9999, y: 9999,
+        type: ShapeType.circle, color: const Color(0xFF4FC3F7), level: 1,
+      );
+      final result = MergeDetector.findBestTarget(
+        shapeA, [farMatch], const Offset(0, 0),
+      );
+      expect(result, isNull);
+    });
+
+    test('findBestTarget ignores incompatible shapes within snap radius', () {
+      final close = GameShape(
+        id: 'close', x: 5, y: 0,
+        type: ShapeType.square, color: const Color(0xFF4FC3F7), level: 1,
+      );
+      final result = MergeDetector.findBestTarget(
+        shapeA, [close], const Offset(0, 0),
+      );
+      expect(result, isNull);
+    });
+
+    test('findBestTarget skips dragged shape itself', () {
+      final result = MergeDetector.findBestTarget(
+        shapeA, [shapeA, shapeB], Offset(shapeB.x, shapeB.y),
+      );
+      expect(result?.id, 'b');
+    });
+
+    test('countPairs counts correctly with multiple groups', () {
+      final shapes = [
+        shapeA, shapeB, // pair circle/blue/L1
+        GameShape(id: 'g1', x: 0, y: 0,
+            type: ShapeType.square, color: const Color(0xFF000000), level: 2),
+        GameShape(id: 'g2', x: 0, y: 0,
+            type: ShapeType.square, color: const Color(0xFF000000), level: 2),
+        GameShape(id: 'lone', x: 0, y: 0,
+            type: ShapeType.star, color: const Color(0xFFFFFFFF), level: 5),
+      ];
+      expect(MergeDetector.countPairs(shapes), 2);
+    });
   });
 }
