@@ -79,6 +79,11 @@ class AdsService {
         : (view.physicalSize.width / view.devicePixelRatio).truncate();
     AdSize size;
     try {
+      // NOTE: google_mobile_ads 8 deprecates this in favour of
+      // `getLargeAnchoredAdaptiveBannerAdSizeWithOrientation`, but "Large"
+      // returns 90-180px banners — our slot is 60px, switching would clip the
+      // ad. Keep the (still-functional) regular adaptive size instead.
+      // ignore: deprecated_member_use
       size = await AdSize.getAnchoredAdaptiveBannerAdSize(
             Orientation.portrait,
             widthPx,

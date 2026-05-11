@@ -351,6 +351,8 @@ class _AdBannerWidgetState extends ConsumerState<AdBannerWidget>
     _lastLoadTime = DateTime.now();
 
     // Resolve ad size once, cache for subsequent reloads.
+    // See note in AdsService._preloadBanner about the deprecation.
+    // ignore: deprecated_member_use
     _cachedAdSize ??= await AdSize.getAnchoredAdaptiveBannerAdSize(
       Orientation.portrait,
       MediaQuery.of(context).size.width.truncate(),
